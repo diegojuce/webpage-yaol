@@ -28,8 +28,7 @@ import { getMenuQuery } from './queries/menu';
 import { getPageQuery, getPagesQuery } from './queries/page';
 import {
   getProductQuery,
-  getProductRecommendationsQuery,
-  getProductsQuery
+  getProductRecommendationsQuery
 } from './queries/product';
 import {
   BackendProductsOperation,
@@ -62,6 +61,8 @@ const domain = process.env.SHOPIFY_STORE_DOMAIN
   ? ensureStartsWith(process.env.SHOPIFY_STORE_DOMAIN, 'https://')
   : '';
 const endpoint = `${domain}${SHOPIFY_GRAPHQL_API_ENDPOINT}`;
+const backend_url = process.env.BACKEND_URL;
+
 const key = process.env.SHOPIFY_STOREFRONT_ACCESS_TOKEN!;
 
 type ExtractVariables<T> = T extends { variables: object }
@@ -114,6 +115,59 @@ export async function shopifyFetch<T>({
     throw {
       error: e,
       query
+    };
+  }
+}
+
+export async function backendFetch<T>({
+  headers,
+  variables,
+  endpoint
+}: {
+  headers?: HeadersInit;
+  variables?: ExtractVariables<T>;
+  endpoint: String;
+}): Promise<{ status: number; body: T } | never> {
+  try {
+    // const backend_url = 'https://stg-back.yantissimo.com'
+    const route = '/bypass/shopify'
+    const backend_endpoint = `${backend_url+route+endpoint}`;
+    const result = await fetch(backend_endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Backend-bearer-token': "HNFEggYGyfFgjkhKHfdtdtfhlJugyfTd",
+        ...headers
+      },
+      body: JSON.stringify({
+        ...(variables && { variables })
+      })
+    });
+
+    const body = await result.json();
+    // body = { body: { data: { products: [Array] } } }
+    console.dir(body, { depth: null })
+    
+
+    if (body.errors) {
+      throw body.errors[0];
+    }
+
+    return {
+      status: result.status,
+      body
+    };
+  } catch (e) {
+    if (isShopifyError(e)) {
+      throw {
+        cause: e.cause?.toString() || 'unknown',
+        status: e.status || 500,
+        message: e.message,
+      };
+    }
+
+    throw {
+      error: e,
     };
   }
 }
@@ -451,14 +505,15 @@ export async function getProducts({
   // -------------------------------------------------------
   // Bloque de interés
   // -------------------------------------------------------
-  const res = await shopifyFetch<BackendProductsOperation>({
-    query: getProductsQuery,
+  const res = await backendFetch<BackendProductsOperation>({
+    endpoint: "/get/products",
     variables: {
       query,
       reverse,
       sortKey
     }
   });
+  console.log("data:", res.body.data)
 
   return reshapeProducts(removeEdgesAndNodes(res.body.data.products));
 }
