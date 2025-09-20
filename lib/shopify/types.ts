@@ -270,3 +270,38 @@ export type ShopifyProductsOperation = {
     sortKey?: string;
   };
 };
+
+// --------------------------------------------
+// Tipos personalizados para nuestro backend
+// --------------------------------------------
+
+export type BackendProduct = {
+  id: string;
+  handle: string;
+  availableForSale: boolean;
+  title: string;
+  description: string;
+  descriptionHtml: string;
+  options: ProductOption[];
+  priceRange: {
+    maxVariantPrice: Money;
+    minVariantPrice: Money;
+  };
+  variants: Connection<ProductVariant>;
+  featuredImage: Image;
+  images: Connection<Image>;
+  seo: SEO;
+  tags: string[];
+  updatedAt: string;
+};
+
+export type BackendProductsOperation = {
+  data: {
+    products: Connection<BackendProduct>;
+  };
+  variables: {
+    query?: string;
+    reverse?: boolean;
+    sortKey?: string;
+  };
+};

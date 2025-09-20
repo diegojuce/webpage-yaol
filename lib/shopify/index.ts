@@ -6,9 +6,9 @@ import {
 import { isShopifyError } from 'lib/type-guards';
 import { ensureStartsWith } from 'lib/utils';
 import {
-  revalidateTag,
+  unstable_cacheLife as cacheLife,
   unstable_cacheTag as cacheTag,
-  unstable_cacheLife as cacheLife
+  revalidateTag
 } from 'next/cache';
 import { cookies, headers } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
@@ -32,6 +32,7 @@ import {
   getProductsQuery
 } from './queries/product';
 import {
+  BackendProductsOperation,
   Cart,
   Collection,
   Connection,
@@ -53,7 +54,6 @@ import {
   ShopifyProduct,
   ShopifyProductOperation,
   ShopifyProductRecommendationsOperation,
-  ShopifyProductsOperation,
   ShopifyRemoveFromCartOperation,
   ShopifyUpdateCartOperation
 } from './types';
@@ -448,7 +448,10 @@ export async function getProducts({
   cacheTag(TAGS.products);
   cacheLife('days');
 
-  const res = await shopifyFetch<ShopifyProductsOperation>({
+  // -------------------------------------------------------
+  // Bloque de interés
+  // -------------------------------------------------------
+  const res = await shopifyFetch<BackendProductsOperation>({
     query: getProductsQuery,
     variables: {
       query,
