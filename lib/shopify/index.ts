@@ -146,7 +146,8 @@ export async function backendFetch<T>({
 
     const body = await result.json();
     // body = { body: { data: { products: [Array] } } }
-    console.dir(body, { depth: null })
+    console.log(body)
+    // console.dir(body, { depth: null })
     
 
     if (body.errors) {

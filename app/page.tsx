@@ -4,7 +4,7 @@ import Footer from 'components/layout/footer';
 import ProductCard from 'components/product/product-card';
 import { getProducts } from 'lib/shopify';
 
-
+export const dynamic = 'force-dynamic';
 export const metadata = {
   description:
     'High-performance ecommerce store built with Next.js, Vercel, and Shopify.',
