@@ -15,7 +15,11 @@ export const metadata = {
 
 export default async function HomePage() {
   // Productos más recientes publicados en Custom Storefronts
-  const products = await getProducts({ sortKey: "CREATED_AT", reverse: true });
+  const products = await getProducts({
+    query: "255/55 R20",
+    sortKey: "CREATED_AT",
+    reverse: true,
+  });
   const recentProducts = products.slice(0, 12);
 
   return (
