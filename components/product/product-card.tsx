@@ -1,7 +1,7 @@
-import clsx from 'clsx';
-import { GridTileImage } from 'components/grid/tile';
-import type { Product } from 'lib/shopify/types';
-import Link from 'next/link';
+import clsx from "clsx";
+import { GridTileImage } from "components/grid/tile";
+import type { Product } from "lib/shopify/types";
+import Link from "next/link";
 
 interface ProductCardProps {
   product: Product;
@@ -11,7 +11,7 @@ interface ProductCardProps {
 export default function ProductCard({ product, className }: ProductCardProps) {
   return (
     <Link
-      className={clsx('relative inline-block h-full w-full', className)}
+      className={clsx("relative inline-block h-full w-full", className)}
       href={`/product/${product.handle}`}
       prefetch
     >
@@ -20,7 +20,7 @@ export default function ProductCard({ product, className }: ProductCardProps) {
         label={{
           title: product.title,
           amount: product.priceRange.maxVariantPrice.amount,
-          currencyCode: product.priceRange.maxVariantPrice.currencyCode
+          currencyCode: product.priceRange.maxVariantPrice.currencyCode,
         }}
         src={product.featuredImage?.url}
         fill
