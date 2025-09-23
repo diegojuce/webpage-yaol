@@ -1,4 +1,5 @@
 import { GridTileImage } from "components/grid/tile";
+import AdCarousel from "components/home/ad-carousel";
 import { getCollectionProducts } from "lib/shopify";
 import type { Product } from "lib/shopify/types";
 import Link from "next/link";
@@ -53,15 +54,25 @@ export async function ThreeItemGrid() {
     collection: "michelin",
   });
 
-  if (!homepageItems[0] || !homepageItems[1] || !homepageItems[2]) return null;
+  const productTiles = homepageItems
+    .filter(Boolean)
+    .slice(0, 2) as Product[];
 
-  const [firstProduct, secondProduct, thirdProduct] = homepageItems;
+  if (productTiles.length < 2) return null;
 
   return (
     <section className="mx-auto grid max-w-(--breakpoint-2xl) gap-4 px-4 pb-4 md:grid-cols-6 md:grid-rows-2 lg:max-h-[calc(100vh-200px)]">
-      <ThreeItemGridItem size="full" item={firstProduct} priority={true} />
-      <ThreeItemGridItem size="half" item={secondProduct} priority={true} />
-      <ThreeItemGridItem size="half" item={thirdProduct} />
+      <div className="md:col-span-4 md:row-span-2">
+        <AdCarousel />
+      </div>
+      {productTiles.map((product, index) => (
+        <ThreeItemGridItem
+          key={product.handle}
+          size="half"
+          item={product}
+          priority={index === 0}
+        />
+      ))}
     </section>
   );
 }
