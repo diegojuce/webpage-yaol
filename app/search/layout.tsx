@@ -12,17 +12,21 @@ export default function SearchLayout({
 }) {
   return (
     <>
-      <div className="mx-auto flex max-w-(--breakpoint-2xl) flex-col gap-8 px-4 pb-4 text-black md:flex-row dark:text-white">
-        <div className="order-first w-full flex-none md:max-w-[125px]">
-          <Collections />
+      <div className="mx-auto flex max-w-(--breakpoint-2xl) flex-col gap-6 px-4 pb-4 text-black dark:text-white">
+        <div className="flex flex-col gap-4 md:items-center md:gap-6">
+          <div className="w-full md:w-auto md:max-w-[220px] md:self-end">
+            <FilterList list={sorting} title="Sort by" />
+          </div>
         </div>
-        <div className="order-last min-h-screen w-full md:order-none">
-          <Suspense fallback={null}>
-            <ChildrenWrapper>{children}</ChildrenWrapper>
-          </Suspense>
-        </div>
-        <div className="order-none flex-none md:order-last md:w-[125px]">
-          <FilterList list={sorting} title="Sort by" />
+        <div className="flex flex-col gap-8 md:flex-row">
+          <div className="order-first w-full flex-none md:max-w-[180px]">
+            <Collections />
+          </div>
+          <div className="min-h-screen w-full md:flex-1">
+            <Suspense fallback={null}>
+              <ChildrenWrapper>{children}</ChildrenWrapper>
+            </Suspense>
+          </div>
         </div>
       </div>
       <Footer />
