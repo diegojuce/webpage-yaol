@@ -1,11 +1,11 @@
 'use client';
 
-import { PlusIcon } from '@heroicons/react/24/outline';
+import { MinusIcon, PlusIcon } from '@heroicons/react/24/outline';
 import clsx from 'clsx';
 import { addItem } from 'components/cart/actions';
 import { useProduct } from 'components/product/product-context';
 import { Product, ProductVariant } from 'lib/shopify/types';
-import { useActionState } from 'react';
+import { useActionState, useState } from 'react';
 import { useCart } from './cart-context';
 
 function SubmitButton({
@@ -61,6 +61,7 @@ export function AddToCart({ product }: { product: Product }) {
   const { variants, availableForSale } = product;
   const { addCartItem } = useCart();
   const { state } = useProduct();
+  const [quantity, setQuantity] = useState(1);
   const [message, formAction] = useActionState(addItem, null);
 
   const variant = variants.find((variant: ProductVariant) =>
@@ -70,18 +71,49 @@ export function AddToCart({ product }: { product: Product }) {
   );
   const defaultVariantId = variants.length === 1 ? variants[0]?.id : undefined;
   const selectedVariantId = variant?.id || defaultVariantId;
-  const addItemAction = formAction.bind(null, selectedVariantId);
   const finalVariant = variants.find(
     (variant) => variant.id === selectedVariantId
-  )!;
+  );
+
+  const incrementQuantity = () => setQuantity((prev) => prev + 1);
+  const decrementQuantity = () =>
+    setQuantity((prev) => (prev > 1 ? prev - 1 : 1));
 
   return (
     <form
       action={async () => {
-        addCartItem(finalVariant, product);
-        addItemAction();
+        if (!selectedVariantId || !finalVariant) {
+          return;
+        }
+
+        addCartItem(finalVariant, product, quantity);
+        await formAction({ selectedVariantId, quantity });
       }}
     >
+      <div className="mb-4 flex items-center gap-3 text-sm font-medium text-black">
+        <span>Cantidad</span>
+        <div className="flex items-center rounded-full border border-neutral-200 bg-white text-black">
+          <button
+            type="button"
+            aria-label="Disminuir cantidad"
+            onClick={decrementQuantity}
+            className="flex h-10 w-10 items-center justify-center rounded-l-full transition hover:bg-neutral-100"
+          >
+            <MinusIcon className="h-4" />
+          </button>
+          <span className="w-10 text-center text-base font-semibold">
+            {quantity}
+          </span>
+          <button
+            type="button"
+            aria-label="Incrementar cantidad"
+            onClick={incrementQuantity}
+            className="flex h-10 w-10 items-center justify-center rounded-r-full transition hover:bg-neutral-100"
+          >
+            <PlusIcon className="h-4" />
+          </button>
+        </div>
+      </div>
       <SubmitButton
         availableForSale={availableForSale}
         selectedVariantId={selectedVariantId}

@@ -14,14 +14,16 @@ import { redirect } from 'next/navigation';
 
 export async function addItem(
   prevState: any,
-  selectedVariantId: string | undefined
+  payload: { selectedVariantId: string | undefined; quantity: number }
 ) {
-  if (!selectedVariantId) {
+  const { selectedVariantId, quantity } = payload;
+
+  if (!selectedVariantId || quantity < 1) {
     return 'Error adding item to cart';
   }
 
   try {
-    await addToCart([{ merchandiseId: selectedVariantId, quantity: 1 }]);
+    await addToCart([{ merchandiseId: selectedVariantId, quantity }]);
     revalidateTag(TAGS.cart);
   } catch (e) {
     return 'Error adding item to cart';
