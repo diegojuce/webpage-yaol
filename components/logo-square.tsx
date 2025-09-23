@@ -1,22 +1,23 @@
 import clsx from 'clsx';
-import LogoIcon from './icons/logo';
+
+const LOGO_SRC = '/logo.svg';
 
 export default function LogoSquare({ size }: { size?: 'sm' | undefined }) {
+  const storeName = process.env.SITE_NAME || 'Store';
+  const containerHeightClass = size === 'sm' ? 'h-6' : 'h-8';
+
   return (
     <div
       className={clsx(
-        'flex flex-none items-center justify-center border border-neutral-200 bg-white dark:border-neutral-700 dark:bg-black',
-        {
-          'h-[40px] w-[40px] rounded-xl': !size,
-          'h-[30px] w-[30px] rounded-lg': size === 'sm'
-        }
+        'flex flex-none items-center justify-center',
+        containerHeightClass
       )}
     >
-      <LogoIcon
-        className={clsx({
-          'h-[16px] w-[16px]': !size,
-          'h-[10px] w-[10px]': size === 'sm'
-        })}
+      <img
+        src={LOGO_SRC}
+        alt={`${storeName} logo`}
+        className="h-full w-auto object-contain"
+        loading="eager"
       />
     </div>
   );
