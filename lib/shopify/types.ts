@@ -135,6 +135,10 @@ export type ShopifyProduct = {
   updatedAt: string;
 };
 
+export type BackendImage = {
+  image: string;
+};
+
 export type ShopifyCartOperation = {
   data: {
     cart: ShopifyCart;
@@ -246,6 +250,13 @@ export type ShopifyPagesOperation = {
 
 export type ShopifyProductOperation = {
   data: { product: ShopifyProduct };
+  variables: {
+    handle: string;
+  };
+};
+
+export type BackendImageOperation = {
+  data: { product: BackendImage };
   variables: {
     handle: string;
   };

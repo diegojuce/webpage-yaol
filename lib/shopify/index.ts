@@ -27,6 +27,7 @@ import {
   getProductRecommendationsQuery,
 } from "./queries/product";
 import {
+  BackendImageOperation,
   Cart,
   Collection,
   Connection,
@@ -344,7 +345,7 @@ export async function getCollection(
     query: getCollectionQuery,
     variables: {
       handle,
-    },
+    } as unknown as ShopifyCollectionOperation["variables"],
   });
 
   return reshapeCollection(res.body.data.collection);
@@ -465,7 +466,31 @@ export async function getProduct(handle: string): Promise<Product | undefined> {
     },
   });
 
-  return reshapeProduct(res.body.data.product, false);
+  const res_2 = await backendFetch<BackendImageOperation>({
+    endpoint: "/get/image",
+    variables: {
+      handle,
+    },
+  });
+  const product = res.body.data.product;
+  const image = res_2.body?.data?.product?.image;
+  const newFeaturedImage: Image = {
+    url: image,
+    altText: product.title,
+    width: 800,
+    height: 800,
+  };
+  // reemplace featuredImage con image
+  if (image) {
+    product.featuredImage = newFeaturedImage;
+    product.images.edges = [
+      { node: newFeaturedImage },
+      ...product.images.edges,
+    ];
+  }
+  console.log("product", { product });
+
+  return reshapeProduct(product, false);
 }
 
 export async function getProductRecommendations(
