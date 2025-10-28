@@ -1,21 +1,22 @@
-'use client';
+"use client";
 
-import { useMemo } from 'react';
-import { useProduct } from 'components/product/product-context';
-import { Product, ProductVariant } from 'lib/shopify/types';
+import { PlusIcon } from "@heroicons/react/24/outline";
+import { useProduct } from "components/product/product-context";
+import { Product, ProductVariant } from "lib/shopify/types";
+import { useMemo, useState } from "react";
 
 const PAYMENT_PLANS = [
-  { label: '3 Meses', months: 3, rate: 0.0469 },
-  { label: '6 Meses', months: 6, rate: 0.0769 },
-  { label: '9 Meses', months: 9, rate: 0.1119 },
-  { label: '12 Meses', months: 12, rate: 0.1289 }
+  { label: "3 Meses", months: 3, rate: 0.0469 },
+  { label: "6 Meses", months: 6, rate: 0.0769 },
+  { label: "9 Meses", months: 9, rate: 0.1119 },
+  { label: "12 Meses", months: 12, rate: 0.1289 },
 ];
 
 const formatCurrency = (value: number, currencyCode: string) =>
   new Intl.NumberFormat(undefined, {
-    style: 'currency',
+    style: "currency",
     currency: currencyCode,
-    currencyDisplay: 'narrowSymbol'
+    currencyDisplay: "narrowSymbol",
   }).format(value);
 
 const findVariantFromState = (
@@ -38,13 +39,15 @@ export function PaymentOptions({ product }: { product: Product }) {
     [variants, state]
   );
 
+  const [isOpen, setIsOpen] = useState(true);
+
   if (hasMultipleVariants && !selectedVariant) {
     return (
       <section className="mt-6 rounded-2xl border border-neutral-200 bg-neutral-50 p-4 text-sm text-black">
         <h3 className="mb-3 text-base font-semibold">Opciones de pago</h3>
         <p className="text-neutral-600">
-          Selecciona una combinación disponible para ver los montos mensuales con el incremento
-          correspondiente.
+          Selecciona una combinación disponible para ver los montos mensuales
+          con el incremento correspondiente.
         </p>
       </section>
     );
@@ -56,13 +59,15 @@ export function PaymentOptions({ product }: { product: Product }) {
     return null;
   }
 
-  const unitPrice = parseFloat(variant.price.amount);
+  const unitPrice = parseFloat(priceRange.minVariantPrice.amount);
   if (Number.isNaN(unitPrice)) {
     return null;
   }
 
   const currencyCode =
-    variant.price.currencyCode ?? priceRange.maxVariantPrice.currencyCode ?? 'USD';
+    variant.price.currencyCode ??
+    priceRange.maxVariantPrice.currencyCode ??
+    "USD";
   const totalPrice = unitPrice * quantity;
 
   const plans = PAYMENT_PLANS.map((plan) => {
@@ -72,30 +77,44 @@ export function PaymentOptions({ product }: { product: Product }) {
     return {
       ...plan,
       totalWithInterest,
-      monthlyAmount
+      monthlyAmount,
     };
   });
 
   return (
     <section className="mt-6 rounded-2xl border border-neutral-200 bg-neutral-50 p-4 text-sm text-black">
-      <h3 className="mb-3 text-base font-semibold">Opciones de pago</h3>
-      <p className="mb-3 text-xs text-neutral-600">
-        Precio base seleccionado: {formatCurrency(totalPrice, currencyCode)} {currencyCode}
-      </p>
-      <ul className="space-y-2">
-        {plans.map(({ label, months, monthlyAmount }) => (
-          <li className="flex items-center justify-between" key={months}>
-            <span>{label}</span>
-            <span className="font-semibold">
-              {formatCurrency(monthlyAmount, currencyCode)} {currencyCode} / mes
-            </span>
-          </li>
-        ))}
-      </ul>
-      <p className="mt-2 text-xs text-neutral-500">
-        Los montos incluyen el incremento porcentual indicado y se dividen entre el número de
-        pagos.
-      </p>
+      <details
+        open={isOpen}
+        onToggle={(e) =>
+          setIsOpen((e.currentTarget as HTMLDetailsElement).open)
+        }
+      >
+        <summary className="flex cursor-pointer list-none items-center justify-between">
+          <h3 className="text-base font-semibold">Opciones de pago</h3>
+          <PlusIcon className="h-5" />
+        </summary>
+        <div className="mt-3">
+          <p className="mb-3 text-xs text-neutral-600">
+            Precio base seleccionado: {formatCurrency(totalPrice, currencyCode)}{" "}
+            {currencyCode}
+          </p>
+          <ul className="space-y-2">
+            {plans.map(({ label, months, monthlyAmount }) => (
+              <li className="flex items-center justify-between" key={months}>
+                <span>{label}</span>
+                <span className="font-semibold">
+                  {formatCurrency(monthlyAmount, currencyCode)} {currencyCode} /
+                  mes
+                </span>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-2 text-xs text-neutral-500">
+            Los montos incluyen el incremento porcentual indicado y se dividen
+            entre el número de pagos.
+          </p>
+        </div>
+      </details>
     </section>
   );
 }
