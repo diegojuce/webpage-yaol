@@ -214,10 +214,15 @@ export default function CartModal() {
                         currencyCode={cart.cost.totalAmount.currencyCode}
                       />
                     </div>
-                  </div>
+                  </div >
+                  <div className="py-4">
                   <form action={redirectToCheckout}>
                     <CheckoutButton />
                   </form>
+                  </div>
+                  <form action={redirectToCheckout}>
+                    <AgendarCita />
+                  </form> 
                 </div>
               )}
             </Dialog.Panel>
@@ -250,7 +255,22 @@ function CheckoutButton() {
       type="submit"
       disabled={pending}
     >
-      {pending ? <LoadingDots className="bg-white" /> : 'Proceed to Checkout'}
+      {pending ? <LoadingDots className="bg-white" /> : 'Pagar Ahora'}
     </button>
   );
+}
+
+  function AgendarCita() {
+    const { pending } = useFormStatus();
+  
+    return (
+      <button
+        className="block w-full rounded-full bg-yellow-500 p-3 text-center text-sm font-medium text-white opacity-90 hover:opacity-100"
+        type="submit"
+        disabled={pending}
+      >
+        {pending ? <LoadingDots className="bg-white" /> : 'Pagar en sucursal'}
+      </button>
+ );
+
 }
