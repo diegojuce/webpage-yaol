@@ -115,7 +115,6 @@ export async function shopifyFetch<T>({
     };
   }
 }
-
 export async function backendFetch<T>({
   headers,
   variables,
@@ -143,7 +142,7 @@ export async function backendFetch<T>({
 
     const body = await result.json();
     // body = { body: { data: { products: [Array] } } }
-    console.log(body);
+    // console.debug(body);
     // console.dir(body, { depth: null })
 
     if (body.errors) {
@@ -454,7 +453,9 @@ export async function getPages(): Promise<Page[]> {
   return removeEdgesAndNodes(res.body.data.pages);
 }
 
-export async function getProduct(handle: string): Promise<Product | undefined> {
+export async function _getProduct(
+  handle: string
+): Promise<Product | undefined> {
   "use cache";
   cacheTag(TAGS.products);
   cacheLife("days");
@@ -488,7 +489,27 @@ export async function getProduct(handle: string): Promise<Product | undefined> {
       ...product.images.edges,
     ];
   }
-  console.log("product", { product });
+  console.log({ product });
+
+  return reshapeProduct(product, false);
+}
+
+export async function getProduct(handle: string): Promise<Product | undefined> {
+  "use cache";
+  cacheTag(TAGS.products);
+  cacheLife("days");
+
+  // -------------------------------------------------------
+  // Bloque de interés
+  // -------------------------------------------------------
+  const res = await backendFetch<ShopifyProductOperation>({
+    endpoint: "/get/product",
+    variables: {
+      handle,
+    },
+  });
+  const product = res.body.data.product;
+  console.log({ product });
 
   return reshapeProduct(product, false);
 }
@@ -500,14 +521,25 @@ export async function getProductRecommendations(
   cacheTag(TAGS.products);
   cacheLife("days");
 
-  const res = await shopifyFetch<ShopifyProductRecommendationsOperation>({
-    query: getProductRecommendationsQuery,
-    variables: {
-      productId,
-    },
-  });
+  // If the productId is not a Shopify GID, skip recommendations gracefully.
+  // Backend returns IDs like "gid://yssm/Product/..." which are invalid for Shopify API.
+  if (!productId?.startsWith("gid://shopify/")) {
+    return [];
+  }
 
-  return reshapeProducts(res.body.data.productRecommendations);
+  try {
+    const res = await shopifyFetch<ShopifyProductRecommendationsOperation>({
+      query: getProductRecommendationsQuery,
+      variables: {
+        productId,
+      },
+    });
+
+    return reshapeProducts(res.body.data.productRecommendations);
+  } catch (e) {
+    // Do not fail the product page if recommendations are unavailable.
+    return [];
+  }
 }
 
 export async function getProducts({

@@ -1,7 +1,5 @@
 import AdCarousel from "components/home/ad-carousel";
-import Search, {
-  SearchSkeleton,
-} from "components/layout/navbar/search";
+import Search, { SearchSkeleton } from "components/layout/navbar/search";
 import Price from "components/price";
 import { getCollectionProducts } from "lib/shopify";
 import type { Product } from "lib/shopify/types";
@@ -18,15 +16,19 @@ export async function ThreeItemGrid() {
     collection: "michelin",
   });
 
-  const productTiles = homepageItems
-    .filter(Boolean)
-    .slice(0, 2) as Product[];
+  const productTiles = homepageItems.filter(Boolean).slice(0, 2) as Product[];
 
   return (
     <section className="mx-auto max-w-(--breakpoint-2xl) px-4 pb-10 pt-4">
       <div className="relative overflow-hidden rounded-3xl border border-neutral-800 bg-neutral-950/90 px-6 py-10 shadow-[0_35px_120px_rgba(15,15,15,0.55)] sm:px-10 md:px-14 md:py-16">
-        <div className="absolute -top-40 left-1/3 h-72 w-72 rounded-full bg-yellow-500/20 blur-3xl" aria-hidden="true" />
-        <div className="absolute -bottom-48 -left-32 h-96 w-96 rounded-full bg-yellow-500/10 blur-3xl" aria-hidden="true" />
+        <div
+          className="absolute -top-40 left-1/3 h-72 w-72 rounded-full bg-yellow-500/20 blur-3xl"
+          aria-hidden="true"
+        />
+        <div
+          className="absolute -bottom-48 -left-32 h-96 w-96 rounded-full bg-yellow-500/10 blur-3xl"
+          aria-hidden="true"
+        />
 
         <div className="relative grid gap-10 md:grid-cols-12 md:items-center">
           <div className="flex flex-col gap-6 md:col-span-7">
@@ -68,7 +70,7 @@ export async function ThreeItemGrid() {
                     key={product.handle}
                     href={`/product/${product.handle}`}
                     prefetch={true}
-                    className="group inline-flex min-w-[240px] items-center gap-4 rounded-2xl border border-neutral-800/80 bg-neutral-900/70 px-4 py-3 transition-all duration-200 ease-out hover:-translate-y-1 hover:border-yellow-500/60 hover:bg-neutral-900/90"
+                    className="mt-2 group inline-flex min-w-[240px] items-center gap-4 rounded-2xl border border-neutral-800/80 bg-neutral-900/70 px-4 py-3 transition-all duration-200 ease-out hover:-translate-y-1 hover:border-yellow-500/60 hover:bg-neutral-900/90"
                   >
                     <div className="relative h-16 w-16 overflow-hidden rounded-xl bg-neutral-950">
                       {product.featuredImage?.url ? (
@@ -82,7 +84,7 @@ export async function ThreeItemGrid() {
                         />
                       ) : null}
                     </div>
-                    <div className="flex min-w-0 flex-1 flex-col">
+                    <div className="flex min-w-0 flex-1 flex-col ">
                       <span className="text-xs uppercase tracking-[0.25em] text-neutral-500">
                         Destacado
                       </span>
