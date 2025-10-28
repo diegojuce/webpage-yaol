@@ -1,23 +1,23 @@
-'use client';
+"use client";
 
-import { MinusIcon, PlusIcon } from '@heroicons/react/24/outline';
-import clsx from 'clsx';
-import { addItem } from 'components/cart/actions';
-import { useProduct } from 'components/product/product-context';
-import { Product, ProductVariant } from 'lib/shopify/types';
-import { useActionState, useEffect } from 'react';
-import { useCart } from './cart-context';
+import { MinusIcon, PlusIcon } from "@heroicons/react/24/outline";
+import clsx from "clsx";
+import { addItem } from "components/cart/actions";
+import { useProduct } from "components/product/product-context";
+import { Product, ProductVariant } from "lib/shopify/types";
+import { useActionState, useEffect } from "react";
+import { useCart } from "./cart-context";
 
 function SubmitButton({
   availableForSale,
-  selectedVariantId
+  selectedVariantId,
 }: {
   availableForSale: boolean;
   selectedVariantId: string | undefined;
 }) {
   const buttonClasses =
-    'relative flex w-full items-center justify-center rounded-full bg-yellow-500 p-4 tracking-wide text-white';
-  const disabledClasses = 'cursor-not-allowed opacity-60 hover:opacity-60';
+    "relative flex w-full items-center justify-center rounded-full bg-yellow-500 p-4 tracking-wide text-white";
+  const disabledClasses = "cursor-not-allowed opacity-60 hover:opacity-60";
 
   if (!availableForSale) {
     return (
@@ -46,7 +46,7 @@ function SubmitButton({
     <button
       aria-label="Add to cart"
       className={clsx(buttonClasses, {
-        'hover:opacity-90': true
+        "hover:opacity-90": true,
       })}
     >
       <div className="absolute left-0 ml-4">
@@ -74,12 +74,12 @@ export function AddToCart({ product }: { product: Product }) {
     (variant) => variant.id === selectedVariantId
   );
   const availableQuantity =
-    typeof finalVariant?.quantityAvailable === 'number'
+    typeof finalVariant?.quantityAvailable === "number"
       ? finalVariant.quantityAvailable
       : undefined;
 
   useEffect(() => {
-    if (typeof availableQuantity !== 'number') {
+    if (typeof availableQuantity !== "number") {
       return;
     }
 
@@ -102,7 +102,7 @@ export function AddToCart({ product }: { product: Product }) {
 
   const handleIncrement = () =>
     setQuantity((prev) => {
-      if (typeof availableQuantity === 'number') {
+      if (typeof availableQuantity === "number") {
         if (availableQuantity <= 0) {
           return 0;
         }
@@ -114,7 +114,7 @@ export function AddToCart({ product }: { product: Product }) {
   const handleDecrement = () =>
     setQuantity((prev) => {
       if (prev <= 1) {
-        if (typeof availableQuantity === 'number' && availableQuantity <= 0) {
+        if (typeof availableQuantity === "number" && availableQuantity <= 0) {
           return 0;
         }
         return 1;
@@ -124,7 +124,7 @@ export function AddToCart({ product }: { product: Product }) {
     });
 
   const availabilityLabel =
-    typeof availableQuantity === 'number' ? availableQuantity : '--';
+    typeof availableQuantity === "number" ? availableQuantity : "--";
 
   return (
     <form
