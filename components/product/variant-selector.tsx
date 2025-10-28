@@ -36,7 +36,7 @@ export function VariantSelector({
   }));
 
   return options.map((option) => (
-    <form key={option.id}>
+    <form key={option.id ?? `${option.name}-${option.values.join('|')}` }>
       <dl className="mb-8">
         <dt className="mb-4 text-sm uppercase tracking-wide">{option.name}</dt>
         <dd className="flex flex-wrap gap-3">
