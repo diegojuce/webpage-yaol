@@ -33,6 +33,15 @@ export default async function RootLayout({
   return (
     <html lang="en" className={GeistSans.variable}>
       <body className="bg-black text-white selection:bg-teal-300 dark:bg-black dark:text-white dark:selection:bg-pink-500 dark:selection:text-white">
+        {/* MANCHAS AMARILLAS */}
+        <div
+          className="absolute -top-40 left-2/3 h-72 w-72 rounded-full bg-yellow-500/20 blur-3xl"
+          aria-hidden="true"
+        />
+        <div
+          className="absolute -bottom-48 -left-32 h-96 w-96 rounded-full bg-yellow-500/10 blur-3xl"
+          aria-hidden="true"
+        />
         <CartProvider cartPromise={cart}>
           <Navbar />
           <main>

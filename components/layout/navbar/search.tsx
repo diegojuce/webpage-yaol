@@ -1,10 +1,15 @@
 "use client";
 
 import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
+import clsx from "clsx";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent } from "react";
 
-export default function Search() {
+type SearchProps = {
+  className?: string;
+};
+
+export default function Search({ className }: SearchProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -24,7 +29,13 @@ export default function Search() {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="w-max-[550px] relative w-full lg:w-80 xl:w-full">
+    <form
+      onSubmit={handleSubmit}
+      className={clsx(
+        "w-max-[550px] relative w-full lg:w-80 xl:w-full",
+        className,
+      )}
+    >
       <input
         key={searchParams?.get("q")}
         type="text"
@@ -46,9 +57,13 @@ export default function Search() {
   );
 }
 
-export function SearchSkeleton() {
+type SearchSkeletonProps = {
+  className?: string;
+};
+
+export function SearchSkeleton({ className }: SearchSkeletonProps) {
   return (
-    <form className="w-max-[550px] relative w-full lg:w-80 xl:w-full">
+    <form className={clsx("w-max-[550px] relative w-full lg:w-80 xl:w-full", className)}>
       <input
         placeholder="Search for products..."
         className="w-full rounded-lg border bg-white px-4 py-2 text-sm text-black placeholder:text-neutral-500 focus:!border-white dark:focus:!border-white focus:outline-none focus:ring-0 transition-colors duration-150 dark:border-neutral-800 dark:bg-transparent dark:text-white dark:placeholder:text-neutral-400"

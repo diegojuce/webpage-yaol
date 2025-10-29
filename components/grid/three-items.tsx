@@ -1,34 +1,42 @@
-import AdCarousel from "components/home/ad-carousel";
-import Search, { SearchSkeleton } from "components/layout/navbar/search";
+import PromoBannerCarousel, { type PromoBanner } from "components/grid/promo-banner-carousel";
+import TireSearchCTA from "components/grid/tire-search-cta";
 import Price from "components/price";
 import { getCollectionProducts } from "lib/shopify";
 import type { Product } from "lib/shopify/types";
 import Image from "next/image";
 import Link from "next/link";
-import { Suspense } from "react";
 
 const HERO_CTA_CLASSES =
   "relative flex-1 rounded-full bg-yellow-500 px-6 py-3 text-center text-base font-semibold uppercase tracking-[0.25em] text-black transition-transform duration-150 ease-out shadow-[0_0_25px_rgba(250,204,21,0.45)] hover:-translate-y-0.5 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-yellow-300 focus-visible:ring-offset-2 focus-visible:ring-offset-black dark:focus-visible:ring-yellow-400";
+
+const PROMO_BANNERS: PromoBanner[] = [
+  {
+    highlight: "20% DE DESCUENTO",
+    message: "EN MANO DE OBRA",
+  },
+  {
+    highlight: "PAGOS FLEXIBLES",
+    message: "HASTA 12 MSI CON TARJETA PARTICIPANTE",
+  },
+  {
+    highlight: "INSPECCIÓN GRATIS",
+    message: "EN LA COMPRA DE 4 LLANTAS NUEVAS",
+  },
+];
 
 export async function ThreeItemGrid() {
   // Collections that start with `hidden-*` are hidden from the search page.
   const homepageItems = await getCollectionProducts({
     collection: "michelin",
+    sortKey: "price",
   });
 
-  const productTiles = homepageItems.filter(Boolean).slice(0, 2) as Product[];
+  const productTiles = homepageItems.filter(Boolean).slice(0, 5) as Product[];
 
   return (
-    <section className="mx-auto max-w-(--breakpoint-2xl) px-4 pb-10 pt-4">
-      <div className="relative overflow-hidden rounded-3xl border border-neutral-800 bg-neutral-950/90 px-6 py-10 shadow-[0_35px_120px_rgba(15,15,15,0.55)] sm:px-10 md:px-14 md:py-16">
-        <div
-          className="absolute -top-40 left-1/3 h-72 w-72 rounded-full bg-yellow-500/20 blur-3xl"
-          aria-hidden="true"
-        />
-        <div
-          className="absolute -bottom-48 -left-32 h-96 w-96 rounded-full bg-yellow-500/10 blur-3xl"
-          aria-hidden="true"
-        />
+    <section className="mx-auto max-w-(--breakpoint-2xl) pb-10">
+      <div className="relative overflow-hidden rounded-3xl  border-neutral-800 px-6 py-10 shadow-[0_35px_120px_rgba(15,15,15,0.55)] sm:px-10 md:px-14 md:py-16">
+        
 
         <div className="relative grid gap-10 md:grid-cols-12 md:items-center">
           <div className="flex flex-col gap-6 md:col-span-7">
@@ -44,16 +52,8 @@ export async function ThreeItemGrid() {
               </p>
             </div>
 
-            <div className="max-w-xl">
-              <Suspense fallback={<SearchSkeleton />}>
-                <Search />
-              </Suspense>
-            </div>
-
             <div className="flex flex-col gap-4 sm:flex-row">
-              <Link href="/search" prefetch={true} className={HERO_CTA_CLASSES}>
-                BUSCAR LLANTAS
-              </Link>
+              <TireSearchCTA className={HERO_CTA_CLASSES} />
               <Link
                 href="/citas"
                 prefetch={true}
@@ -112,28 +112,14 @@ export async function ThreeItemGrid() {
               aria-hidden="true"
             />
             <div className="relative overflow-hidden rounded-3xl border border-neutral-800 bg-neutral-900/60 p-4 shadow-[0_20px_65px_rgba(10,10,10,0.55)]">
-              <AdCarousel />
+            
             </div>
           </div>
         </div>
       </div>
 
       <div className="mt-6 overflow-hidden rounded-2xl border border-neutral-800 bg-neutral-900/90 shadow-[0_25px_80px_rgba(10,10,10,0.45)]">
-        <div className="flex min-w-full gap-6 px-6 py-4 md:px-10">
-          {[0, 1, 2].map((item) => (
-            <div
-              key={`promo-banner-${item}`}
-              className="flex w-full flex-col items-center justify-center gap-2 text-center uppercase tracking-[0.35em] text-neutral-100 md:flex-row md:text-left md:tracking-[0.45em]"
-            >
-              <span className="rounded-full bg-yellow-500 px-4 py-1 text-sm font-extrabold text-black">
-                20% DE DESCUENTO
-              </span>
-              <span className="text-sm font-semibold text-neutral-200">
-                EN MANO DE OBRA
-              </span>
-            </div>
-          ))}
-        </div>
+        <PromoBannerCarousel banners={PROMO_BANNERS} />
       </div>
     </section>
   );
