@@ -11,7 +11,6 @@ import {
   createAppointment,
   fetchAvailableDates,
   fetchAvailableTimes,
-  fetchServices,
   type Branch,
   type CreateAppointmentPayload,
   type Service
@@ -72,7 +71,6 @@ function AppointmentModal({
   const [branchesLoading, setBranchesLoading] = useState(false);
   const [branchesError, setBranchesError] = useState<string | null>(null);
 
-  const [services, setServices] = useState<Service[]>([]);
   const [servicesLoading, setServicesLoading] = useState(false);
   const [servicesError, setServicesError] = useState<string | null>(null);
 
@@ -106,15 +104,84 @@ function AppointmentModal({
     [currentMonth],
   );
 
-  const branches = [
-    {id: 1, name: 'CON', address: "YANTI" },
-    {id: 2, name: 'BJZ', address: "YANTI" },
-    {id: 3, name: 'REY', address: "YANTI" },
-    {id: 4, name: 'TEC', address: "YANTI" },
-    {id: 5, name: 'MZO', address: "YANTI" },
-    {id: 6, name: 'NHS', address: "YANTI" },
-    {id: 7, name: 'BLV', address: "YANTI" },
+  const branches: Branch[] = [
+    {id: "1", name: 'NHS', address: "Av Niños Héroes Esquina, Ignacio Torres #1050" },
+    {id: "2", name: 'TEC', address: "Av Tecnológico #7, La Frontera" },
+    {id: "3", name: 'BJ', address: "Av. Benito Juárez #365, La Gloria" },
+    {id: "4", name: 'CON', address: "Av. Constitución #1837, Parque Royal" },
+    {id: "5", name: 'REY', address: "Av. Enrique Corona Morfin #422" },
+    {id: "6", name: 'MAN', address: "Boulevard Miguel de la Madrid #11386" },
   ]
+  
+  const services: Service[] = [
+    {id: "1", name: "FRENOS", durationMinutes: 120},
+    {id: "2", name: "FRENO CON SENSOR ELECTRICO", durationMinutes: 180},
+    {id: "3", name: "LIMPIEZA Y AJUSTE DE FRENOS", durationMinutes: 60},
+    {id: "4", name: "CAMBIO DE SENSOR ABS Y /O SENSOR DE BALATA", durationMinutes: 60},
+    {id: "5", name: "CAMBIO DE PISTON Y REPUESTO", durationMinutes: 60},
+    {id: "6", name: "M.O DE CAMBIO DE BOMBA DE FRENOS", durationMinutes: 120},
+    {id: "7", name: "M.O DE CAMBIO DE BOMBA DE FRENOS ESPECIAL", durationMinutes: 180},
+    {id: "8", name: "RECTIFICADO", durationMinutes: 0},
+    {id: "9", name: "M.O CAMBIO DE CHICOTE DE FRENO EXTERNO", durationMinutes: 120},
+    {id: "10", name: "SERVICIO DE PURGADO(INCLUYE LIQUIDO DE FRENOS)", durationMinutes: 60},
+    {id: "11", name: "SUSPENSION", durationMinutes: 0},
+    {id: "12", name: "BUJE CON SOPORTE", durationMinutes: 0},
+    {id: "13", name: "BUJE EJE TRASERO CON PURGADO", durationMinutes: 0},
+    {id: "14", name: "HORQUILLA", durationMinutes: 0},
+    {id: "15", name: "HORQUILLA CON BARRA", durationMinutes: 0},
+    {id: "16", name: "HORQUILLA CON PUENTE", durationMinutes: 0},
+    {id: "17", name: "CREMALLERA ", durationMinutes: 0},
+    {id: "18", name: "JUNTA HOMOCINETICA O CUBRE POLVO X LADO", durationMinutes: 180},
+    {id: "19", name: "JUNTA HOMOCINETICA O CUBRE POLVO X LADO 4X4", durationMinutes: 240},
+    {id: "20", name: "BALERO CARDAN O CRUCETA", durationMinutes: 120},
+    {id: "21", name: "BUJES DE MUELLE POR LADO", durationMinutes: 90},
+    {id: "22", name: "HULES DE BARRA PAR", durationMinutes: 60},
+    {id: "23", name: "HULES DE BARRA PAR CON PUENTE", durationMinutes: 120},
+    {id: "24", name: "CAMBIO AMORTIGUADORES MACHPERSHON", durationMinutes: 120},
+    {id: "25", name: "CAMBIO AMORTIGUADORES MACHPERSHON DE BASTAGO", durationMinutes: 120},
+    {id: "26", name: "CAMBIO AMORTIGUADORES NORMAL", durationMinutes: 60},
+    {id: "27", name: "DESARME DELANTERO O TRASERO", durationMinutes: 0},
+    {id: "28", name: "ALINEACION ESCANTILLON", durationMinutes: 30},
+    {id: "29", name: "ALINEACION ESCANTILLON CON CAIDA", durationMinutes: 60},
+    {id: "30", name: "ALINEACION 3D", durationMinutes: 30},
+    {id: "31", name: "ALINEACION 3D 2 EJES", durationMinutes: 60},
+    {id: "32", name: "ALINEACION 3D  CON CAIDA DE AMORTIGUADOR", durationMinutes: 30},
+    {id: "33", name: "UNIDADES DE MANO DE OBRA", durationMinutes: 0},
+    {id: "34", name: "AFINACION MAYOR (CARBUCLEAN,BOYA, AFLOJATODO) 4CILINDROS", durationMinutes: 120},
+    {id: "35", name: "AFINACION MAYOR (CARBUCLEAN,BOYA, AFLOJATODO) 6 U 8 CILINDROS", durationMinutes: 240},
+    {id: "36", name: "AFINACION MENOR (CAMBIO DE FILTROS Y ACEITE)", durationMinutes: 60},
+    {id: "37", name: "CAMBIO DE ACEITE MOTOR", durationMinutes: 60},
+    {id: "38", name: "CAMBIO DE ACIETE MOTOR CON TOLVA O SKIDPLATE", durationMinutes: 90},
+    {id: "39", name: "CAMBIO DE ACEITE TRANSMISION ESTANDAR", durationMinutes: 90},
+    {id: "40", name: "CAMBIO DE ACEITE DIFERENCIAL", durationMinutes: 90},
+    {id: "41", name: "MANO DE OBRA ANTICONGELANTE", durationMinutes: 0},
+    {id: "42", name: "SOPORTES MOTOR", durationMinutes: 0},
+    {id: "43", name: "BALERO DOBLE, MAZA BALERO", durationMinutes: 120},
+    {id: "44", name: "CAMBIO EMPAQUE PUNTERIAS", durationMinutes: 0},
+    {id: "45", name: "CAMBIO DE BOMBA DE AGUA", durationMinutes: 0},
+    {id: "46", name: "CAMBIIO BANDAS DE ACCESORIOS", durationMinutes: 90},
+    {id: "47", name: "CAMBIO DE POLEAS O TENSOR", durationMinutes: 90},
+    {id: "48", name: "TRABAJOS ESPECIALES ES POR HORA", durationMinutes: 0},
+    {id: "49", name: "MONTAJE, BALANCEO, VALVULA Y NITROGENO (13-18) PASAJERO", durationMinutes: 60},
+    {id: "50", name: "MONTAJE, BALANCEO, VALVULA Y NITROGENO (19-22) PASAJERO", durationMinutes: 90},
+    {id: "51", name: "MONTAJE, BALANCEO, VALVULA Y NITROGENO PERFIL BAJO", durationMinutes: 0},
+    {id: "52", name: "MONTAJE, BALANCEO, VALVULA Y NITROGENO AT ", durationMinutes: 120},
+    {id: "53", name: "MONTAJE, BALANCEO, VALVULA Y NITROGENO MUD", durationMinutes: 120},
+    {id: "54", name: "BALANCEO RIN ACERO ", durationMinutes: 0},
+    {id: "55", name: "BALANCEO RIN OFF ROAD", durationMinutes: 0},
+    {id: "56", name: "BALANCEO RIN DEPORTIVO", durationMinutes: 0},
+    {id: "57", name: "ROTACION", durationMinutes: 0},
+    {id: "58", name: "REVISION DE VEHICULO", durationMinutes: 0},
+    {id: "59", name: "NITROGENO X LLANTA", durationMinutes: 0},
+    {id: "60", name: "PARCHE NORMAL", durationMinutes: 0},
+    {id: "61", name: "CAMBIO DE BIRLO POR RUEDA SIN DESARMAR", durationMinutes: 0},
+    {id: "62", name: "CAMBIO DE BIRLO POR RUEDA DESARMANDO", durationMinutes: 0},
+    {id: "63", name: "PAQUETE 1 (REVISION,ROTACION Y NITROGENO)", durationMinutes: 0},
+    {id: "64", name: "PAQUETE 2 (REVISION,ROTACION, NITROGENO Y BALANCEO)", durationMinutes: 0},
+    {id: "65", name: "PAQUETE 3 (REVISION,ROTACION, NITROGENO Y BALANCEO, ALINEACION)", durationMinutes: 0},
+    {id: "66", name: "BALATA DELATNERA", durationMinutes: 180},
+    {id: "67", name: "BALATA TRASERA", durationMinutes: 180}
+]
 
   // Reset form state when the modal closes.
   useEffect(() => {
@@ -153,21 +220,21 @@ function AppointmentModal({
   // }, [isOpen, branches.length, branchesLoading]);
 
   // Load services once when needed.
-  useEffect(() => {
-    if (!isOpen || servicesLoading || services.length) {
-      return;
-    }
-    setServicesLoading(true);
-    setServicesError(null);
-    fetchServices()
-      .then((raw) => setServices(normalizeServices(raw)))
-      .catch((error: unknown) =>
-        setServicesError(
-          error instanceof Error ? error.message : "Error al obtener servicios",
-        ),
-      )
-      .finally(() => setServicesLoading(false));
-  }, [isOpen, services.length, servicesLoading]);
+  // useEffect(() => {
+  //   if (!isOpen || servicesLoading || services.length) {
+  //     return;
+  //   }
+  //   setServicesLoading(true);
+  //   setServicesError(null);
+  //   fetchServices()
+  //     .then((raw) => setServices(normalizeServices(raw)))
+  //     .catch((error: unknown) =>
+  //       setServicesError(
+  //         error instanceof Error ? error.message : "Error al obtener servicios",
+  //       ),
+  //     )
+  //     .finally(() => setServicesLoading(false));
+  // }, [isOpen, services.length, servicesLoading]);
 
   // Fetch availability dates when branch changes.
   useEffect(() => {

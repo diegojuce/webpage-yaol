@@ -13,6 +13,16 @@ export const metadata = {
   },
 };
 
+const SERVICES = [
+  { title: "AFINACIÓN", subtitle: "mayor y menor" },
+  { title: "VENTA Y MONTAJE", subtitle: "de llantas" },
+  { title: "ALINEACIÓN 3D", subtitle: "y escantillón" },
+  { title: "SUSPENSIÓN", subtitle: "y amortiguadores" },
+  { title: "RECARGA", subtitle: "de nitrógeno" },
+  { title: "FRENOS", subtitle: "y balatas" },
+  { title: "BALANCEO", subtitle: "pro" },
+];
+
 export default async function HomePage() {
   // Productos más recientes publicados en Custom Storefronts
   const products = await getProducts({
@@ -26,6 +36,25 @@ export default async function HomePage() {
     <>
       <ThreeItemGrid />
       <Carousel />
+      <section
+        id="servicios"
+        aria-labelledby="services-heading"
+        className="servicios"
+      >
+        <header className="servicios__head">
+          <p>CONOCE NUESTROS</p>
+          <h2 id="services-heading">SERVICIOS</h2>
+        </header>
+        <div className="servicios__grid">
+          {SERVICES.map((service) => (
+            <article key={service.title} tabIndex={0} className="svc-card">
+              <div className="svc-card__icon">{/* ICONO */}</div>
+              <h3 className="svc-card__title">{service.title}</h3>
+              <p className="svc-card__subtitle">{service.subtitle}</p>
+            </article>
+          ))}
+        </div>
+      </section>
       <div className="mt-8">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {recentProducts.map((product) => (
