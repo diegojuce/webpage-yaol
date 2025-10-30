@@ -1,7 +1,6 @@
 "use client";
 
-export const API_BASE_URL =
-  process.env.SHOPIFY_BACKEND_URL || "http://localhost:3050";
+export const API_BASE_URL = "https://stg-back.yantissimo.com";
 
 export type Branch = {
   id: string;
