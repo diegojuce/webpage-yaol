@@ -1,6 +1,7 @@
 "use client";
 
-export const API_BASE_URL = ""; // TODO: completar
+export const API_BASE_URL =
+  process.env.SHOPIFY_BACKEND_URL || "http://localhost:3050";
 
 export type Branch = {
   id: string;
@@ -11,7 +12,7 @@ export type Branch = {
 export type Service = {
   id: string;
   name: string;
-  durationMinutes: number;
+  duration: number;
 };
 
 function buildUrl(path: string) {
@@ -31,9 +32,9 @@ export async function fetchBranches() {
 export async function fetchAvailableDates(branchId: string) {
   const res = await fetch(
     buildUrl(
-      `/api/availability/dates?branchId=${encodeURIComponent(branchId)}`,
+      `/bypass/availability/dates?branchId=${encodeURIComponent(branchId)}`
     ),
-    { cache: "no-store" },
+    { cache: "no-store" }
   );
   if (!res.ok) {
     throw new Error("Error al obtener fechas disponibles");
@@ -42,23 +43,25 @@ export async function fetchAvailableDates(branchId: string) {
 }
 
 export async function fetchAvailableTimes(
-  branchId: string,
-  date: string,
-  serviceId?: string,
+  mins: string,
+  suc: string,
+  date: string
 ) {
   const searchParams = new URLSearchParams({
-    branchId,
+    mins,
+    suc,
     date,
   });
 
-  if (serviceId) {
-    searchParams.set("serviceId", serviceId);
-  }
-
   const res = await fetch(
-    buildUrl(`/api/availability/times?${searchParams.toString()}`),
-    { cache: "no-store" },
+    buildUrl(
+      `/bypass/calendar/get/availability/day?${searchParams.toString()}`
+    ),
+    { cache: "no-store" }
   );
+  // console.log("Fetching times with params:", { mins, suc, date });
+  // const data = await res.clone().json();
+  // console.log("Response data:", data);
   if (!res.ok) {
     throw new Error("Error al obtener horarios disponibles");
   }

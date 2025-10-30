@@ -9,11 +9,10 @@ import {
 import clsx from "clsx";
 import {
   createAppointment,
-  fetchAvailableDates,
   fetchAvailableTimes,
   type Branch,
   type CreateAppointmentPayload,
-  type Service
+  type Service,
 } from "lib/api/appointments";
 import { Fragment, useEffect, useMemo, useState } from "react";
 
@@ -51,7 +50,7 @@ export function AgendarCita({
         className={clsx(
           "uppercase tracking-[0.25em]",
           "transition-transform duration-150 ease-out",
-          triggerClassName,
+          triggerClassName
         )}
       >
         {triggerLabel}
@@ -91,97 +90,197 @@ function AppointmentModal({
   const [submitMessage, setSubmitMessage] = useState<string | null>(null);
 
   const [currentMonth, setCurrentMonth] = useState(() =>
-    startOfMonth(new Date()),
+    startOfMonth(new Date())
   );
 
   const todayISO = useMemo(() => formatISODate(new Date()), []);
   const availableDateSet = useMemo(
     () => new Set(availableDates),
-    [availableDates],
+    [availableDates]
   );
   const calendarDays = useMemo(
     () => buildCalendarDays(currentMonth),
-    [currentMonth],
+    [currentMonth]
   );
 
   const branches: Branch[] = [
-    {id: "1", name: 'NHS', address: "Av Niños Héroes Esquina, Ignacio Torres #1050" },
-    {id: "2", name: 'TEC', address: "Av Tecnológico #7, La Frontera" },
-    {id: "3", name: 'BJ', address: "Av. Benito Juárez #365, La Gloria" },
-    {id: "4", name: 'CON', address: "Av. Constitución #1837, Parque Royal" },
-    {id: "5", name: 'REY', address: "Av. Enrique Corona Morfin #422" },
-    {id: "6", name: 'MAN', address: "Boulevard Miguel de la Madrid #11386" },
-  ]
-  
+    {
+      id: "1",
+      name: "NHS",
+      address: "Av Niños Héroes Esquina, Ignacio Torres #1050",
+    },
+    { id: "2", name: "TEC", address: "Av Tecnológico #7, La Frontera" },
+    { id: "3", name: "BJ", address: "Av. Benito Juárez #365, La Gloria" },
+    { id: "4", name: "CON", address: "Av. Constitución #1837, Parque Royal" },
+    { id: "5", name: "REY", address: "Av. Enrique Corona Morfin #422" },
+    { id: "6", name: "MAN", address: "Boulevard Miguel de la Madrid #11386" },
+  ];
+
   const services: Service[] = [
-    {id: "1", name: "FRENOS", durationMinutes: 120},
-    {id: "2", name: "FRENO CON SENSOR ELECTRICO", durationMinutes: 180},
-    {id: "3", name: "LIMPIEZA Y AJUSTE DE FRENOS", durationMinutes: 60},
-    {id: "4", name: "CAMBIO DE SENSOR ABS Y /O SENSOR DE BALATA", durationMinutes: 60},
-    {id: "5", name: "CAMBIO DE PISTON Y REPUESTO", durationMinutes: 60},
-    {id: "6", name: "M.O DE CAMBIO DE BOMBA DE FRENOS", durationMinutes: 120},
-    {id: "7", name: "M.O DE CAMBIO DE BOMBA DE FRENOS ESPECIAL", durationMinutes: 180},
-    {id: "8", name: "RECTIFICADO", durationMinutes: 0},
-    {id: "9", name: "M.O CAMBIO DE CHICOTE DE FRENO EXTERNO", durationMinutes: 120},
-    {id: "10", name: "SERVICIO DE PURGADO(INCLUYE LIQUIDO DE FRENOS)", durationMinutes: 60},
-    {id: "11", name: "SUSPENSION", durationMinutes: 0},
-    {id: "12", name: "BUJE CON SOPORTE", durationMinutes: 0},
-    {id: "13", name: "BUJE EJE TRASERO CON PURGADO", durationMinutes: 0},
-    {id: "14", name: "HORQUILLA", durationMinutes: 0},
-    {id: "15", name: "HORQUILLA CON BARRA", durationMinutes: 0},
-    {id: "16", name: "HORQUILLA CON PUENTE", durationMinutes: 0},
-    {id: "17", name: "CREMALLERA ", durationMinutes: 0},
-    {id: "18", name: "JUNTA HOMOCINETICA O CUBRE POLVO X LADO", durationMinutes: 180},
-    {id: "19", name: "JUNTA HOMOCINETICA O CUBRE POLVO X LADO 4X4", durationMinutes: 240},
-    {id: "20", name: "BALERO CARDAN O CRUCETA", durationMinutes: 120},
-    {id: "21", name: "BUJES DE MUELLE POR LADO", durationMinutes: 90},
-    {id: "22", name: "HULES DE BARRA PAR", durationMinutes: 60},
-    {id: "23", name: "HULES DE BARRA PAR CON PUENTE", durationMinutes: 120},
-    {id: "24", name: "CAMBIO AMORTIGUADORES MACHPERSHON", durationMinutes: 120},
-    {id: "25", name: "CAMBIO AMORTIGUADORES MACHPERSHON DE BASTAGO", durationMinutes: 120},
-    {id: "26", name: "CAMBIO AMORTIGUADORES NORMAL", durationMinutes: 60},
-    {id: "27", name: "DESARME DELANTERO O TRASERO", durationMinutes: 0},
-    {id: "28", name: "ALINEACION ESCANTILLON", durationMinutes: 30},
-    {id: "29", name: "ALINEACION ESCANTILLON CON CAIDA", durationMinutes: 60},
-    {id: "30", name: "ALINEACION 3D", durationMinutes: 30},
-    {id: "31", name: "ALINEACION 3D 2 EJES", durationMinutes: 60},
-    {id: "32", name: "ALINEACION 3D  CON CAIDA DE AMORTIGUADOR", durationMinutes: 30},
-    {id: "33", name: "UNIDADES DE MANO DE OBRA", durationMinutes: 0},
-    {id: "34", name: "AFINACION MAYOR (CARBUCLEAN,BOYA, AFLOJATODO) 4CILINDROS", durationMinutes: 120},
-    {id: "35", name: "AFINACION MAYOR (CARBUCLEAN,BOYA, AFLOJATODO) 6 U 8 CILINDROS", durationMinutes: 240},
-    {id: "36", name: "AFINACION MENOR (CAMBIO DE FILTROS Y ACEITE)", durationMinutes: 60},
-    {id: "37", name: "CAMBIO DE ACEITE MOTOR", durationMinutes: 60},
-    {id: "38", name: "CAMBIO DE ACIETE MOTOR CON TOLVA O SKIDPLATE", durationMinutes: 90},
-    {id: "39", name: "CAMBIO DE ACEITE TRANSMISION ESTANDAR", durationMinutes: 90},
-    {id: "40", name: "CAMBIO DE ACEITE DIFERENCIAL", durationMinutes: 90},
-    {id: "41", name: "MANO DE OBRA ANTICONGELANTE", durationMinutes: 0},
-    {id: "42", name: "SOPORTES MOTOR", durationMinutes: 0},
-    {id: "43", name: "BALERO DOBLE, MAZA BALERO", durationMinutes: 120},
-    {id: "44", name: "CAMBIO EMPAQUE PUNTERIAS", durationMinutes: 0},
-    {id: "45", name: "CAMBIO DE BOMBA DE AGUA", durationMinutes: 0},
-    {id: "46", name: "CAMBIIO BANDAS DE ACCESORIOS", durationMinutes: 90},
-    {id: "47", name: "CAMBIO DE POLEAS O TENSOR", durationMinutes: 90},
-    {id: "48", name: "TRABAJOS ESPECIALES ES POR HORA", durationMinutes: 0},
-    {id: "49", name: "MONTAJE, BALANCEO, VALVULA Y NITROGENO (13-18) PASAJERO", durationMinutes: 60},
-    {id: "50", name: "MONTAJE, BALANCEO, VALVULA Y NITROGENO (19-22) PASAJERO", durationMinutes: 90},
-    {id: "51", name: "MONTAJE, BALANCEO, VALVULA Y NITROGENO PERFIL BAJO", durationMinutes: 0},
-    {id: "52", name: "MONTAJE, BALANCEO, VALVULA Y NITROGENO AT ", durationMinutes: 120},
-    {id: "53", name: "MONTAJE, BALANCEO, VALVULA Y NITROGENO MUD", durationMinutes: 120},
-    {id: "54", name: "BALANCEO RIN ACERO ", durationMinutes: 0},
-    {id: "55", name: "BALANCEO RIN OFF ROAD", durationMinutes: 0},
-    {id: "56", name: "BALANCEO RIN DEPORTIVO", durationMinutes: 0},
-    {id: "57", name: "ROTACION", durationMinutes: 0},
-    {id: "58", name: "REVISION DE VEHICULO", durationMinutes: 0},
-    {id: "59", name: "NITROGENO X LLANTA", durationMinutes: 0},
-    {id: "60", name: "PARCHE NORMAL", durationMinutes: 0},
-    {id: "61", name: "CAMBIO DE BIRLO POR RUEDA SIN DESARMAR", durationMinutes: 0},
-    {id: "62", name: "CAMBIO DE BIRLO POR RUEDA DESARMANDO", durationMinutes: 0},
-    {id: "63", name: "PAQUETE 1 (REVISION,ROTACION Y NITROGENO)", durationMinutes: 0},
-    {id: "64", name: "PAQUETE 2 (REVISION,ROTACION, NITROGENO Y BALANCEO)", durationMinutes: 0},
-    {id: "65", name: "PAQUETE 3 (REVISION,ROTACION, NITROGENO Y BALANCEO, ALINEACION)", durationMinutes: 0},
-    {id: "66", name: "BALATA DELATNERA", durationMinutes: 180},
-    {id: "67", name: "BALATA TRASERA", durationMinutes: 180}
-]
+    { id: "1", name: "FRENOS", duration: 120 },
+    { id: "2", name: "FRENO CON SENSOR ELECTRICO", duration: 180 },
+    { id: "3", name: "LIMPIEZA Y AJUSTE DE FRENOS", duration: 60 },
+    {
+      id: "4",
+      name: "CAMBIO DE SENSOR ABS Y /O SENSOR DE BALATA",
+      duration: 60,
+    },
+    { id: "5", name: "CAMBIO DE PISTON Y REPUESTO", duration: 60 },
+    { id: "6", name: "M.O DE CAMBIO DE BOMBA DE FRENOS", duration: 120 },
+    {
+      id: "7",
+      name: "M.O DE CAMBIO DE BOMBA DE FRENOS ESPECIAL",
+      duration: 180,
+    },
+    { id: "8", name: "RECTIFICADO", duration: 0 },
+    {
+      id: "9",
+      name: "M.O CAMBIO DE CHICOTE DE FRENO EXTERNO",
+      duration: 120,
+    },
+    {
+      id: "10",
+      name: "SERVICIO DE PURGADO(INCLUYE LIQUIDO DE FRENOS)",
+      duration: 60,
+    },
+    { id: "11", name: "SUSPENSION", duration: 0 },
+    { id: "12", name: "BUJE CON SOPORTE", duration: 0 },
+    { id: "13", name: "BUJE EJE TRASERO CON PURGADO", duration: 0 },
+    { id: "14", name: "HORQUILLA", duration: 0 },
+    { id: "15", name: "HORQUILLA CON BARRA", duration: 0 },
+    { id: "16", name: "HORQUILLA CON PUENTE", duration: 0 },
+    { id: "17", name: "CREMALLERA ", duration: 0 },
+    {
+      id: "18",
+      name: "JUNTA HOMOCINETICA O CUBRE POLVO X LADO",
+      duration: 180,
+    },
+    {
+      id: "19",
+      name: "JUNTA HOMOCINETICA O CUBRE POLVO X LADO 4X4",
+      duration: 240,
+    },
+    { id: "20", name: "BALERO CARDAN O CRUCETA", duration: 120 },
+    { id: "21", name: "BUJES DE MUELLE POR LADO", duration: 90 },
+    { id: "22", name: "HULES DE BARRA PAR", duration: 60 },
+    { id: "23", name: "HULES DE BARRA PAR CON PUENTE", duration: 120 },
+    {
+      id: "24",
+      name: "CAMBIO AMORTIGUADORES MACHPERSHON",
+      duration: 120,
+    },
+    {
+      id: "25",
+      name: "CAMBIO AMORTIGUADORES MACHPERSHON DE BASTAGO",
+      duration: 120,
+    },
+    { id: "26", name: "CAMBIO AMORTIGUADORES NORMAL", duration: 60 },
+    { id: "27", name: "DESARME DELANTERO O TRASERO", duration: 0 },
+    { id: "28", name: "ALINEACION ESCANTILLON", duration: 30 },
+    { id: "29", name: "ALINEACION ESCANTILLON CON CAIDA", duration: 60 },
+    { id: "30", name: "ALINEACION 3D", duration: 30 },
+    { id: "31", name: "ALINEACION 3D 2 EJES", duration: 60 },
+    {
+      id: "32",
+      name: "ALINEACION 3D  CON CAIDA DE AMORTIGUADOR",
+      duration: 30,
+    },
+    { id: "33", name: "UNIDADES DE MANO DE OBRA", duration: 0 },
+    {
+      id: "34",
+      name: "AFINACION MAYOR (CARBUCLEAN,BOYA, AFLOJATODO) 4CILINDROS",
+      duration: 120,
+    },
+    {
+      id: "35",
+      name: "AFINACION MAYOR (CARBUCLEAN,BOYA, AFLOJATODO) 6 U 8 CILINDROS",
+      duration: 240,
+    },
+    {
+      id: "36",
+      name: "AFINACION MENOR (CAMBIO DE FILTROS Y ACEITE)",
+      duration: 60,
+    },
+    { id: "37", name: "CAMBIO DE ACEITE MOTOR", duration: 60 },
+    {
+      id: "38",
+      name: "CAMBIO DE ACIETE MOTOR CON TOLVA O SKIDPLATE",
+      duration: 90,
+    },
+    {
+      id: "39",
+      name: "CAMBIO DE ACEITE TRANSMISION ESTANDAR",
+      duration: 90,
+    },
+    { id: "40", name: "CAMBIO DE ACEITE DIFERENCIAL", duration: 90 },
+    { id: "41", name: "MANO DE OBRA ANTICONGELANTE", duration: 0 },
+    { id: "42", name: "SOPORTES MOTOR", duration: 0 },
+    { id: "43", name: "BALERO DOBLE, MAZA BALERO", duration: 120 },
+    { id: "44", name: "CAMBIO EMPAQUE PUNTERIAS", duration: 0 },
+    { id: "45", name: "CAMBIO DE BOMBA DE AGUA", duration: 0 },
+    { id: "46", name: "CAMBIIO BANDAS DE ACCESORIOS", duration: 90 },
+    { id: "47", name: "CAMBIO DE POLEAS O TENSOR", duration: 90 },
+    { id: "48", name: "TRABAJOS ESPECIALES ES POR HORA", duration: 0 },
+    {
+      id: "49",
+      name: "MONTAJE, BALANCEO, VALVULA Y NITROGENO (13-18) PASAJERO",
+      duration: 60,
+    },
+    {
+      id: "50",
+      name: "MONTAJE, BALANCEO, VALVULA Y NITROGENO (19-22) PASAJERO",
+      duration: 90,
+    },
+    {
+      id: "51",
+      name: "MONTAJE, BALANCEO, VALVULA Y NITROGENO PERFIL BAJO",
+      duration: 0,
+    },
+    {
+      id: "52",
+      name: "MONTAJE, BALANCEO, VALVULA Y NITROGENO AT ",
+      duration: 120,
+    },
+    {
+      id: "53",
+      name: "MONTAJE, BALANCEO, VALVULA Y NITROGENO MUD",
+      duration: 120,
+    },
+    { id: "54", name: "BALANCEO RIN ACERO ", duration: 0 },
+    { id: "55", name: "BALANCEO RIN OFF ROAD", duration: 0 },
+    { id: "56", name: "BALANCEO RIN DEPORTIVO", duration: 0 },
+    { id: "57", name: "ROTACION", duration: 0 },
+    { id: "58", name: "REVISION DE VEHICULO", duration: 0 },
+    { id: "59", name: "NITROGENO X LLANTA", duration: 0 },
+    { id: "60", name: "PARCHE NORMAL", duration: 0 },
+    {
+      id: "61",
+      name: "CAMBIO DE BIRLO POR RUEDA SIN DESARMAR",
+      duration: 0,
+    },
+    {
+      id: "62",
+      name: "CAMBIO DE BIRLO POR RUEDA DESARMANDO",
+      duration: 0,
+    },
+    {
+      id: "63",
+      name: "PAQUETE 1 (REVISION,ROTACION Y NITROGENO)",
+      duration: 0,
+    },
+    {
+      id: "64",
+      name: "PAQUETE 2 (REVISION,ROTACION, NITROGENO Y BALANCEO)",
+      duration: 0,
+    },
+    {
+      id: "65",
+      name: "PAQUETE 3 (REVISION,ROTACION, NITROGENO Y BALANCEO, ALINEACION)",
+      duration: 0,
+    },
+    { id: "66", name: "BALATA DELATNERA", duration: 180 },
+    { id: "67", name: "BALATA TRASERA", duration: 180 },
+  ];
 
   // Reset form state when the modal closes.
   useEffect(() => {
@@ -237,23 +336,23 @@ function AppointmentModal({
   // }, [isOpen, services.length, servicesLoading]);
 
   // Fetch availability dates when branch changes.
-  useEffect(() => {
-    if (!isOpen || !selectedBranchId) {
-      return;
-    }
-    setDatesLoading(true);
-    setDatesError(null);
-    fetchAvailableDates(selectedBranchId)
-      .then((raw) => setAvailableDates(normalizeStringArray(raw)))
-      .catch((error: unknown) =>
-        setDatesError(
-          error instanceof Error
-            ? error.message
-            : "Error al obtener fechas disponibles",
-        ),
-      )
-      .finally(() => setDatesLoading(false));
-  }, [isOpen, selectedBranchId]);
+  // useEffect(() => {
+  //   if (!isOpen || !selectedBranchId) {
+  //     return;
+  //   }
+  //   setDatesLoading(true);
+  //   setDatesError(null);
+  //   fetchAvailableDates(selectedBranchId)
+  //     .then((raw) => setAvailableDates(normalizeStringArray(raw)))
+  //     .catch((error: unknown) =>
+  //       setDatesError(
+  //         error instanceof Error
+  //           ? error.message
+  //           : "Error al obtener fechas disponibles"
+  //       )
+  //     )
+  //     .finally(() => setDatesLoading(false));
+  // }, [isOpen, selectedBranchId]);
 
   // Fetch availability times when date or service changes.
   useEffect(() => {
@@ -266,17 +365,22 @@ function AppointmentModal({
     setTimesLoading(true);
     setTimesError(null);
     fetchAvailableTimes(
-      selectedBranchId,
-      selectedDate,
-      selectedServiceId || undefined,
+      String(
+        services.find((service) => service.id === selectedServiceId)
+          ?.duration || 0
+      ),
+      String(
+        branches.find((service) => service.id === selectedBranchId)?.name || 0
+      ),
+      selectedDate
     )
       .then((raw) => setAvailableTimes(normalizeStringArray(raw)))
       .catch((error: unknown) =>
         setTimesError(
           error instanceof Error
             ? error.message
-            : "Error al obtener horarios disponibles",
-        ),
+            : "Error al obtener horarios disponibles"
+        )
       )
       .finally(() => setTimesLoading(false));
   }, [isOpen, selectedBranchId, selectedDate, selectedServiceId]);
@@ -299,7 +403,7 @@ function AppointmentModal({
     if (!selectedBranchId || !selectedDate || !selectedTime) {
       setSubmitStatus("error");
       setSubmitMessage(
-        "Selecciona una sucursal, una fecha y un horario disponibles antes de confirmar.",
+        "Selecciona una sucursal, una fecha y un horario disponibles antes de confirmar."
       );
       return;
     }
@@ -326,7 +430,7 @@ function AppointmentModal({
       setSubmitMessage(
         error instanceof Error
           ? error.message
-          : "Error al crear la cita. Intenta de nuevo.",
+          : "Error al crear la cita. Intenta de nuevo."
       );
     }
   };
@@ -445,7 +549,7 @@ function AppointmentModal({
                             </option>
                             {services.map((service) => (
                               <option key={service.id} value={service.id}>
-                                {service.name} · {service.durationMinutes} min
+                                {service.name} · {service.duration} min
                               </option>
                             ))}
                           </select>
@@ -527,12 +631,8 @@ function AppointmentModal({
                           }
 
                           const isPast = day.iso < todayISO;
-                          const isAvailable = availableDateSet.has(day.iso);
                           const isDisabled =
-                            !selectedBranchId ||
-                            !isAvailable ||
-                            isPast ||
-                            datesLoading;
+                            !selectedBranchId || isPast || datesLoading;
                           const isSelected = selectedDate === day.iso;
 
                           return (
@@ -548,7 +648,7 @@ function AppointmentModal({
                                   : isDisabled
                                     ? "border-neutral-800 text-neutral-600"
                                     : "border-yellow-500/60 bg-yellow-500/10 text-yellow-200 hover:bg-yellow-400/20",
-                                datesLoading && "opacity-60",
+                                datesLoading && "opacity-60"
                               )}
                             >
                               {day.label}
@@ -601,6 +701,9 @@ function AppointmentModal({
                       <div className="mt-4 flex flex-wrap gap-2">
                         {availableTimes.map((time) => {
                           const isSelected = selectedTime === time;
+                          if (timesLoading) {
+                            return null;
+                          }
                           return (
                             <button
                               key={time}
@@ -610,7 +713,7 @@ function AppointmentModal({
                                 "rounded-full border px-4 py-2 text-sm font-semibold uppercase tracking-[0.2em] transition",
                                 isSelected
                                   ? "border-yellow-400 bg-yellow-400 text-black shadow-[0_12px_30px_rgba(250,204,21,0.35)]"
-                                  : "border-yellow-500/60 bg-yellow-500/10 text-yellow-200 hover:bg-yellow-400/20",
+                                  : "border-yellow-500/60 bg-yellow-500/10 text-yellow-200 hover:bg-yellow-400/20"
                               )}
                             >
                               {time}
@@ -628,7 +731,7 @@ function AppointmentModal({
                             ? "border-green-500/60 bg-green-500/10 text-green-200"
                             : submitStatus === "error"
                               ? "border-red-500/60 bg-red-500/10 text-red-200"
-                              : "border-yellow-500/60 bg-yellow-500/10 text-yellow-200",
+                              : "border-yellow-500/60 bg-yellow-500/10 text-yellow-200"
                         )}
                       >
                         {submitMessage}
@@ -651,7 +754,7 @@ function AppointmentModal({
                           "rounded-full px-6 py-3 text-sm font-semibold uppercase tracking-[0.25em] text-black transition focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-yellow-300 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-950",
                           isConfirmDisabled
                             ? "cursor-not-allowed bg-yellow-500/50 text-black/60"
-                            : "bg-yellow-500 shadow-[0_18px_40px_rgba(250,204,21,0.35)] hover:translate-y-[-2px]",
+                            : "bg-yellow-500 shadow-[0_18px_40px_rgba(250,204,21,0.35)] hover:translate-y-[-2px]"
                         )}
                       >
                         {submitStatus === "loading"
@@ -781,8 +884,8 @@ function normalizeServices(data: unknown): Service[] {
             ? item.nombre
             : null;
       const duration =
-        typeof item.durationMinutes === "number"
-          ? item.durationMinutes
+        typeof item.duration === "number"
+          ? item.duration
           : typeof item.duracionMinutos === "number"
             ? item.duracionMinutos
             : null;
@@ -794,13 +897,92 @@ function normalizeServices(data: unknown): Service[] {
       return {
         id,
         name,
-        durationMinutes: duration,
+        duration: duration,
       };
     })
     .filter(Boolean) as Service[];
 }
 
 function normalizeStringArray(data: unknown): string[] {
+  console.log("Raw data for normalization:", data);
+  // Disponibilidad del día: [
+  //   {
+  //     start: '2025-10-30T09:00:00.000Z',
+  //     end: '2025-10-30T10:00:00.000Z'
+  //   },
+  //   {
+  //     start: '2025-10-30T09:30:00.000Z',
+  //     end: '2025-10-30T10:30:00.000Z'
+  //   },
+  //   {
+  //     start: '2025-10-30T10:00:00.000Z',
+  //     end: '2025-10-30T11:00:00.000Z'
+  //   },
+  //   {
+  //     start: '2025-10-30T10:30:00.000Z',
+  //     end: '2025-10-30T11:30:00.000Z'
+  //   },
+  //   {
+  //     start: '2025-10-30T11:00:00.000Z',
+  //     end: '2025-10-30T12:00:00.000Z'
+  //   },
+  //   {
+  //     start: '2025-10-30T11:30:00.000Z',
+  //     end: '2025-10-30T12:30:00.000Z'
+  //   },
+  //   {
+  //     start: '2025-10-30T12:00:00.000Z',
+  //     end: '2025-10-30T13:00:00.000Z'
+  //   },
+  //   {
+  //     start: '2025-10-30T12:30:00.000Z',
+  //     end: '2025-10-30T13:30:00.000Z'
+  //   },
+  //   {
+  //     start: '2025-10-30T13:00:00.000Z',
+  //     end: '2025-10-30T14:00:00.000Z'
+  //   },
+  //   {
+  //     start: '2025-10-30T13:30:00.000Z',
+  //     end: '2025-10-30T14:30:00.000Z'
+  //   },
+  //   {
+  //     start: '2025-10-30T14:00:00.000Z',
+  //     end: '2025-10-30T15:00:00.000Z'
+  //   },
+  //   {
+  //     start: '2025-10-30T14:30:00.000Z',
+  //     end: '2025-10-30T15:30:00.000Z'
+  //   },
+  //   {
+  //     start: '2025-10-30T15:00:00.000Z',
+  //     end: '2025-10-30T16:00:00.000Z'
+  //   },
+  //   {
+  //     start: '2025-10-30T15:30:00.000Z',
+  //     end: '2025-10-30T16:30:00.000Z'
+  //   },
+  //   {
+  //     start: '2025-10-30T16:00:00.000Z',
+  //     end: '2025-10-30T17:00:00.000Z'
+  //   },
+  //   {
+  //     start: '2025-10-30T16:30:00.000Z',
+  //     end: '2025-10-30T17:30:00.000Z'
+  //   },
+  //   {
+  //     start: '2025-10-30T17:00:00.000Z',
+  //     end: '2025-10-30T18:00:00.000Z'
+  //   },
+  //   {
+  //     start: '2025-10-30T17:30:00.000Z',
+  //     end: '2025-10-30T18:30:00.000Z'
+  //   },
+  //   {
+  //     start: '2025-10-30T18:00:00.000Z',
+  //     end: '2025-10-30T19:00:00.000Z'
+  //   }
+  // ]
   if (Array.isArray(data)) {
     return data.filter((item): item is string => typeof item === "string");
   }
