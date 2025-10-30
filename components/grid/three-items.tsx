@@ -1,4 +1,7 @@
-import PromoBannerCarousel, { type PromoBanner } from "components/grid/promo-banner-carousel";
+import { AgendarCita } from "components/appointments/agendar-cita";
+import PromoBannerCarousel, {
+  type PromoBanner,
+} from "components/grid/promo-banner-carousel";
 import TireSearchCTA from "components/grid/tire-search-cta";
 import Price from "components/price";
 import { getCollectionProducts } from "lib/shopify";
@@ -36,8 +39,6 @@ export async function ThreeItemGrid() {
   return (
     <section className="mx-auto max-w-(--breakpoint-2xl) pb-10">
       <div className="relative overflow-hidden rounded-3xl  border-neutral-800 px-6 py-10 shadow-[0_35px_120px_rgba(15,15,15,0.55)] sm:px-10 md:px-14 md:py-16">
-        
-
         <div className="relative grid gap-10 md:grid-cols-12 md:items-center">
           <div className="flex flex-col gap-6 md:col-span-7">
             <div>
@@ -54,13 +55,7 @@ export async function ThreeItemGrid() {
 
             <div className="flex flex-col gap-4 sm:flex-row">
               <TireSearchCTA className={HERO_CTA_CLASSES} />
-              <Link
-                href="/citas"
-                prefetch={true}
-                className="relative flex-1 rounded-full border border-yellow-400/70 px-6 py-3 text-center text-base font-semibold uppercase tracking-[0.25em] text-yellow-400 transition duration-150 hover:-translate-y-0.5 hover:border-yellow-300 hover:text-yellow-200 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-yellow-300 focus-visible:ring-offset-2 focus-visible:ring-offset-black dark:focus-visible:ring-yellow-400"
-              >
-                AGENDAR CITA
-              </Link>
+              <AgendarCita triggerClassName="relative flex-1 rounded-full border border-yellow-400/70 px-6 py-3 text-center text-base font-semibold text-yellow-400 transition duration-150 hover:-translate-y-0.5 hover:border-yellow-300 hover:text-yellow-200 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-yellow-300 focus-visible:ring-offset-2 focus-visible:ring-offset-black dark:focus-visible:ring-yellow-400" />
             </div>
 
             {productTiles.length ? (
@@ -111,9 +106,7 @@ export async function ThreeItemGrid() {
               className="pointer-events-none absolute -inset-8 rounded-full bg-yellow-500/20 blur-3xl"
               aria-hidden="true"
             />
-            <div className="relative overflow-hidden rounded-3xl border border-neutral-800 bg-neutral-900/60 p-4 shadow-[0_20px_65px_rgba(10,10,10,0.55)]">
-            
-            </div>
+            <div className="relative overflow-hidden rounded-3xl border border-neutral-800 bg-neutral-900/60 p-4 shadow-[0_20px_65px_rgba(10,10,10,0.55)]"></div>
           </div>
         </div>
       </div>

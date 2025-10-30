@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
-import clsx from 'clsx';
-import { useState } from 'react';
+import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
+import clsx from "clsx";
+import { useState } from "react";
 
 export type PromoBanner = {
   highlight: string;
@@ -13,7 +13,9 @@ type PromoBannerCarouselProps = {
   banners: readonly PromoBanner[];
 };
 
-export default function PromoBannerCarousel({ banners }: PromoBannerCarouselProps) {
+export default function PromoBannerCarousel({
+  banners,
+}: PromoBannerCarouselProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
 
   if (!banners?.length) {
@@ -74,8 +76,8 @@ export default function PromoBannerCarousel({ banners }: PromoBannerCarouselProp
             <span
               key={`promo-indicator-${index}`}
               className={clsx(
-                'h-2 w-2 rounded-full transition',
-                index === currentIndex ? 'bg-yellow-500' : 'bg-neutral-700'
+                "h-2 w-2 rounded-full transition",
+                index === currentIndex ? "bg-yellow-500" : "bg-neutral-700",
               )}
             />
           ))}

@@ -21,12 +21,12 @@ const formatCurrency = (value: number, currencyCode: string) =>
 
 const findVariantFromState = (
   variants: ProductVariant[],
-  state: Record<string, string | undefined>
+  state: Record<string, string | undefined>,
 ) =>
   variants.find((variant) =>
     variant.selectedOptions.every(
-      (option) => option.value === state[option.name.toLowerCase()]
-    )
+      (option) => option.value === state[option.name.toLowerCase()],
+    ),
   );
 
 export function PaymentOptions({ product }: { product: Product }) {
@@ -36,7 +36,7 @@ export function PaymentOptions({ product }: { product: Product }) {
 
   const selectedVariant = useMemo(
     () => findVariantFromState(variants, state),
-    [variants, state]
+    [variants, state],
   );
 
   const [isOpen, setIsOpen] = useState(true);

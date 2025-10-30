@@ -76,11 +76,9 @@ export default function TireSearchCTA({ className }: TireSearchCTAProps) {
               >
                 BUSCAR LLANTAS
               </h3>
-              <p
-                id={descriptionId}
-                className="mt-3 text-sm text-neutral-300"
-              >
-                Encuentra la medida ideal ingresando el ancho, perfil y rin de tus llantas.
+              <p id={descriptionId} className="mt-3 text-sm text-neutral-300">
+                Encuentra la medida ideal ingresando el ancho, perfil y rin de
+                tus llantas.
               </p>
             </div>
 

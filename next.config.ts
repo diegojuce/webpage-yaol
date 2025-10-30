@@ -2,13 +2,10 @@ export default {
   experimental: {
     ppr: true,
     inlineCss: true,
-    useCache: true
+    useCache: true,
   },
   images: {
-    formats: ['image/avif', 'image/webp'],
-    remotePatterns: [
-      { protocol: 'https', hostname: '**', pathname: '/**' }
-    ]
-  }
-  
+    formats: ["image/avif", "image/webp"],
+    remotePatterns: [{ protocol: "https", hostname: "**", pathname: "/**" }],
+  },
 };

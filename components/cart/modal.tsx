@@ -1,21 +1,21 @@
-'use client';
+"use client";
 
-import { Dialog, Transition } from '@headlessui/react';
-import { ShoppingCartIcon, XMarkIcon } from '@heroicons/react/24/outline';
-import clsx from 'clsx';
-import LoadingDots from 'components/loading-dots';
-import Price from 'components/price';
-import { DEFAULT_OPTION } from 'lib/constants';
-import { createUrl } from 'lib/utils';
-import Image from 'next/image';
-import Link from 'next/link';
-import { Fragment, useEffect, useRef, useState } from 'react';
-import { useFormStatus } from 'react-dom';
-import { createCartAndSetCookie, redirectToCheckout } from './actions';
-import { useCart } from './cart-context';
-import { DeleteItemButton } from './delete-item-button';
-import { EditItemQuantityButton } from './edit-item-quantity-button';
-import OpenCart from './open-cart';
+import { Dialog, Transition } from "@headlessui/react";
+import { ShoppingCartIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import clsx from "clsx";
+import LoadingDots from "components/loading-dots";
+import Price from "components/price";
+import { DEFAULT_OPTION } from "lib/constants";
+import { createUrl } from "lib/utils";
+import Image from "next/image";
+import Link from "next/link";
+import { Fragment, useEffect, useRef, useState } from "react";
+import { useFormStatus } from "react-dom";
+import { createCartAndSetCookie, redirectToCheckout } from "./actions";
+import { useCart } from "./cart-context";
+import { DeleteItemButton } from "./delete-item-button";
+import { EditItemQuantityButton } from "./edit-item-quantity-button";
+import OpenCart from "./open-cart";
 
 type MerchandiseSearchParams = {
   [key: string]: string;
@@ -95,8 +95,8 @@ export default function CartModal() {
                     {cart.lines
                       .sort((a, b) =>
                         a.merchandise.product.title.localeCompare(
-                          b.merchandise.product.title
-                        )
+                          b.merchandise.product.title,
+                        ),
                       )
                       .map((item, i) => {
                         const merchandiseSearchParams =
@@ -108,12 +108,12 @@ export default function CartModal() {
                               merchandiseSearchParams[name.toLowerCase()] =
                                 value;
                             }
-                          }
+                          },
                         );
 
                         const merchandiseUrl = createUrl(
                           `/product/${item.merchandise.product.handle}`,
-                          new URLSearchParams(merchandiseSearchParams)
+                          new URLSearchParams(merchandiseSearchParams),
                         );
 
                         return (
@@ -214,15 +214,15 @@ export default function CartModal() {
                         currencyCode={cart.cost.totalAmount.currencyCode}
                       />
                     </div>
-                  </div >
+                  </div>
                   <div className="py-4">
-                  <form action={redirectToCheckout}>
-                    <CheckoutButton />
-                  </form>
+                    <form action={redirectToCheckout}>
+                      <CheckoutButton />
+                    </form>
                   </div>
                   <form action={redirectToCheckout}>
                     <AgendarCita />
-                  </form> 
+                  </form>
                 </div>
               )}
             </Dialog.Panel>
@@ -238,8 +238,8 @@ function CloseCart({ className }: { className?: string }) {
     <div className="relative flex h-11 w-11 items-center justify-center bg-white rounded-md border border-neutral-200 text-black transition-colors dark:border-neutral-700 dark:text-white">
       <XMarkIcon
         className={clsx(
-          'h-6 transition-all ease-in-out hover:scale-110',
-          className
+          "h-6 transition-all ease-in-out hover:scale-110",
+          className,
         )}
       />
     </div>
@@ -255,22 +255,21 @@ function CheckoutButton() {
       type="submit"
       disabled={pending}
     >
-      {pending ? <LoadingDots className="bg-white" /> : 'Pagar Ahora'}
+      {pending ? <LoadingDots className="bg-white" /> : "Pagar Ahora"}
     </button>
   );
 }
 
-  function AgendarCita() {
-    const { pending } = useFormStatus();
-  
-    return (
-      <button
-        className="block w-full rounded-full bg-yellow-500 p-3 text-center text-sm font-medium text-white opacity-90 hover:opacity-100"
-        type="submit"
-        disabled={pending}
-      >
-        {pending ? <LoadingDots className="bg-white" /> : 'Pagar en sucursal'}
-      </button>
- );
+function AgendarCita() {
+  const { pending } = useFormStatus();
 
+  return (
+    <button
+      className="block w-full rounded-full bg-yellow-500 p-3 text-center text-sm font-medium text-white opacity-90 hover:opacity-100"
+      type="submit"
+      disabled={pending}
+    >
+      {pending ? <LoadingDots className="bg-white" /> : "Pagar en sucursal"}
+    </button>
+  );
 }
