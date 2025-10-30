@@ -39,7 +39,7 @@ export async function ThreeItemGrid() {
   return (
     <section className="mx-auto max-w-(--breakpoint-2xl) pb-10">
       <div className="relative overflow-hidden rounded-3xl  border-neutral-800 px-6 py-10 shadow-[0_35px_120px_rgba(15,15,15,0.55)] sm:px-10 md:px-14 md:py-16">
-        <div className="relative grid gap-10 md:grid-cols-12 md:items-center">
+        <div className="relative grid gap-0 md:grid-cols-12 md:items-center">
           <div className="flex flex-col gap-6 md:col-span-7">
             <div>
               <h1 className="text-4xl font-black uppercase tracking-[0.35em] text-white sm:text-5xl lg:text-6xl">
@@ -101,12 +101,18 @@ export async function ThreeItemGrid() {
             ) : null}
           </div>
 
-          <div className="relative md:col-span-5">
-            <div
-              className="pointer-events-none absolute -inset-8 rounded-full bg-yellow-500/20 blur-3xl"
-              aria-hidden="true"
-            />
-            <div className="relative overflow-hidden rounded-3xl border border-neutral-800 bg-neutral-900/60 p-4 shadow-[0_20px_65px_rgba(10,10,10,0.55)]"></div>
+          <div className="relative w-[700px]">
+            <div className="relative overflow-hidden">
+              <Image
+                src="/imagen_portada.svg"
+                alt="Servicio automotriz"
+                width={640}
+                height={640}
+                sizes="(min-width: 1024px) 32vw, 60vw"
+                className="h-auto w-full"
+                priority
+              />
+            </div>
           </div>
         </div>
       </div>
