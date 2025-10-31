@@ -1,8 +1,7 @@
-import { Carousel } from "components/carousel";
 import { ThreeItemGrid } from "components/grid/three-items";
 import Footer from "components/layout/footer";
-import ProductCard from "components/product/product-card";
 import { getProducts } from "lib/shopify";
+import Image from "next/image";
 
 export const dynamic = "force-dynamic";
 export const metadata = {
@@ -14,13 +13,95 @@ export const metadata = {
 };
 
 const SERVICES = [
-  { title: "AFINACIÓN", subtitle: "mayor y menor" },
-  { title: "VENTA Y MONTAJE", subtitle: "de llantas" },
-  { title: "ALINEACIÓN 3D", subtitle: "y escantillón" },
-  { title: "SUSPENSIÓN", subtitle: "y amortiguadores" },
-  { title: "RECARGA", subtitle: "de nitrógeno" },
-  { title: "FRENOS", subtitle: "y balatas" },
-  { title: "BALANCEO", subtitle: "pro" },
+  { 
+    title: "AFINACIÓN", 
+    subtitle: "MAYOR Y MENOR", 
+    icon: (
+      <Image
+        src="/Recurso 3.svg"
+        alt="Icono de afinación"
+        width={64}
+        height={64}
+        priority
+      />
+    ),
+    
+  
+  },
+  { title: "VENTA Y MONTAJE", 
+    subtitle: "DE LLANTAS",
+    icon: (
+      <Image
+        src="/Recurso 4.svg"
+        alt="Icono de afinación"
+        width={64}
+        height={64}
+        priority
+      />
+    ), 
+  
+  },
+  { title: "ALINEACIÓN 3D", 
+    subtitle: "Y ESCANTILLÓN", 
+    icon: (
+      <Image
+        src="/Recurso 5.svg"
+        alt="Icono de afinación"
+        width={64}
+        height={64}
+        priority
+      />
+    ), 
+  
+  },
+  { title: "SUSPENSIÓN", 
+    subtitle: "Y AMORTIGUADORES", 
+    icon: (
+      <Image
+        src="/Recurso 6.svg"
+        alt="Icono de afinación"
+        width={64}
+        height={64}
+        priority
+      />
+    ), 
+  },
+  { title: "RECARGA", 
+    subtitle: "DE NITRÓGENO", 
+    icon: (
+      <Image
+        src="/Recurso 7.svg"
+        alt="Icono de afinación"
+        width={64}
+        height={64}
+        priority
+      />
+    ), 
+  },
+  { title: "FRENOS", 
+    subtitle: "Y BALATAS", 
+    icon: (
+      <Image
+        src="/Recurso 8.svg"
+        alt="Icono de afinación"
+        width={64}
+        height={64}
+        priority
+      />
+    ), 
+  },
+  { title: "BALANCEO", 
+    subtitle: "PRO",
+    icon: (
+      <Image
+        src="/Recurso 9.svg"
+        alt="Icono de afinación"
+        width={64}
+        height={64}
+        priority
+      />
+    ),  
+  },
 ];
 
 export default async function HomePage() {
@@ -35,7 +116,7 @@ export default async function HomePage() {
   return (
     <>
       <ThreeItemGrid />
-      <Carousel />
+      {/* <Carousel /> */}
       <section
         id="servicios"
         aria-labelledby="services-heading"
@@ -48,20 +129,20 @@ export default async function HomePage() {
         <div className="servicios__grid">
           {SERVICES.map((service) => (
             <article key={service.title} tabIndex={0} className="svc-card">
-              <div className="svc-card__icon">{/* ICONO */}</div>
+              <div className="svc-card__icon">{service.icon}</div>
               <h3 className="svc-card__title">{service.title}</h3>
               <p className="svc-card__subtitle">{service.subtitle}</p>
             </article>
           ))}
         </div>
       </section>
-      <div className="mt-8">
+      {/* <div className="mt-8">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {recentProducts.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}
         </div>
-      </div>
+      </div> */}
       <Footer />
     </>
   );

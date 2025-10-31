@@ -38,14 +38,27 @@ export async function ThreeItemGrid() {
 
   return (
     <section className="mx-auto max-w-(--breakpoint-2xl) pb-10">
+      <div className="absolute right-0 w-[44vw] h-[44vw] mt-2 hidden md:block md:col-span-5 md:mt-0">
+            <div className="relative overflow-hidden">
+              <Image
+                src="/imagen_portada.svg"
+                alt="Servicio automotriz"
+                width={640}
+                height={640}
+                sizes="(min-width: 1024px) 32vw, 60vw"
+                className="w-[44vw] h-[44vw] object-contain"
+                priority
+              />
+            </div>
+          </div>
       <div className="relative overflow-hidden rounded-3xl  border-neutral-800 px-6 py-10 shadow-[0_35px_120px_rgba(15,15,15,0.55)] sm:px-10 md:px-14 md:py-0">
         <div className="relative grid gap-0 md:grid-cols-12 md:items-top">
           <div className="flex flex-col gap-10 md:col-span-7 mt-20 mb-40">
             <div>
-              <h1 className="text-4xl font-black uppercase tracking-[0.35em] text-white sm:text-5xl lg:text-6xl">
+              <h1 className="text-4xl font-black uppercase tracking-[0.35em] text-white sm:text-4xl lg:text-6xl">
                 LA MEJOR
               </h1>
-              <h2 className="mt-2 text-4xl font-black uppercase tracking-[0.35em] text-yellow-400 sm:text-5xl lg:text-6xl">
+              <h2 className="mt-2 text-4xl font-black uppercase tracking-[0.35em] text-yellow-400 sm:text-4xl lg:text-6xl">
                 EXPERIENCIA
               </h2>
               <p className="mt-4 text-lg italic text-neutral-300 sm:text-xl">
@@ -60,24 +73,11 @@ export async function ThreeItemGrid() {
           </div>
 
           {/* z index 10001 */}
-          <div className="absolute right-[-12.5vw] w-[700px] mt-2 z-[10001] hidden md:block md:col-span-5 md:mt-0">
-            <div className="relative overflow-hidden">
-              <Image
-                src="/imagen_portada.svg"
-                alt="Servicio automotriz"
-                width={640}
-                height={640}
-                sizes="(min-width: 1024px) 32vw, 60vw"
-                className="w-[40vw] h-[40vw] object-contain"
-                priority
-              />
-            </div>
-          </div>
         </div>
       </div>
 
       {productTiles.length ? (
-        <div className="mt-0 pt-4 overflow-x-auto px-2 sm:px-4 md:px-6">
+        <div className="mt-0 pt-4 overflow-x-auto px-2 sm:px-4 md:px-6 z-100000">
           <div className="mx-auto flex max-w-(--breakpoint-2xl) gap-4 pb-2">
             {productTiles.map((product, index) => (
               <Link
@@ -118,7 +118,7 @@ export async function ThreeItemGrid() {
         </div>
       ) : null}
 
-      <div className="overflow-hidden rounded-2xl border border-neutral-800 bg-neutral-900/90 shadow-[0_25px_80px_rgba(10,10,10,0.45)]">
+      <div className="overflow-hidden rounded-2xl border border-neutral-800 bg-neutral-900/90 shadow-[0_25px_80px_rgba(10,10,10,0.45)] mx-6 mt-2">
         <PromoBannerCarousel banners={PROMO_BANNERS} />
       </div>
     </section>

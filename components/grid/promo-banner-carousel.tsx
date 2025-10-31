@@ -37,7 +37,7 @@ export default function PromoBannerCarousel({
   };
 
   return (
-    <div className="relative flex w-full items-center justify-center px-6 py-3 md:px-10">
+    <div className="relative flex w-full items-center justify-center px-6  md:px-10">
       {total > 1 ? (
         <>
           <button
