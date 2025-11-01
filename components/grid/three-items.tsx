@@ -52,8 +52,8 @@ export async function ThreeItemGrid() {
             </div>
           </div>
       <div className="relative overflow-hidden rounded-3xl  border-neutral-800 px-6 py-10 shadow-[0_35px_120px_rgba(15,15,15,0.55)] sm:px-10 md:px-14 md:py-0">
-        <div className="relative grid gap-0 md:grid-cols-12 md:items-top">
-          <div className="flex flex-col gap-10 md:col-span-7 mt-20 mb-40">
+        <div className="relative grid  gap-0 md:grid-cols-12 md:items-top">
+          <div className="flex flex-col gap-10 md:col-span-7 mt-20 mb-10 md:mb-40">
             <div>
               <h1 className=" text-2xl font-black uppercase tracking-[0.35em] text-white sm:text-4xl lg:text-6xl">
                 LA MEJOR
@@ -86,14 +86,14 @@ export async function ThreeItemGrid() {
                 prefetch={true}
                 className="group inline-flex min-w-[320px] items-center gap-4 rounded-2xl border border-neutral-800/80 bg-neutral-900/70 px-4 py-3 transition-all duration-200 ease-out hover:-translate-y-1 hover:border-yellow-500/60 hover:bg-neutral-900/90"
               >
-                <div className="relative h-16 w-16 overflow-hidden rounded-xl bg-neutral-950">
+                <div className="relative h-16 w-16 md:h-16 overflow-hidden rounded-xl bg-neutral-950">
                   {product.featuredImage?.url ? (
                     <Image
                       src={product.featuredImage.url}
                       alt={product.title}
                       fill
                       sizes="64px"
-                      className="object-contain transition-transform duration-200 group-hover:scale-105"
+                      className="object-contain htransition-transform duration-200 group-hover:scale-105"
                       priority={index === 0}
                     />
                   ) : null}

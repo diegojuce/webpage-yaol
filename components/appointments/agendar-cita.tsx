@@ -457,7 +457,7 @@ function AppointmentModal({
         </Transition.Child>
 
         <div className="fixed inset-0 overflow-y-auto">
-          <div className="flex min-h-full items-center justify-center p-6">
+          <div className="flex min-h-full items-center justify-center p-0">
             <Transition.Child
               as={Fragment}
               enter="transition-all duration-200 ease-out"
@@ -469,16 +469,16 @@ function AppointmentModal({
             >
               <Dialog.Panel className="relative w-full max-w-5xl overflow-hidden rounded-3xl border border-neutral-800/70 bg-neutral-950/90 p-6 text-white shadow-[0_30px_120px_rgba(8,8,8,0.8)] backdrop-blur-xl">
                 <div className="flex items-start justify-between gap-4 border-b border-white/10 pb-4">
-                  <Dialog.Title className="text-2xl font-black uppercase tracking-[0.3em] text-white">
+                  <Dialog.Title className="text-xl md:text-2xl font-black uppercase tracking-[0.3em] text-white">
                     Agendar cita
                   </Dialog.Title>
                   <button
                     type="button"
                     onClick={onClose}
-                    className="rounded-full border border-white/20 p-2 text-white transition hover:border-yellow-400 hover:text-yellow-400 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-yellow-300 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-950"
+                    className="rounded-full border border-white/20 p-1 md:p-2 text-white transition hover:border-yellow-400 hover:text-yellow-400 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-yellow-300 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-950"
                     aria-label="Cerrar modal"
                   >
-                    <XMarkIcon className="h-5 w-5" />
+                    <XMarkIcon className="h-3 w-3 md:h-5 md:w-5" />
                   </button>
                 </div>
 
@@ -624,7 +624,7 @@ function AppointmentModal({
                         ))}
                       </div>
 
-                      <div className="mt-3 grid grid-cols-7 gap-2 text-center text-sm">
+                      <div className="mt-3 grid grid-cols-7 gap-1 text-center text-sm">
                         {calendarDays.map((day) => {
                           if (!day.iso) {
                             return <span key={day.key} className="h-10" />;
