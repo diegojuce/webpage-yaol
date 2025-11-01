@@ -44,7 +44,7 @@ export default function Search({ className }: SearchProps) {
         autoComplete="off"
         enterKeyHint="search"
         defaultValue={searchParams?.get("q") || ""}
-        className="text-md w-full rounded-lg border bg-white px-4 py-2 text-black placeholder:text-neutral-500 md:text-sm focus:!border-white dark:focus:!border-white focus:outline-none focus:ring-0 transition-colors duration-150 dark:border-neutral-800 dark:bg-transparent dark:text-white dark:placeholder:text-neutral-400"
+        className="text-sm w-full rounded-lg border bg-white px-4 py-2 text-black placeholder:text-neutral-500 md:text-sm focus:!border-white dark:focus:!border-white focus:outline-none focus:ring-0 transition-colors duration-150 dark:border-neutral-800 dark:bg-transparent dark:text-white dark:placeholder:text-neutral-400"
       />
       <button
         type="submit"

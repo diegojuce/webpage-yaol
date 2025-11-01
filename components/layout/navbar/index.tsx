@@ -13,7 +13,7 @@ export async function Navbar() {
   return (
     <nav className="relative flex flex-col gap-4 p-4 lg:px-6 pt-6">
       <div className="flex items-center justify-between md:hidden">
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-0">
           <Suspense fallback={null}>
             <MobileMenu menu={menu} />
           </Suspense>
@@ -21,14 +21,19 @@ export async function Navbar() {
             <LogoSquare />
           </Link>
         </div>
+        <div className="w-full md:hidden px-2">
+          <Suspense fallback={<SearchSkeleton />}>
+            <Search />
+          </Suspense>
+        </div>
         <CartModal />
       </div>
 
-      <div className="w-full md:hidden">
+      {/* <div className="w-full md:hidden">
         <Suspense fallback={<SearchSkeleton />}>
           <Search />
         </Suspense>
-      </div>
+      </div> */}
 
       <div className="hidden w-full items-center md:flex">
         <div className="flex w-full md:w-1/3">

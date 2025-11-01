@@ -38,7 +38,7 @@ export async function ThreeItemGrid() {
 
   return (
     <section className="mx-auto max-w-(--breakpoint-2xl) pb-10">
-      <div className="absolute right-0 w-[44vw] h-[44vw] mt-2 hidden md:block md:col-span-5 md:mt-0">
+      <div className="absolute w-[70vw] h-[70vw] mt-20 right-0  md:w-[44vw] md:h-[44vw] md:mt-2 md:block md:col-span-5 md:mt-0">
             <div className="relative overflow-hidden">
               <Image
                 src="/imagen_portada.svg"
@@ -46,7 +46,7 @@ export async function ThreeItemGrid() {
                 width={640}
                 height={640}
                 sizes="(min-width: 1024px) 32vw, 60vw"
-                className="w-[44vw] h-[44vw] object-contain"
+                className="w-full md:w-[44vw] md:h-[44vw] object-contain"
                 priority
               />
             </div>
@@ -55,18 +55,18 @@ export async function ThreeItemGrid() {
         <div className="relative grid gap-0 md:grid-cols-12 md:items-top">
           <div className="flex flex-col gap-10 md:col-span-7 mt-20 mb-40">
             <div>
-              <h1 className="text-4xl font-black uppercase tracking-[0.35em] text-white sm:text-4xl lg:text-6xl">
+              <h1 className=" text-2xl font-black uppercase tracking-[0.35em] text-white sm:text-4xl lg:text-6xl">
                 LA MEJOR
               </h1>
-              <h2 className="mt-2 text-4xl font-black uppercase tracking-[0.35em] text-yellow-400 sm:text-4xl lg:text-6xl">
+              <h2 className="mt-2 text-2xl font-black uppercase tracking-[0.35em] text-yellow-400 sm:text-4xl lg:text-6xl">
                 EXPERIENCIA
               </h2>
-              <p className="mt-4 text-lg italic text-neutral-300 sm:text-xl">
+              <p className="mt-4 text-sm italic text-neutral-300 sm:text-xl">
                 EN LLANTAS Y SERVICIO AUTOMOTRÍZ
               </p>
             </div>
 
-            <div className="flex flex-col gap-4 sm:flex-row">
+            <div className="flex flex-col mt-10 px-5 md:px-0 md:mt-0 gap-4 sm:flex-row">
               <TireSearchCTA className={HERO_CTA_CLASSES} />
               <AgendarCita triggerClassName="relative flex-1 rounded-full border border-yellow-400/70 px-6 py-3 text-center text-base font-semibold text-yellow-400 transition duration-150 hover:-translate-y-0.5 hover:border-yellow-300 hover:text-yellow-200 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-yellow-300 focus-visible:ring-offset-2 focus-visible:ring-offset-black dark:focus-visible:ring-yellow-400" />
             </div>
