@@ -99,7 +99,9 @@ button {
 
   @media (max-width: 480px) {
     .servicios__grid {
-      grid-template-columns: repeat(1, minmax(0, 1fr));
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      text-size-adjust: 60%;
+      text-align: center;
     }
   }
 
@@ -110,7 +112,7 @@ button {
     align-items: center;
     justify-content: center;
     gap: 14px;
-    min-height: 200px;
+    /* min-height: 200px; */
     padding: 26px 24px 28px;
     border-radius: 18px;
     background: #1b1b1d;
@@ -118,7 +120,7 @@ button {
     border: 1px solid rgba(255, 255, 255, 0.06);
     box-shadow: 0 0 0 rgba(0, 0, 0, 0);
     transition: background 0.25s ease, color 0.25s ease, transform 0.25s ease,
-      box-shadow 0.25s ease, border-color 0.25s ease;
+    box-shadow 0.25s ease, border-color 0.25s ease;
     overflow: hidden;
   }
 

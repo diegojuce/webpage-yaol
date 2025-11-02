@@ -128,8 +128,8 @@ export default async function HomePage() {
         </header>
         <div className="servicios__grid">
           {SERVICES.map((service) => (
-            <article key={service.title} tabIndex={0} className="svc-card">
-              <div className="svc-card__icon">{service.icon}</div>
+            <article key={service.title} tabIndex={0} className="svc-card h-[10rem] md:h-[16rem] gap-0 md:gap-2">
+              <div className="svc-card__icon pb-1 md:pb-0">{service.icon}</div>
               <h3 className="svc-card__title">{service.title}</h3>
               <p className="svc-card__subtitle">{service.subtitle}</p>
             </article>
