@@ -1,13 +1,12 @@
 import { AgendarCita } from "components/appointments/agendar-cita";
+import FeaturedProducts from "components/grid/FeaturedProducts";
 import PromoBannerCarousel, {
   type PromoBanner,
 } from "components/grid/promo-banner-carousel";
 import TireSearchCTA from "components/grid/tire-search-cta";
-import Price from "components/price";
 import { getCollectionProducts } from "lib/shopify";
 import type { Product } from "lib/shopify/types";
 import Image from "next/image";
-import Link from "next/link";
 
 const HERO_CTA_CLASSES =
   "relative flex-1 rounded-full bg-yellow-500 px-6 py-3 text-center text-base font-semibold uppercase tracking-[0.25em] text-black transition-transform duration-150 ease-out shadow-[0_0_25px_rgba(250,204,21,0.45)] hover:-translate-y-0.5 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-yellow-300 focus-visible:ring-offset-2 focus-visible:ring-offset-black dark:focus-visible:ring-yellow-400";
@@ -58,7 +57,7 @@ export async function ThreeItemGrid() {
               <h1 className=" text-2xl font-black uppercase tracking-[0.35em] text-white sm:text-4xl lg:text-6xl">
                 LA MEJOR
               </h1>
-              <h2 className="mt-2 text-2xl font-black uppercase tracking-[0.35em] text-yellow-400 sm:text-4xl lg:text-6xl">
+              <h2 className="mt-2 text-2xl font-black uppercase tracking-[0.35em] text-[#ffd34a] sm:text-4xl lg:text-6xl">
                 EXPERIENCIA
               </h2>
               <p className="mt-4 text-sm italic text-neutral-300 sm:text-xl">
@@ -76,7 +75,7 @@ export async function ThreeItemGrid() {
         </div>
       </div>
 
-      {productTiles.length ? (
+      {/* {productTiles.length ? (
         <div className="mt-0 pt-4 overflow-x-auto px-2 sm:px-4 md:px-6 z-100000">
           <div className="mx-auto flex max-w-(--breakpoint-2xl) gap-4 pb-2">
             {productTiles.map((product, index) => (
@@ -116,11 +115,16 @@ export async function ThreeItemGrid() {
             ))}
           </div>
         </div>
-      ) : null}
+      ) : null} */}
 
-      <div className="overflow-hidden rounded-2xl border border-neutral-800 bg-neutral-900/90 shadow-[0_25px_80px_rgba(10,10,10,0.45)] mx-6 mt-2">
+      <div className="overflow-hidden rounded-2xl border border-neutral-800 bg-neutral-900/90  mx-6 mt-2">
         <PromoBannerCarousel banners={PROMO_BANNERS} />
       </div>
+
+      {productTiles?.length ? (
+        <FeaturedProducts productTiles={productTiles} />
+      ) : null}
+
     </section>
   );
 }

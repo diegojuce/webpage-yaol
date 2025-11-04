@@ -8,6 +8,7 @@ import { ReactNode } from "react";
 import { Toaster } from "sonner";
 import "./globals.css";
 
+
 const { SITE_NAME } = process.env;
 
 export const metadata = {
@@ -39,7 +40,7 @@ export default async function RootLayout({
 
   return (
     <html lang="en" className={GeistSans.variable}>
-      <body className="bg-black text-white selection:bg-teal-300 dark:bg-black dark:text-white dark:selection:bg-pink-500 dark:selection:text-white">
+      <body className="bg-[#1c1c19] text-white selection:bg-teal-300 dark:bg-[#1c1c19] dark:text-white dark:selection:bg-pink-500 dark:selection:text-white">
         <CartProvider cartPromise={cart}>
           <Navbar />
           <main>
