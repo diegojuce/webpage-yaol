@@ -59,10 +59,7 @@ button {
     flex-direction: column;
     gap: 1rem;
   }
-
-
-
-
+  
   .servicios__head > p {
     font-size: 0.9rem;
     font-weight: 700;

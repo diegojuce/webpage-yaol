@@ -1,0 +1,69 @@
+/* --- estilos base del botón --- */
+.root {
+    position: relative;
+    border: 0;
+    outline: none;
+    cursor: pointer;
+    color: #fff;
+    transition: .3s ease-in-out;
+    overflow: hidden;
+  }
+
+.clicked {}
+  
+  /* --- elementos internos --- */
+  .label {
+    position: absolute;
+    z-index: 3;
+    left: 50%;
+    top: 50%;
+    font-size: 1.05rem;
+    transform: translate(-50%, -50%);
+    color: #fff;
+    pointer-events: none;
+  }
+  
+  .labelAdd { opacity: 1; }
+  .labelAdded { opacity: 0; }
+  
+  .iconCart {
+    position: absolute;
+    z-index: 2;
+    top: 50%;
+    left: -10%;
+    transform: translate(-50%,-50%);
+  }
+  
+  .iconBox {
+    position: absolute;
+    z-index: 3;
+    top: -20%;
+    left: 52%;
+    transform: translate(-50%,-50%);
+  }
+  
+  /* --- animaciones al hacer click --- */
+  .clicked .iconCart { animation: cart 1.5s ease-in-out forwards; }
+  .clicked .iconBox  { animation: box  1.5s ease-in-out forwards; }
+  .clicked .labelAdd { animation: txt1 1.5s ease-in-out forwards; }
+  .clicked .labelAdded { animation: txt2 1.5s ease-in-out forwards; }
+  
+  /* --- keyframes idénticos a tu ejemplo --- */
+  @keyframes cart {
+    0%   { left: -10%; }
+    40%,60% { left: 50%; }
+    100% { left: 110%; }
+  }
+  @keyframes box {
+    0%,40% { top: -20%; }
+    60% { top: 40%; left: 52%; }
+    100% { top: 40%; left: 112%; }
+  }
+  @keyframes txt1 {
+    0% { opacity: 1; }
+    20%,100% { opacity: 0; }
+  }
+  @keyframes txt2 {
+    0%,80% { opacity: 0; }
+    100% { opacity: 1; }
+  }

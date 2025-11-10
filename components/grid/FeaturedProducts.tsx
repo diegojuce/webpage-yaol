@@ -28,13 +28,13 @@ export default function FeaturedProducts({ productTiles }: { productTiles: Produ
   if (!productTiles?.length) return null;
 
   return (
-    <section className="relative py-10">
+    <section className="relative py-10 bg-neutral-900/90">
       {/* Encabezado estilo mock */}
 
-      <header className="servicios__head">
+      {/* <header className="servicios__head">
         <p>Conoce los</p>
         <h2 id="services-heading">MÁS VENDIDOS</h2>
-      </header>
+      </header> */}
 
       {/* Flecha IZQ (slot para SVG) */}
       <button

@@ -11,7 +11,7 @@ export async function Navbar() {
   const menu = await getMenu("next-js-frontend-header-menu");
 
   return (
-    <nav className="relative flex flex-col gap-4 p-4 lg:px-6 pt-6">
+    <nav className="fixed w-[100vw] z-100 top-0 bg-[#6E6E6E] flex flex-col gap-4 p-4 lg:px-6 pt-6">
       <div className="flex items-center justify-between md:hidden">
         <div className="flex items-center gap-0">
           <Suspense fallback={null}>
