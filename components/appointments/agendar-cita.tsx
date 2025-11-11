@@ -1,5 +1,4 @@
 "use client";
-
 import { Dialog, Transition } from "@headlessui/react";
 import {
   ChevronLeftIcon,
@@ -14,8 +13,10 @@ import {
   type CreateAppointmentPayload,
   type Service,
 } from "lib/api/appointments";
+import { getProduct } from "lib/shopify";
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { addItem } from "../cart/actions";
+import { useCart } from "../cart/cart-context";
 
 type AgendarCitaProps = {
   triggerClassName?: string;
@@ -33,6 +34,186 @@ type SubmitStatus = "idle" | "loading" | "success" | "error";
 const WEEK_DAYS = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"] as const;
 const CALENDAR_SLOTS = 42; // 6 semanas visibles
 const ARRAY_KEYS = ["data", "dates", "fechas", "items", "horarios"] as const;
+
+// same hardcoded sucursales and services arrays as in AppointmentModal (copy as-is)
+const sucursales: Branch[] = [
+  {
+    id: "1",
+    name: "NHS",
+    address: "Av Niños Héroes Esquina, Ignacio Torres #1050",
+  },
+  { id: "2", name: "TEC", address: "Av Tecnológico #7, La Frontera" },
+  { id: "3", name: "BJZ", address: "Av. Benito Juárez #365, La Gloria" },
+  { id: "4", name: "CON", address: "Av. Constitución #1837, Parque Royal" },
+  { id: "5", name: "REY", address: "Av. Enrique Corona Morfin #422" },
+  { id: "6", name: "MAN", address: "Boulevard Miguel de la Madrid #11386" },
+];
+
+const services: Service[] = [
+  { id: "1", name: "FRENOS", duration: 120 },
+  { id: "2", name: "FRENO CON SENSOR ELECTRICO", duration: 180 },
+  { id: "3", name: "LIMPIEZA Y AJUSTE DE FRENOS", duration: 60 },
+  {
+    id: "4",
+    name: "CAMBIO DE SENSOR ABS Y /O SENSOR DE BALATA",
+    duration: 60,
+  },
+  { id: "5", name: "CAMBIO DE PISTON Y REPUESTO", duration: 60 },
+  { id: "6", name: "M.O DE CAMBIO DE BOMBA DE FRENOS", duration: 120 },
+  {
+    id: "7",
+    name: "M.O DE CAMBIO DE BOMBA DE FRENOS ESPECIAL",
+    duration: 180,
+  },
+  { id: "8", name: "RECTIFICADO", duration: 0 },
+  {
+    id: "9",
+    name: "M.O CAMBIO DE CHICOTE DE FRENO EXTERNO",
+    duration: 120,
+  },
+  {
+    id: "10",
+    name: "SERVICIO DE PURGADO(INCLUYE LIQUIDO DE FRENOS)",
+    duration: 60,
+  },
+  { id: "11", name: "SUSPENSION", duration: 0 },
+  { id: "12", name: "BUJE CON SOPORTE", duration: 0 },
+  { id: "13", name: "BUJE EJE TRASERO CON PURGADO", duration: 0 },
+  { id: "14", name: "HORQUILLA", duration: 0 },
+  { id: "15", name: "HORQUILLA CON BARRA", duration: 0 },
+  { id: "16", name: "HORQUILLA CON PUENTE", duration: 0 },
+  { id: "17", name: "CREMALLERA ", duration: 0 },
+  {
+    id: "18",
+    name: "JUNTA HOMOCINETICA O CUBRE POLVO X LADO",
+    duration: 180,
+  },
+  {
+    id: "19",
+    name: "JUNTA HOMOCINETICA O CUBRE POLVO X LADO 4X4",
+    duration: 240,
+  },
+  { id: "20", name: "BALERO CARDAN O CRUCETA", duration: 120 },
+  { id: "21", name: "BUJES DE MUELLE POR LADO", duration: 90 },
+  { id: "22", name: "HULES DE BARRA PAR", duration: 60 },
+  { id: "23", name: "HULES DE BARRA PAR CON PUENTE", duration: 120 },
+  {
+    id: "24",
+    name: "CAMBIO AMORTIGUADORES MACHPERSHON",
+    duration: 120,
+  },
+  {
+    id: "25",
+    name: "CAMBIO AMORTIGUADORES MACHPERSHON DE BASTAGO",
+    duration: 120,
+  },
+  { id: "26", name: "CAMBIO AMORTIGUADORES NORMAL", duration: 60 },
+  { id: "27", name: "DESARME DELANTERO O TRASERO", duration: 0 },
+  { id: "28", name: "ALINEACION ESCANTILLON", duration: 30 },
+  { id: "29", name: "ALINEACION ESCANTILLON CON CAIDA", duration: 60 },
+  { id: "30", name: "ALINEACION 3D", duration: 30 },
+  { id: "31", name: "ALINEACION 3D 2 EJES", duration: 60 },
+  {
+    id: "32",
+    name: "ALINEACION 3D  CON CAIDA DE AMORTIGUADOR",
+    duration: 30,
+  },
+  { id: "33", name: "UNIDADES DE MANO DE OBRA", duration: 0 },
+  {
+    id: "34",
+    name: "AFINACION MAYOR (CARBUCLEAN,BOYA, AFLOJATODO) 4CILINDROS",
+    duration: 120,
+  },
+  {
+    id: "35",
+    name: "AFINACION MAYOR (CARBUCLEAN,BOYA, AFLOJATODO) 6 U 8 CILINDROS",
+    duration: 240,
+  },
+  {
+    id: "36",
+    name: "AFINACION MENOR (CAMBIO DE FILTROS Y ACEITE)",
+    duration: 60,
+  },
+  { id: "37", name: "CAMBIO DE ACEITE MOTOR", duration: 60 },
+  {
+    id: "38",
+    name: "CAMBIO DE ACIETE MOTOR CON TOLVA O SKIDPLATE",
+    duration: 90,
+  },
+  {
+    id: "39",
+    name: "CAMBIO DE ACEITE TRANSMISION ESTANDAR",
+    duration: 90,
+  },
+  { id: "40", name: "CAMBIO DE ACEITE DIFERENCIAL", duration: 90 },
+  { id: "41", name: "MANO DE OBRA ANTICONGELANTE", duration: 0 },
+  { id: "42", name: "SOPORTES MOTOR", duration: 0 },
+  { id: "43", name: "BALERO DOBLE, MAZA BALERO", duration: 120 },
+  { id: "44", name: "CAMBIO EMPAQUE PUNTERIAS", duration: 0 },
+  { id: "45", name: "CAMBIO DE BOMBA DE AGUA", duration: 0 },
+  { id: "46", name: "CAMBIIO BANDAS DE ACCESORIOS", duration: 90 },
+  { id: "47", name: "CAMBIO DE POLEAS O TENSOR", duration: 90 },
+  { id: "48", name: "TRABAJOS ESPECIALES ES POR HORA", duration: 0 },
+  {
+    id: "49",
+    name: "MONTAJE, BALANCEO, VALVULA Y NITROGENO (13-18) PASAJERO",
+    duration: 60,
+  },
+  {
+    id: "50",
+    name: "MONTAJE, BALANCEO, VALVULA Y NITROGENO (19-22) PASAJERO",
+    duration: 90,
+  },
+  {
+    id: "51",
+    name: "MONTAJE, BALANCEO, VALVULA Y NITROGENO PERFIL BAJO",
+    duration: 0,
+  },
+  {
+    id: "52",
+    name: "MONTAJE, BALANCEO, VALVULA Y NITROGENO AT ",
+    duration: 120,
+  },
+  {
+    id: "53",
+    name: "MONTAJE, BALANCEO, VALVULA Y NITROGENO MUD",
+    duration: 120,
+  },
+  { id: "54", name: "BALANCEO RIN ACERO ", duration: 0 },
+  { id: "55", name: "BALANCEO RIN OFF ROAD", duration: 0 },
+  { id: "56", name: "BALANCEO RIN DEPORTIVO", duration: 0 },
+  { id: "57", name: "ROTACION", duration: 0 },
+  { id: "58", name: "REVISION DE VEHICULO", duration: 0 },
+  { id: "59", name: "NITROGENO X LLANTA", duration: 0 },
+  { id: "60", name: "PARCHE NORMAL", duration: 0 },
+  {
+    id: "61",
+    name: "CAMBIO DE BIRLO POR RUEDA SIN DESARMAR",
+    duration: 0,
+  },
+  {
+    id: "62",
+    name: "CAMBIO DE BIRLO POR RUEDA DESARMANDO",
+    duration: 0,
+  },
+  {
+    id: "63",
+    name: "PAQUETE 1 (REVISION,ROTACION Y NITROGENO)",
+    duration: 0,
+  },
+  {
+    id: "64",
+    name: "PAQUETE 2 (REVISION,ROTACION, NITROGENO Y BALANCEO)",
+    duration: 0,
+  },
+  {
+    id: "65",
+    name: "PAQUETE 3 (REVISION,ROTACION, NITROGENO Y BALANCEO, ALINEACION)",
+    duration: 0,
+  },
+  { id: "66", name: "BALATA DELATNERA", duration: 180 },
+  { id: "67", name: "BALATA TRASERA", duration: 180 },
+];
 
 export function AgendarCita({
   triggerClassName,
@@ -104,185 +285,6 @@ function AppointmentModal({
     [currentMonth]
   );
 
-  const branches: Branch[] = [
-    {
-      id: "1",
-      name: "NHS",
-      address: "Av Niños Héroes Esquina, Ignacio Torres #1050",
-    },
-    { id: "2", name: "TEC", address: "Av Tecnológico #7, La Frontera" },
-    { id: "3", name: "BJ", address: "Av. Benito Juárez #365, La Gloria" },
-    { id: "4", name: "CON", address: "Av. Constitución #1837, Parque Royal" },
-    { id: "5", name: "REY", address: "Av. Enrique Corona Morfin #422" },
-    { id: "6", name: "MAN", address: "Boulevard Miguel de la Madrid #11386" },
-  ];
-
-  const services: Service[] = [
-    { id: "1", name: "FRENOS", duration: 120 },
-    { id: "2", name: "FRENO CON SENSOR ELECTRICO", duration: 180 },
-    { id: "3", name: "LIMPIEZA Y AJUSTE DE FRENOS", duration: 60 },
-    {
-      id: "4",
-      name: "CAMBIO DE SENSOR ABS Y /O SENSOR DE BALATA",
-      duration: 60,
-    },
-    { id: "5", name: "CAMBIO DE PISTON Y REPUESTO", duration: 60 },
-    { id: "6", name: "M.O DE CAMBIO DE BOMBA DE FRENOS", duration: 120 },
-    {
-      id: "7",
-      name: "M.O DE CAMBIO DE BOMBA DE FRENOS ESPECIAL",
-      duration: 180,
-    },
-    { id: "8", name: "RECTIFICADO", duration: 0 },
-    {
-      id: "9",
-      name: "M.O CAMBIO DE CHICOTE DE FRENO EXTERNO",
-      duration: 120,
-    },
-    {
-      id: "10",
-      name: "SERVICIO DE PURGADO(INCLUYE LIQUIDO DE FRENOS)",
-      duration: 60,
-    },
-    { id: "11", name: "SUSPENSION", duration: 0 },
-    { id: "12", name: "BUJE CON SOPORTE", duration: 0 },
-    { id: "13", name: "BUJE EJE TRASERO CON PURGADO", duration: 0 },
-    { id: "14", name: "HORQUILLA", duration: 0 },
-    { id: "15", name: "HORQUILLA CON BARRA", duration: 0 },
-    { id: "16", name: "HORQUILLA CON PUENTE", duration: 0 },
-    { id: "17", name: "CREMALLERA ", duration: 0 },
-    {
-      id: "18",
-      name: "JUNTA HOMOCINETICA O CUBRE POLVO X LADO",
-      duration: 180,
-    },
-    {
-      id: "19",
-      name: "JUNTA HOMOCINETICA O CUBRE POLVO X LADO 4X4",
-      duration: 240,
-    },
-    { id: "20", name: "BALERO CARDAN O CRUCETA", duration: 120 },
-    { id: "21", name: "BUJES DE MUELLE POR LADO", duration: 90 },
-    { id: "22", name: "HULES DE BARRA PAR", duration: 60 },
-    { id: "23", name: "HULES DE BARRA PAR CON PUENTE", duration: 120 },
-    {
-      id: "24",
-      name: "CAMBIO AMORTIGUADORES MACHPERSHON",
-      duration: 120,
-    },
-    {
-      id: "25",
-      name: "CAMBIO AMORTIGUADORES MACHPERSHON DE BASTAGO",
-      duration: 120,
-    },
-    { id: "26", name: "CAMBIO AMORTIGUADORES NORMAL", duration: 60 },
-    { id: "27", name: "DESARME DELANTERO O TRASERO", duration: 0 },
-    { id: "28", name: "ALINEACION ESCANTILLON", duration: 30 },
-    { id: "29", name: "ALINEACION ESCANTILLON CON CAIDA", duration: 60 },
-    { id: "30", name: "ALINEACION 3D", duration: 30 },
-    { id: "31", name: "ALINEACION 3D 2 EJES", duration: 60 },
-    {
-      id: "32",
-      name: "ALINEACION 3D  CON CAIDA DE AMORTIGUADOR",
-      duration: 30,
-    },
-    { id: "33", name: "UNIDADES DE MANO DE OBRA", duration: 0 },
-    {
-      id: "34",
-      name: "AFINACION MAYOR (CARBUCLEAN,BOYA, AFLOJATODO) 4CILINDROS",
-      duration: 120,
-    },
-    {
-      id: "35",
-      name: "AFINACION MAYOR (CARBUCLEAN,BOYA, AFLOJATODO) 6 U 8 CILINDROS",
-      duration: 240,
-    },
-    {
-      id: "36",
-      name: "AFINACION MENOR (CAMBIO DE FILTROS Y ACEITE)",
-      duration: 60,
-    },
-    { id: "37", name: "CAMBIO DE ACEITE MOTOR", duration: 60 },
-    {
-      id: "38",
-      name: "CAMBIO DE ACIETE MOTOR CON TOLVA O SKIDPLATE",
-      duration: 90,
-    },
-    {
-      id: "39",
-      name: "CAMBIO DE ACEITE TRANSMISION ESTANDAR",
-      duration: 90,
-    },
-    { id: "40", name: "CAMBIO DE ACEITE DIFERENCIAL", duration: 90 },
-    { id: "41", name: "MANO DE OBRA ANTICONGELANTE", duration: 0 },
-    { id: "42", name: "SOPORTES MOTOR", duration: 0 },
-    { id: "43", name: "BALERO DOBLE, MAZA BALERO", duration: 120 },
-    { id: "44", name: "CAMBIO EMPAQUE PUNTERIAS", duration: 0 },
-    { id: "45", name: "CAMBIO DE BOMBA DE AGUA", duration: 0 },
-    { id: "46", name: "CAMBIIO BANDAS DE ACCESORIOS", duration: 90 },
-    { id: "47", name: "CAMBIO DE POLEAS O TENSOR", duration: 90 },
-    { id: "48", name: "TRABAJOS ESPECIALES ES POR HORA", duration: 0 },
-    {
-      id: "49",
-      name: "MONTAJE, BALANCEO, VALVULA Y NITROGENO (13-18) PASAJERO",
-      duration: 60,
-    },
-    {
-      id: "50",
-      name: "MONTAJE, BALANCEO, VALVULA Y NITROGENO (19-22) PASAJERO",
-      duration: 90,
-    },
-    {
-      id: "51",
-      name: "MONTAJE, BALANCEO, VALVULA Y NITROGENO PERFIL BAJO",
-      duration: 0,
-    },
-    {
-      id: "52",
-      name: "MONTAJE, BALANCEO, VALVULA Y NITROGENO AT ",
-      duration: 120,
-    },
-    {
-      id: "53",
-      name: "MONTAJE, BALANCEO, VALVULA Y NITROGENO MUD",
-      duration: 120,
-    },
-    { id: "54", name: "BALANCEO RIN ACERO ", duration: 0 },
-    { id: "55", name: "BALANCEO RIN OFF ROAD", duration: 0 },
-    { id: "56", name: "BALANCEO RIN DEPORTIVO", duration: 0 },
-    { id: "57", name: "ROTACION", duration: 0 },
-    { id: "58", name: "REVISION DE VEHICULO", duration: 0 },
-    { id: "59", name: "NITROGENO X LLANTA", duration: 0 },
-    { id: "60", name: "PARCHE NORMAL", duration: 0 },
-    {
-      id: "61",
-      name: "CAMBIO DE BIRLO POR RUEDA SIN DESARMAR",
-      duration: 0,
-    },
-    {
-      id: "62",
-      name: "CAMBIO DE BIRLO POR RUEDA DESARMANDO",
-      duration: 0,
-    },
-    {
-      id: "63",
-      name: "PAQUETE 1 (REVISION,ROTACION Y NITROGENO)",
-      duration: 0,
-    },
-    {
-      id: "64",
-      name: "PAQUETE 2 (REVISION,ROTACION, NITROGENO Y BALANCEO)",
-      duration: 0,
-    },
-    {
-      id: "65",
-      name: "PAQUETE 3 (REVISION,ROTACION, NITROGENO Y BALANCEO, ALINEACION)",
-      duration: 0,
-    },
-    { id: "66", name: "BALATA DELATNERA", duration: 180 },
-    { id: "67", name: "BALATA TRASERA", duration: 180 },
-  ];
-
   // Reset form state when the modal closes.
   useEffect(() => {
     if (!isOpen) {
@@ -300,9 +302,9 @@ function AppointmentModal({
     }
   }, [isOpen]);
 
-  // Load branches when modal opens.
+  // Load sucursales when modal opens.
   // useEffect(() => {
-  //   if (!isOpen || branchesLoading || branches.length) {
+  //   if (!isOpen || branchesLoading || sucursales.length) {
   //     return;
   //   }
   //   setBranchesLoading(true);
@@ -317,7 +319,7 @@ function AppointmentModal({
   //       ),
   //     )
   //     .finally(() => setBranchesLoading(false));
-  // }, [isOpen, branches.length, branchesLoading]);
+  // }, [isOpen, sucursales.length, branchesLoading]);
 
   // Load services once when needed.
   // useEffect(() => {
@@ -371,7 +373,7 @@ function AppointmentModal({
           ?.duration || 0
       ),
       String(
-        branches.find((service) => service.id === selectedBranchId)?.name || 0
+        sucursales.find((service) => service.id === selectedBranchId)?.name || 0
       ),
       selectedDate
     )
@@ -500,7 +502,7 @@ function AppointmentModal({
                           className="w-full rounded-xl border border-neutral-700 bg-neutral-900/80 px-4 py-3 text-sm text-white shadow-[0_10px_30px_rgba(0,0,0,0.35)] focus:border-yellow-400 focus:outline-none"
                         >
                           <option value="">Selecciona una sucursal</option>
-                          {branches.map((branch) => (
+                          {sucursales.map((branch) => (
                             <option key={branch.id} value={branch.id}>
                               {branch.name}
                               {branch.address ? ` — ${branch.address}` : ""}
@@ -774,6 +776,16 @@ function AppointmentModal({
   );
 }
 
+const instalationIDs = {
+  tec: "gid://shopify/ProductVariant/45765059444935",
+  bjz: "gid://shopify/ProductVariant/45765059477703",
+  con: "gid://shopify/ProductVariant/45765059510471",
+  nhs: "gid://shopify/ProductVariant/45765059543239",
+  rey: "gid://shopify/ProductVariant/45765059576007",
+  man: "gid://shopify/ProductVariant/45765059608775",
+  tap: "gid://shopify/ProductVariant/45765059641543",
+};
+
 export function AppointmentEmbedded({ onClose }: { onClose: () => void }) {
   // replicate the same local state as in AppointmentModal:
   const [branchesLoading, setBranchesLoading] = useState(false);
@@ -792,188 +804,20 @@ export function AppointmentEmbedded({ onClose }: { onClose: () => void }) {
   const [timesError, setTimesError] = useState<string | null>(null);
   const [submitStatus, setSubmitStatus] = useState<SubmitStatus>("idle");
   const [submitMessage, setSubmitMessage] = useState<string | null>(null);
-  const [currentMonth, setCurrentMonth] = useState(() => startOfMonth(new Date()));
+  const [currentMonth, setCurrentMonth] = useState(() =>
+    startOfMonth(new Date())
+  );
   const todayISO = useMemo(() => formatISODate(new Date()), []);
-  const availableDateSet = useMemo(() => new Set(availableDates), [availableDates]);
-  const calendarDays = useMemo(() => buildCalendarDays(currentMonth), [currentMonth]);
-  // same hardcoded branches and services arrays as in AppointmentModal (copy as-is)
-  const branches: Branch[] = [
-    {
-      id: "1",
-      name: "NHS",
-      address: "Av Niños Héroes Esquina, Ignacio Torres #1050",
-    },
-    { id: "2", name: "TEC", address: "Av Tecnológico #7, La Frontera" },
-    { id: "3", name: "BJ", address: "Av. Benito Juárez #365, La Gloria" },
-    { id: "4", name: "CON", address: "Av. Constitución #1837, Parque Royal" },
-    { id: "5", name: "REY", address: "Av. Enrique Corona Morfin #422" },
-    { id: "6", name: "MAN", address: "Boulevard Miguel de la Madrid #11386" },
-  ];
-  const services: Service[] = [
-    { id: "1", name: "FRENOS", duration: 120 },
-    { id: "2", name: "FRENO CON SENSOR ELECTRICO", duration: 180 },
-    { id: "3", name: "LIMPIEZA Y AJUSTE DE FRENOS", duration: 60 },
-    {
-      id: "4",
-      name: "CAMBIO DE SENSOR ABS Y /O SENSOR DE BALATA",
-      duration: 60,
-    },
-    { id: "5", name: "CAMBIO DE PISTON Y REPUESTO", duration: 60 },
-    { id: "6", name: "M.O DE CAMBIO DE BOMBA DE FRENOS", duration: 120 },
-    {
-      id: "7",
-      name: "M.O DE CAMBIO DE BOMBA DE FRENOS ESPECIAL",
-      duration: 180,
-    },
-    { id: "8", name: "RECTIFICADO", duration: 0 },
-    {
-      id: "9",
-      name: "M.O CAMBIO DE CHICOTE DE FRENO EXTERNO",
-      duration: 120,
-    },
-    {
-      id: "10",
-      name: "SERVICIO DE PURGADO(INCLUYE LIQUIDO DE FRENOS)",
-      duration: 60,
-    },
-    { id: "11", name: "SUSPENSION", duration: 0 },
-    { id: "12", name: "BUJE CON SOPORTE", duration: 0 },
-    { id: "13", name: "BUJE EJE TRASERO CON PURGADO", duration: 0 },
-    { id: "14", name: "HORQUILLA", duration: 0 },
-    { id: "15", name: "HORQUILLA CON BARRA", duration: 0 },
-    { id: "16", name: "HORQUILLA CON PUENTE", duration: 0 },
-    { id: "17", name: "CREMALLERA ", duration: 0 },
-    {
-      id: "18",
-      name: "JUNTA HOMOCINETICA O CUBRE POLVO X LADO",
-      duration: 180,
-    },
-    {
-      id: "19",
-      name: "JUNTA HOMOCINETICA O CUBRE POLVO X LADO 4X4",
-      duration: 240,
-    },
-    { id: "20", name: "BALERO CARDAN O CRUCETA", duration: 120 },
-    { id: "21", name: "BUJES DE MUELLE POR LADO", duration: 90 },
-    { id: "22", name: "HULES DE BARRA PAR", duration: 60 },
-    { id: "23", name: "HULES DE BARRA PAR CON PUENTE", duration: 120 },
-    {
-      id: "24",
-      name: "CAMBIO AMORTIGUADORES MACHPERSHON",
-      duration: 120,
-    },
-    {
-      id: "25",
-      name: "CAMBIO AMORTIGUADORES MACHPERSHON DE BASTAGO",
-      duration: 120,
-    },
-    { id: "26", name: "CAMBIO AMORTIGUADORES NORMAL", duration: 60 },
-    { id: "27", name: "DESARME DELANTERO O TRASERO", duration: 0 },
-    { id: "28", name: "ALINEACION ESCANTILLON", duration: 30 },
-    { id: "29", name: "ALINEACION ESCANTILLON CON CAIDA", duration: 60 },
-    { id: "30", name: "ALINEACION 3D", duration: 30 },
-    { id: "31", name: "ALINEACION 3D 2 EJES", duration: 60 },
-    {
-      id: "32",
-      name: "ALINEACION 3D  CON CAIDA DE AMORTIGUADOR",
-      duration: 30,
-    },
-    { id: "33", name: "UNIDADES DE MANO DE OBRA", duration: 0 },
-    {
-      id: "34",
-      name: "AFINACION MAYOR (CARBUCLEAN,BOYA, AFLOJATODO) 4CILINDROS",
-      duration: 120,
-    },
-    {
-      id: "35",
-      name: "AFINACION MAYOR (CARBUCLEAN,BOYA, AFLOJATODO) 6 U 8 CILINDROS",
-      duration: 240,
-    },
-    {
-      id: "36",
-      name: "AFINACION MENOR (CAMBIO DE FILTROS Y ACEITE)",
-      duration: 60,
-    },
-    { id: "37", name: "CAMBIO DE ACEITE MOTOR", duration: 60 },
-    {
-      id: "38",
-      name: "CAMBIO DE ACIETE MOTOR CON TOLVA O SKIDPLATE",
-      duration: 90,
-    },
-    {
-      id: "39",
-      name: "CAMBIO DE ACEITE TRANSMISION ESTANDAR",
-      duration: 90,
-    },
-    { id: "40", name: "CAMBIO DE ACEITE DIFERENCIAL", duration: 90 },
-    { id: "41", name: "MANO DE OBRA ANTICONGELANTE", duration: 0 },
-    { id: "42", name: "SOPORTES MOTOR", duration: 0 },
-    { id: "43", name: "BALERO DOBLE, MAZA BALERO", duration: 120 },
-    { id: "44", name: "CAMBIO EMPAQUE PUNTERIAS", duration: 0 },
-    { id: "45", name: "CAMBIO DE BOMBA DE AGUA", duration: 0 },
-    { id: "46", name: "CAMBIIO BANDAS DE ACCESORIOS", duration: 90 },
-    { id: "47", name: "CAMBIO DE POLEAS O TENSOR", duration: 90 },
-    { id: "48", name: "TRABAJOS ESPECIALES ES POR HORA", duration: 0 },
-    {
-      id: "49",
-      name: "MONTAJE, BALANCEO, VALVULA Y NITROGENO (13-18) PASAJERO",
-      duration: 60,
-    },
-    {
-      id: "50",
-      name: "MONTAJE, BALANCEO, VALVULA Y NITROGENO (19-22) PASAJERO",
-      duration: 90,
-    },
-    {
-      id: "51",
-      name: "MONTAJE, BALANCEO, VALVULA Y NITROGENO PERFIL BAJO",
-      duration: 0,
-    },
-    {
-      id: "52",
-      name: "MONTAJE, BALANCEO, VALVULA Y NITROGENO AT ",
-      duration: 120,
-    },
-    {
-      id: "53",
-      name: "MONTAJE, BALANCEO, VALVULA Y NITROGENO MUD",
-      duration: 120,
-    },
-    { id: "54", name: "BALANCEO RIN ACERO ", duration: 0 },
-    { id: "55", name: "BALANCEO RIN OFF ROAD", duration: 0 },
-    { id: "56", name: "BALANCEO RIN DEPORTIVO", duration: 0 },
-    { id: "57", name: "ROTACION", duration: 0 },
-    { id: "58", name: "REVISION DE VEHICULO", duration: 0 },
-    { id: "59", name: "NITROGENO X LLANTA", duration: 0 },
-    { id: "60", name: "PARCHE NORMAL", duration: 0 },
-    {
-      id: "61",
-      name: "CAMBIO DE BIRLO POR RUEDA SIN DESARMAR",
-      duration: 0,
-    },
-    {
-      id: "62",
-      name: "CAMBIO DE BIRLO POR RUEDA DESARMANDO",
-      duration: 0,
-    },
-    {
-      id: "63",
-      name: "PAQUETE 1 (REVISION,ROTACION Y NITROGENO)",
-      duration: 0,
-    },
-    {
-      id: "64",
-      name: "PAQUETE 2 (REVISION,ROTACION, NITROGENO Y BALANCEO)",
-      duration: 0,
-    },
-    {
-      id: "65",
-      name: "PAQUETE 3 (REVISION,ROTACION, NITROGENO Y BALANCEO, ALINEACION)",
-      duration: 0,
-    },
-    { id: "66", name: "BALATA DELATNERA", duration: 180 },
-    { id: "67", name: "BALATA TRASERA", duration: 180 },
-  ];
+  const availableDateSet = useMemo(
+    () => new Set(availableDates),
+    [availableDates]
+  );
+  const calendarDays = useMemo(
+    () => buildCalendarDays(currentMonth),
+    [currentMonth]
+  );
+  const { addCartItem } = useCart();
+
   // same useEffects for resetting (omit the isOpen guard), fetching availableTimes, etc.
   useEffect(() => {
     setSelectedBranchId("");
@@ -1004,7 +848,7 @@ export function AppointmentEmbedded({ onClose }: { onClose: () => void }) {
           ?.duration || 0
       ),
       String(
-        branches.find((service) => service.id === selectedBranchId)?.name || 0
+        sucursales.find((service) => service.id === selectedBranchId)?.name || 0
       ),
       selectedDate
     )
@@ -1050,34 +894,56 @@ export function AppointmentEmbedded({ onClose }: { onClose: () => void }) {
     if (selectedServiceId) {
       payload.serviceId = selectedServiceId;
     }
+    const sucursalName = sucursales.find(
+      (b) => b.id === selectedBranchId
+    )?.name;
+    const sucursalCode = sucursalName ? sucursalName.toLowerCase() : undefined;
+    const variantId = sucursalCode
+      ? instalationIDs[
+          (sucursalCode in instalationIDs
+            ? sucursalCode
+            : "") as keyof typeof instalationIDs
+        ]
+      : undefined;
+    if (!variantId) {
+      setSubmitStatus("error");
+      setSubmitMessage(
+        "No se pudo resolver el producto de instalación para la sucursal seleccionada."
+      );
+      return;
+    }
+    const sucProduct = await getProduct(`${sucursalCode}-inst-00`);
+    if (!sucProduct) {
+      setSubmitStatus("error");
+      setSubmitMessage("No se pudo obtener el producto de instalación.");
+      return;
+    }
+    const { variants } = sucProduct;
+    const defaultVariantId =
+      variants.length === 1 ? variants[0]?.id : undefined;
+    const selectedVariantId = defaultVariantId;
+    const finalVariant = variants.find(
+      (variant) => variant.id === selectedVariantId
+    );
+    if (!finalVariant) {
+      setSubmitStatus("error");
+      setSubmitMessage(
+        "No se pudo obtener la variante del producto de instalación."
+      );
+      return;
+    }
     try {
       // await createAppointment(payload);
       setSubmitStatus("success");
       setSubmitMessage("¡Tu cita ha sido confirmada con éxito!");
-      switch (selectedBranchId) {
-        case 'tec':
-          addItem(null, {selectedVariantId: "gid://shopify/ProductVariant/45765059444935", quantity: 1})
-          break;
-        case 'bjz':
-          addItem(null, {selectedVariantId: "gid://shopify/ProductVariant/45765059477703", quantity: 1})
-          break;
-        case 'con':
-          addItem(null, {selectedVariantId: "gid://shopify/ProductVariant/45765059510471", quantity: 1})
-          break;
-        case 'nhs':
-          addItem(null, {selectedVariantId: "gid://shopify/ProductVariant/45765059543239", quantity: 1})
-          break;
-        case 'rey':
-          addItem(null, {selectedVariantId: "gid://shopify/ProductVariant/45765059576007", quantity: 1})
-          break;
-        case 'man':
-          addItem(null, {selectedVariantId: "gid://shopify/ProductVariant/45765059608775", quantity: 1})
-          break;
-        case 'tap':
-          addItem(null, {selectedVariantId: "gid://shopify/ProductVariant/45765059641543", quantity: 1})
-          break;
-      }
-      
+      console.debug("Appointment created:", sucursalCode, variantId);
+      await addItem(null, {
+        selectedVariantId: variantId,
+        quantity: 1,
+      }).then((r) => {
+        if (r) console.debug("Added to cart:", r);
+      });
+      addCartItem(finalVariant, sucProduct, 1);
     } catch (error) {
       setSubmitStatus("error");
       setSubmitMessage(
@@ -1120,13 +986,11 @@ export function AppointmentEmbedded({ onClose }: { onClose: () => void }) {
             <div className="space-y-3">
               <select
                 value={selectedBranchId}
-                onChange={(event) =>
-                  handleBranchChange(event.target.value)
-                }
+                onChange={(event) => handleBranchChange(event.target.value)}
                 className="w-full rounded-xl border border-neutral-700 bg-neutral-900/80 px-4 py-3 text-sm text-white shadow-[0_10px_30px_rgba(0,0,0,0.35)] focus:border-yellow-400 focus:outline-none"
               >
                 <option value="">Selecciona una sucursal</option>
-                {branches.map((branch) => (
+                {sucursales.map((branch) => (
                   <option key={branch.id} value={branch.id}>
                     {branch.name}
                     {branch.address ? ` — ${branch.address}` : ""}
@@ -1139,16 +1003,12 @@ export function AppointmentEmbedded({ onClose }: { onClose: () => void }) {
                 </p>
               ) : null}
               {branchesError ? (
-                <p className="text-xs text-red-400">
-                  {branchesError}
-                </p>
+                <p className="text-xs text-red-400">{branchesError}</p>
               ) : null}
             </div>
           </section>
           {servicesLoading ? (
-            <p className="text-xs text-neutral-400">
-              Cargando servicios...
-            </p>
+            <p className="text-xs text-neutral-400">Cargando servicios...</p>
           ) : null}
           {servicesError ? (
             <p className="text-xs text-red-400">{servicesError}</p>
@@ -1163,14 +1023,10 @@ export function AppointmentEmbedded({ onClose }: { onClose: () => void }) {
               <div className="space-y-3">
                 <select
                   value={selectedServiceId}
-                  onChange={(event) =>
-                    setSelectedServiceId(event.target.value)
-                  }
+                  onChange={(event) => setSelectedServiceId(event.target.value)}
                   className="w-full rounded-xl border border-neutral-700 bg-neutral-900/80 px-4 py-3 text-sm text-white focus:border-yellow-400 focus:outline-none"
                 >
-                  <option value="">
-                    Selecciona un servicio (opcional)
-                  </option>
+                  <option value="">Selecciona un servicio (opcional)</option>
                   {services.map((service) => (
                     <option key={service.id} value={service.id}>
                       {service.name} · {service.duration} min
@@ -1178,8 +1034,8 @@ export function AppointmentEmbedded({ onClose }: { onClose: () => void }) {
                   ))}
                 </select>
                 <p className="text-xs text-neutral-400">
-                  El servicio seleccionado puede ajustar la
-                  disponibilidad de horarios.
+                  El servicio seleccionado puede ajustar la disponibilidad de
+                  horarios.
                 </p>
               </div>
             </section>
@@ -1189,12 +1045,8 @@ export function AppointmentEmbedded({ onClose }: { onClose: () => void }) {
               Requisitos
             </p>
             <ul className="mt-2 space-y-1">
-              <li>
-                Selecciona sucursal, fecha y horario disponibles.
-              </li>
-              <li>
-                Confirma tu cita y guarda el número de confirmación.
-              </li>
+              <li>Selecciona sucursal, fecha y horario disponibles.</li>
+              <li>Confirma tu cita y guarda el número de confirmación.</li>
               <li>
                 Presenta tu cita en la sucursal elegida el día y hora
                 seleccionados.
@@ -1216,9 +1068,7 @@ export function AppointmentEmbedded({ onClose }: { onClose: () => void }) {
               <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  onClick={() =>
-                    setCurrentMonth(addMonths(currentMonth, -1))
-                  }
+                  onClick={() => setCurrentMonth(addMonths(currentMonth, -1))}
                   className="rounded-full border border-neutral-700 p-1 text-neutral-300 transition hover:border-yellow-400 hover:text-yellow-400 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-yellow-300 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-900"
                   aria-label="Mes anterior"
                 >
@@ -1226,9 +1076,7 @@ export function AppointmentEmbedded({ onClose }: { onClose: () => void }) {
                 </button>
                 <button
                   type="button"
-                  onClick={() =>
-                    setCurrentMonth(addMonths(currentMonth, 1))
-                  }
+                  onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
                   className="rounded-full border border-neutral-700 p-1 text-neutral-300 transition hover:border-yellow-400 hover:text-yellow-400 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-yellow-300 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-900"
                   aria-label="Mes siguiente"
                 >
@@ -1250,8 +1098,7 @@ export function AppointmentEmbedded({ onClose }: { onClose: () => void }) {
                   return <span key={day.key} className="h-10" />;
                 }
                 const isPast = day.iso < todayISO;
-                const isDisabled =
-                  !selectedBranchId || isPast || datesLoading;
+                const isDisabled = !selectedBranchId || isPast || datesLoading;
                 const isSelected = selectedDate === day.iso;
                 return (
                   <button
@@ -1264,8 +1111,8 @@ export function AppointmentEmbedded({ onClose }: { onClose: () => void }) {
                       isSelected
                         ? "border-yellow-400 bg-yellow-400 text-black shadow-[0_12px_30px_rgba(250,204,21,0.35)]"
                         : isDisabled
-                        ? "border-neutral-800 text-neutral-600"
-                        : "border-yellow-500/60 bg-yellow-500/10 text-yellow-200 hover:bg-yellow-400/20",
+                          ? "border-neutral-800 text-neutral-600"
+                          : "border-yellow-500/60 bg-yellow-500/10 text-yellow-200 hover:bg-yellow-400/20",
                       datesLoading && "opacity-60"
                     )}
                   >
@@ -1280,9 +1127,7 @@ export function AppointmentEmbedded({ onClose }: { onClose: () => void }) {
               </p>
             ) : null}
             {datesError ? (
-              <p className="mt-3 text-xs text-red-400">
-                {datesError}
-              </p>
+              <p className="mt-3 text-xs text-red-400">{datesError}</p>
             ) : null}
           </section>
           <section className="rounded-2xl border border-neutral-800/80 bg-neutral-900/70 p-5">
@@ -1302,14 +1147,12 @@ export function AppointmentEmbedded({ onClose }: { onClose: () => void }) {
             {timesError ? (
               <p className="text-xs text-red-400">{timesError}</p>
             ) : null}
-            {!timesLoading &&
-              !availableTimes.length &&
-              selectedDate ? (
-                <p className="text-xs text-neutral-400">
-                  No hay horarios disponibles para esta fecha. Prueba
-                  con otra combinación.
-                </p>
-              ) : null}
+            {!timesLoading && !availableTimes.length && selectedDate ? (
+              <p className="text-xs text-neutral-400">
+                No hay horarios disponibles para esta fecha. Prueba con otra
+                combinación.
+              </p>
+            ) : null}
             <div className="mt-4 flex flex-wrap gap-2">
               {availableTimes.map((time) => {
                 const isSelected = selectedTime === time;
@@ -1341,8 +1184,8 @@ export function AppointmentEmbedded({ onClose }: { onClose: () => void }) {
                 submitStatus === "success"
                   ? "border-green-500/60 bg-green-500/10 text-green-200"
                   : submitStatus === "error"
-                  ? "border-red-500/60 bg-red-500/10 text-red-200"
-                  : "border-yellow-500/60 bg-yellow-500/10 text-yellow-200"
+                    ? "border-red-500/60 bg-red-500/10 text-red-200"
+                    : "border-yellow-500/60 bg-yellow-500/10 text-yellow-200"
               )}
             >
               {submitMessage}
@@ -1367,9 +1210,7 @@ export function AppointmentEmbedded({ onClose }: { onClose: () => void }) {
                   : "bg-yellow-500 shadow-[0_18px_40px_rgba(250,204,21,0.35)] hover:translate-y-[-2px]"
               )}
             >
-              {submitStatus === "loading"
-                ? "Confirmando..."
-                : "Confirmar cita"}
+              {submitStatus === "loading" ? "Confirmando..." : "Confirmar cita"}
             </button>
           </div>
         </div>

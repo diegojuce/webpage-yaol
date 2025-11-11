@@ -14,13 +14,18 @@ import { redirect } from "next/navigation";
 
 export async function addItem(
   prevState: any,
-  payload: { selectedVariantId: string | undefined; quantity: number },
+  payload: { selectedVariantId: string | undefined; quantity: number }
 ) {
   const { selectedVariantId, quantity } = payload;
 
   if (!selectedVariantId || quantity < 1) {
     return "Error adding item to cart";
   }
+  console.debug(
+    "[actions][addItem] Adding to cart:",
+    selectedVariantId,
+    quantity
+  );
 
   try {
     await addToCart([{ merchandiseId: selectedVariantId, quantity }]);
@@ -39,7 +44,7 @@ export async function removeItem(prevState: any, merchandiseId: string) {
     }
 
     const lineItem = cart.lines.find(
-      (line) => line.merchandise.id === merchandiseId,
+      (line) => line.merchandise.id === merchandiseId
     );
 
     if (lineItem && lineItem.id) {
@@ -58,7 +63,7 @@ export async function updateItemQuantity(
   payload: {
     merchandiseId: string;
     quantity: number;
-  },
+  }
 ) {
   const { merchandiseId, quantity } = payload;
 
@@ -70,7 +75,7 @@ export async function updateItemQuantity(
     }
 
     const lineItem = cart.lines.find(
-      (line) => line.merchandise.id === merchandiseId,
+      (line) => line.merchandise.id === merchandiseId
     );
 
     if (lineItem && lineItem.id) {
@@ -106,7 +111,6 @@ export async function createCartAndSetCookie() {
   let cart = await createCart();
   (await cookies()).set("cartId", cart.id!);
 }
-
 
 // switch (sucursal) {
 //   case 'tec':

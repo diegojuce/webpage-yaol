@@ -65,13 +65,13 @@ export function AddToCart({ product }: { product: Product }) {
 
   const variant = variants.find((variant: ProductVariant) =>
     variant.selectedOptions.every(
-      (option) => option.value === state[option.name.toLowerCase()],
-    ),
+      (option) => option.value === state[option.name.toLowerCase()]
+    )
   );
   const defaultVariantId = variants.length === 1 ? variants[0]?.id : undefined;
   const selectedVariantId = variant?.id || defaultVariantId;
   const finalVariant = variants.find(
-    (variant) => variant.id === selectedVariantId,
+    (variant) => variant.id === selectedVariantId
   );
   const availableQuantity =
     typeof finalVariant?.quantityAvailable === "number"
@@ -132,6 +132,7 @@ export function AddToCart({ product }: { product: Product }) {
         if (!selectedVariantId || !finalVariant || quantity <= 0) {
           return;
         }
+        console.debug("[add-to-cart] Adding to cart:", selectedVariantId);
 
         addCartItem(finalVariant, product, quantity);
         await formAction({ selectedVariantId, quantity });

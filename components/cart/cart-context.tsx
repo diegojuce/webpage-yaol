@@ -38,7 +38,7 @@ function calculateItemCost(quantity: number, price: string): string {
 
 function updateCartItem(
   item: CartItem,
-  updateType: UpdateType,
+  updateType: UpdateType
 ): CartItem | null {
   if (updateType === "delete") return null;
 
@@ -49,7 +49,7 @@ function updateCartItem(
   const singleItemAmount = Number(item.cost.totalAmount.amount) / item.quantity;
   const newTotalAmount = calculateItemCost(
     newQuantity,
-    singleItemAmount.toString(),
+    singleItemAmount.toString()
   );
 
   return {
@@ -69,7 +69,7 @@ function createOrUpdateCartItem(
   existingItem: CartItem | undefined,
   variant: ProductVariant,
   product: Product,
-  quantityToAdd: number,
+  quantityToAdd: number
 ): CartItem {
   const baseQuantity = existingItem ? existingItem.quantity : 0;
   const newQuantity = baseQuantity + quantityToAdd;
@@ -99,12 +99,12 @@ function createOrUpdateCartItem(
 }
 
 function updateCartTotals(
-  lines: CartItem[],
+  lines: CartItem[]
 ): Pick<Cart, "totalQuantity" | "cost"> {
   const totalQuantity = lines.reduce((sum, item) => sum + item.quantity, 0);
   const totalAmount = lines.reduce(
     (sum, item) => sum + Number(item.cost.totalAmount.amount),
-    0,
+    0
   );
   const currencyCode = lines[0]?.cost.totalAmount.currencyCode ?? "USD";
 
@@ -142,7 +142,7 @@ function cartReducer(state: Cart | undefined, action: CartAction): Cart {
         .map((item) =>
           item.merchandise.id === merchandiseId
             ? updateCartItem(item, updateType)
-            : item,
+            : item
         )
         .filter(Boolean) as CartItem[];
 
@@ -167,18 +167,18 @@ function cartReducer(state: Cart | undefined, action: CartAction): Cart {
     case "ADD_ITEM": {
       const { variant, product, quantity } = action.payload;
       const existingItem = currentCart.lines.find(
-        (item) => item.merchandise.id === variant.id,
+        (item) => item.merchandise.id === variant.id
       );
       const updatedItem = createOrUpdateCartItem(
         existingItem,
         variant,
         product,
-        quantity,
+        quantity
       );
 
       const updatedLines = existingItem
         ? currentCart.lines.map((item) =>
-            item.merchandise.id === variant.id ? updatedItem : item,
+            item.merchandise.id === variant.id ? updatedItem : item
           )
         : [...currentCart.lines, updatedItem];
 
@@ -216,7 +216,7 @@ export function useCart() {
   const initialCart = use(context.cartPromise);
   const [optimisticCart, updateOptimisticCart] = useOptimistic(
     initialCart,
-    cartReducer,
+    cartReducer
   );
 
   const updateCartItem = (merchandiseId: string, updateType: UpdateType) => {
@@ -229,7 +229,7 @@ export function useCart() {
   const addCartItem = (
     variant: ProductVariant,
     product: Product,
-    quantity: number,
+    quantity: number
   ) => {
     updateOptimisticCart({
       type: "ADD_ITEM",
@@ -243,6 +243,6 @@ export function useCart() {
       updateCartItem,
       addCartItem,
     }),
-    [optimisticCart],
+    [optimisticCart]
   );
 }
