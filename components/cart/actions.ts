@@ -106,3 +106,28 @@ export async function createCartAndSetCookie() {
   let cart = await createCart();
   (await cookies()).set("cartId", cart.id!);
 }
+
+
+// switch (sucursal) {
+//   case 'tec':
+//     addItem(null, {selectedVariantId: "gid://shopify/ProductVariant/45765059444935", quantity: 1})
+//     break;
+//   case 'bjz':
+//     addItem(null, {selectedVariantId: "gid://shopify/ProductVariant/45765059477703", quantity: 1})
+//     break;
+//   case 'con':
+//     addItem(null, {selectedVariantId: "gid://shopify/ProductVariant/45765059510471", quantity: 1})
+//     break;
+//   case 'nhs':
+//     addItem(null, {selectedVariantId: "gid://shopify/ProductVariant/45765059543239", quantity: 1})
+//     break;
+//   case 'rey':
+//     addItem(null, {selectedVariantId: "gid://shopify/ProductVariant/45765059576007", quantity: 1})
+//     break;
+//   case 'man':
+//     addItem(null, {selectedVariantId: "gid://shopify/ProductVariant/45765059608775", quantity: 1})
+//     break;
+//   case 'tap':
+//     addItem(null, {selectedVariantId: "gid://shopify/ProductVariant/45765059641543", quantity: 1})
+//     break;
+// }

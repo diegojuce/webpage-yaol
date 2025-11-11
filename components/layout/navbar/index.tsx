@@ -66,7 +66,14 @@ export async function Navbar() {
           </Suspense>
         </div>
         <div className="flex justify-end md:w-1/3">
+          <div className="flex py-5 px-10 gap-5 flex-row text-black">
+            <h1 className="hover:text-blue-900 hover:underline">Inicio</h1>
+            <h1 className="hover:text-blue-900 hover:underline">Promociones</h1>
+            <h1 className="hover:text-blue-900 hover:underline">Servicios</h1>
+            <h1 className="hover:text-blue-900 hover:underline">Nosotros</h1>
+          </div>
           <CartModal />
+
         </div>
       </div>
     </nav>

@@ -63,7 +63,7 @@ export async function ThreeItemGrid() {
               </p>
             </div>
 
-            <div className="flex flex-col md:w-full border border-white rounded py-5 mt-5 px-5 md:px-4 md:mt-0 gap-4 ">
+            <div className="flex flex-col md:w-full border border-white rounded py-5 mt-5  px-5 md:px-4 md:mt-0 gap-4 ">
               <div className= "flex flex-row gap-4 mb-5">
                 <button className="bg-yellow-500 text-black rounded w-25 py-1 text-sm hover:bg-yellow-500">Por Medida</button>
                 <button className=" border border-yellow-500 rounded text-yellow-500 w-25 py-1 text-sm hover:bg-yellow-500">Por Auto</button>
@@ -74,9 +74,9 @@ export async function ThreeItemGrid() {
               {/* <ServiceModal></ServiceModal> */}
               <div className="flex flex-col md:flex-row">
                 <div className="flex flex-row gap-5">
-                <input className="text-sm h-10 p-3 w-full placeholder:text-black bg-white" placeholder="Alto"></input>
-                <input className="text-sm h-10 p-3 w-full  placeholder:text-black bg-white" placeholder="Ancho"></input>
-                <input className="text-sm h-10 p-3 w-full placeholder:text-black bg-white" placeholder="Rin"></input>
+                <input className="text-sm h-10 p-3 w-full text-black placeholder:text-black bg-white" placeholder="Alto"></input>
+                <input className="text-sm h-10 p-3 w-full  text-black placeholder:text-black bg-white" placeholder="Ancho"></input>
+                <input className="text-sm h-10 p-3 w-full text-black placeholder:text-black bg-white" placeholder="Rin"></input>
                 </div>
                 <button className="rounded bg-yellow-500 mt-5 md:mt-0 md:mx-5 w-full h-10 hover:bg-white hover:text-black">Buscar</button>
               </div>
