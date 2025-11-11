@@ -15,6 +15,7 @@ import {
   type Service,
 } from "lib/api/appointments";
 import { Fragment, useEffect, useMemo, useState } from "react";
+import { addItem } from "../cart/actions";
 
 type AgendarCitaProps = {
   triggerClassName?: string;
@@ -1050,9 +1051,33 @@ export function AppointmentEmbedded({ onClose }: { onClose: () => void }) {
       payload.serviceId = selectedServiceId;
     }
     try {
-      await createAppointment(payload);
+      // await createAppointment(payload);
       setSubmitStatus("success");
       setSubmitMessage("¡Tu cita ha sido confirmada con éxito!");
+      switch (selectedBranchId) {
+        case 'tec':
+          addItem(null, {selectedVariantId: "gid://shopify/ProductVariant/45765059444935", quantity: 1})
+          break;
+        case 'bjz':
+          addItem(null, {selectedVariantId: "gid://shopify/ProductVariant/45765059477703", quantity: 1})
+          break;
+        case 'con':
+          addItem(null, {selectedVariantId: "gid://shopify/ProductVariant/45765059510471", quantity: 1})
+          break;
+        case 'nhs':
+          addItem(null, {selectedVariantId: "gid://shopify/ProductVariant/45765059543239", quantity: 1})
+          break;
+        case 'rey':
+          addItem(null, {selectedVariantId: "gid://shopify/ProductVariant/45765059576007", quantity: 1})
+          break;
+        case 'man':
+          addItem(null, {selectedVariantId: "gid://shopify/ProductVariant/45765059608775", quantity: 1})
+          break;
+        case 'tap':
+          addItem(null, {selectedVariantId: "gid://shopify/ProductVariant/45765059641543", quantity: 1})
+          break;
+      }
+      
     } catch (error) {
       setSubmitStatus("error");
       setSubmitMessage(
