@@ -227,7 +227,7 @@ const reshapeImages = (images: Connection<Image>, productTitle: string) => {
   });
 };
 
-const reshapeProduct = (
+export const reshapeProduct = (
   product: ShopifyProduct,
   filterHiddenProducts: boolean = true,
 ) => {

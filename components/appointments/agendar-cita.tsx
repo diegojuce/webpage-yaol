@@ -13,7 +13,9 @@ import {
   type CreateAppointmentPayload,
   type Service,
 } from "lib/api/appointments";
-import { getProduct } from "lib/shopify";
+import {
+  getProduct
+} from "lib/shopify/noCacheGetProduct";
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { addItem } from "../cart/actions";
 import { useCart } from "../cart/cart-context";
@@ -912,13 +914,16 @@ export function AppointmentEmbedded({ onClose }: { onClose: () => void }) {
       );
       return;
     }
-    const sucProduct = await getProduct(`${sucursalCode}-inst-00`);
-    if (!sucProduct) {
+    // const sucProduct = await backendFetch(`${sucursalCode}-inst-00`);
+    const finalProduct = await getProduct(`${sucursalCode}-inst-00`);
+    if (!finalProduct) {
       setSubmitStatus("error");
-      setSubmitMessage("No se pudo obtener el producto de instalación.");
+      setSubmitMessage(
+        "No se pudo obtener el producto de instalación para la sucursal seleccionada."
+      );
       return;
     }
-    const { variants } = sucProduct;
+    const { variants } = finalProduct;
     const defaultVariantId =
       variants.length === 1 ? variants[0]?.id : undefined;
     const selectedVariantId = defaultVariantId;
@@ -943,7 +948,7 @@ export function AppointmentEmbedded({ onClose }: { onClose: () => void }) {
       }).then((r) => {
         if (r) console.debug("Added to cart:", r);
       });
-      addCartItem(finalVariant, sucProduct, 1);
+      addCartItem(finalVariant, finalProduct, 1);
     } catch (error) {
       setSubmitStatus("error");
       setSubmitMessage(
