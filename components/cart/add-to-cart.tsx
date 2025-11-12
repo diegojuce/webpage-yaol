@@ -132,7 +132,8 @@ export function AddToCart({ product }: { product: Product }) {
         if (!selectedVariantId || !finalVariant || quantity <= 0) {
           return;
         }
-        console.debug("[add-to-cart] Adding to cart:", selectedVariantId);
+        console.debug("[add-to-cart] Adding item:", finalVariant, product, quantity);
+        console.debug("[add-to-cart] Form action:", selectedVariantId, quantity);
 
         addCartItem(finalVariant, product, quantity);
         await formAction({ selectedVariantId, quantity });

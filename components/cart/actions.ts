@@ -16,6 +16,7 @@ export async function addItem(
   prevState: any,
   payload: { selectedVariantId: string | undefined; quantity: number }
 ) {
+  console.debug("[actions][addItem] Payload:", payload);
   const { selectedVariantId, quantity } = payload;
 
   if (!selectedVariantId || quantity < 1) {

@@ -14,8 +14,9 @@ import {
   type Service,
 } from "lib/api/appointments";
 import {
-  getProduct
+  getRawProduct
 } from "lib/shopify/noCacheGetProduct";
+import { ProductVariant } from "lib/shopify/types";
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { addItem } from "../cart/actions";
 import { useCart } from "../cart/cart-context";
@@ -778,7 +779,7 @@ function AppointmentModal({
   );
 }
 
-const instalationIDs = {
+const instVarIDs = {
   tec: "gid://shopify/ProductVariant/45765059444935",
   bjz: "gid://shopify/ProductVariant/45765059477703",
   con: "gid://shopify/ProductVariant/45765059510471",
@@ -786,6 +787,16 @@ const instalationIDs = {
   rey: "gid://shopify/ProductVariant/45765059576007",
   man: "gid://shopify/ProductVariant/45765059608775",
   tap: "gid://shopify/ProductVariant/45765059641543",
+};
+
+const instProdIDs = {
+tec: "gid://shopify/Product/8548552900807",
+bjz: "gid://shopify/Product/8548552933575",
+con: "gid://shopify/Product/8548552966343",
+nhs: "gid://shopify/Product/8548552999111",
+rey: "gid://shopify/Product/8548553031879",
+man: "gid://shopify/Product/8548553064647",
+tap: "gid://shopify/Product/8548553097415",
 };
 
 export function AppointmentEmbedded({ onClose }: { onClose: () => void }) {
@@ -899,12 +910,12 @@ export function AppointmentEmbedded({ onClose }: { onClose: () => void }) {
     const sucursalName = sucursales.find(
       (b) => b.id === selectedBranchId
     )?.name;
-    const sucursalCode = sucursalName ? sucursalName.toLowerCase() : undefined;
+    const sucursalCode = sucursalName ? sucursalName.toLowerCase() : "tec";
     const variantId = sucursalCode
-      ? instalationIDs[
-          (sucursalCode in instalationIDs
+      ? instVarIDs[
+          (sucursalCode in instVarIDs
             ? sucursalCode
-            : "") as keyof typeof instalationIDs
+            : "") as keyof typeof instVarIDs
         ]
       : undefined;
     if (!variantId) {
@@ -914,22 +925,40 @@ export function AppointmentEmbedded({ onClose }: { onClose: () => void }) {
       );
       return;
     }
+    const productGid = sucursalCode in instProdIDs ? instProdIDs[sucursalCode as keyof typeof instProdIDs] : undefined;
+    if (!productGid) {
+      setSubmitStatus("error");
+      setSubmitMessage(
+        "No se pudo resolver el producto de instalación para la sucursal seleccionada."
+      );
+      return;
+    }
     // const sucProduct = await backendFetch(`${sucursalCode}-inst-00`);
-    const finalProduct = await getProduct(`${sucursalCode}-inst-00`);
-    if (!finalProduct) {
+    const product = await getRawProduct(productGid);
+    if (!product) {
       setSubmitStatus("error");
       setSubmitMessage(
         "No se pudo obtener el producto de instalación para la sucursal seleccionada."
       );
       return;
     }
-    const { variants } = finalProduct;
-    const defaultVariantId =
-      variants.length === 1 ? variants[0]?.id : undefined;
-    const selectedVariantId = defaultVariantId;
-    const finalVariant = variants.find(
-      (variant) => variant.id === selectedVariantId
-    );
+    // const { variants } = product;
+    // const defaultVariantId =
+    //   variants.length === 1 ? variants[0]?.id : undefined;
+    const selectedVariantId = instVarIDs[sucursalCode as keyof typeof instVarIDs] || "1";
+    // const finalVariant = variants.find(
+    //   (variant) => variant.id === selectedVariantId
+    // );
+
+    const finalVariant : ProductVariant  = {
+      availableForSale: true,
+      id: selectedVariantId,
+      price: {amount: "0", currencyCode: "MXN"},
+      quantityAvailable: 4,
+      selectedOptions: [{name: "Instalacion", value: sucursalCode}],
+      // sku: `${sucursalCode}-inst-00`,
+      title: `Instalación gratuita ${sucursalCode.toLocaleUpperCase()}`,
+    }
     if (!finalVariant) {
       setSubmitStatus("error");
       setSubmitMessage(
@@ -937,18 +966,22 @@ export function AppointmentEmbedded({ onClose }: { onClose: () => void }) {
       );
       return;
     }
+    // variantId
+    const quantity = 1;
+    const addItemPayload ={
+      selectedVariantId,
+      quantity,
+    }
     try {
       // await createAppointment(payload);
       setSubmitStatus("success");
       setSubmitMessage("¡Tu cita ha sido confirmada con éxito!");
-      console.debug("Appointment created:", sucursalCode, variantId);
-      await addItem(null, {
-        selectedVariantId: variantId,
-        quantity: 1,
-      }).then((r) => {
+      console.debug("[agendar-cita] Adding item:", finalVariant, product, quantity);
+      console.debug("[agendar-cita] Form action:", selectedVariantId, quantity);
+      await addItem(null, addItemPayload).then((r) => {
         if (r) console.debug("Added to cart:", r);
       });
-      addCartItem(finalVariant, finalProduct, 1);
+      addCartItem(finalVariant, product, 1);
     } catch (error) {
       setSubmitStatus("error");
       setSubmitMessage(
@@ -1168,7 +1201,7 @@ export function AppointmentEmbedded({ onClose }: { onClose: () => void }) {
                   <button
                     key={time}
                     type="button"
-                    onClick={() => setSelectedTime(time)}
+                    onClick={() => {setSelectedTime(time); setSubmitStatus("idle");}}
                     className={clsx(
                       "rounded-full border px-4 py-2 text-sm font-semibold uppercase tracking-[0.2em] transition",
                       isSelected
