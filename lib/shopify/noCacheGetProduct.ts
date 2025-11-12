@@ -1,26 +1,14 @@
 import {
-  HIDDEN_PRODUCT_TAG,
-  SHOPIFY_GRAPHQL_API_ENDPOINT
+  HIDDEN_PRODUCT_TAG
 } from "lib/constants";
-import { isShopifyError } from "lib/type-guards";
-import { ensureStartsWith } from "lib/utils";
 import {
-  getProductQuery
-} from "./queries/product";
-import {
-  BackendImageOperation,
   Connection,
   Image,
   Product,
   ShopifyProduct,
-  ShopifyProductOperation,
+  ShopifyProductOperation
 } from "./types";
-const domain = process.env.SHOPIFY_STORE_DOMAIN
-  ? ensureStartsWith(process.env.SHOPIFY_STORE_DOMAIN, "https://")
-  : "";
-const endpoint = `${domain}${SHOPIFY_GRAPHQL_API_ENDPOINT}`;
-const BACKEND_URL = process.env.SHOPIFY_BACKEND_URL || "http://localhost:3050";
-const key = process.env.SHOPIFY_STOREFRONT_ACCESS_TOKEN!;
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3050";
 
 type ExtractVariables<T> = T extends { variables: object }
   ? T["variables"]
@@ -107,55 +95,6 @@ export async function backendFetch<T>({
     };
   }
 }
-export async function shopifyFetch<T>({
-  headers,
-  query,
-  variables,
-}: {
-  headers?: HeadersInit;
-  query: string;
-  variables?: ExtractVariables<T>;
-}): Promise<{ status: number; body: T } | never> {
-  try {
-    const result = await fetch(endpoint, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Shopify-Storefront-Access-Token": key,
-        ...headers,
-      },
-      body: JSON.stringify({
-        ...(query && { query }),
-        ...(variables && { variables }),
-      }),
-    });
-
-    const body = await result.json();
-
-    if (body.errors) {
-      throw body.errors[0];
-    }
-
-    return {
-      status: result.status,
-      body,
-    };
-  } catch (e) {
-    if (isShopifyError(e)) {
-      throw {
-        cause: e.cause?.toString() || "unknown",
-        status: e.status || 500,
-        message: e.message,
-        query,
-      };
-    }
-
-    throw {
-      error: e,
-      query,
-    };
-  }
-}
 
 export async function getRawProduct(handle: string): Promise<Product | undefined> {
   // -------------------------------------------------------
@@ -172,42 +111,4 @@ export async function getRawProduct(handle: string): Promise<Product | undefined
   const reshapedProduct = reshapeProduct(product, false);
   console.log('reshapedProduct: ', reshapedProduct);
   return reshapedProduct;
-}
-
-export async function _getProduct(
-  handle: string,
-): Promise<Product | undefined> {
-
-  const res = await shopifyFetch<ShopifyProductOperation>({
-    query: getProductQuery,
-    variables: {
-      handle,
-    },
-  });
-
-  const res_2 = await backendFetch<BackendImageOperation>({
-    endpoint: "/get/image",
-    variables: {
-      handle,
-    },
-  });
-  const product = res.body.data.product;
-  const image = res_2.body?.data?.product?.image;
-  const newFeaturedImage: Image = {
-    url: image,
-    altText: product.title,
-    width: 800,
-    height: 800,
-  };
-  // reemplace featuredImage con image
-  if (image) {
-    product.featuredImage = newFeaturedImage;
-    product.images.edges = [
-      { node: newFeaturedImage },
-      ...product.images.edges,
-    ];
-  }
-  console.log({ product });
-
-  return reshapeProduct(product, false);
 }
