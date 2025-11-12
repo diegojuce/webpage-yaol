@@ -29,20 +29,15 @@ export async function addItem(
   );
 
   try {
-    // Normalize cartId from cookie; create one if invalid/missing.
-    const normalizeCartId = (id?: string) => {
-      if (!id) return undefined;
-      const clean = id.includes("?") ? id.split("?")[0] : id;
-      if (!clean?.startsWith("gid://shopify/Cart/")) return undefined;
-      return clean;
-    };
+    // Validate cartId from cookie; create one if missing/invalid.
+    const isValidCartId = (id?: string) =>
+      !!id && id.startsWith("gid://shopify/Cart/") && id.includes("?key=");
 
-    let rawCookie = (await cookies()).get("cartId")?.value;
-    let cartId = normalizeCartId(rawCookie);
-    if (!cartId) {
-      console.debug("[actions][addItem] Invalid/missing cartId cookie (", rawCookie, "). Creating cart...");
+    let cartId = (await cookies()).get("cartId")?.value;
+    if (!isValidCartId(cartId)) {
+      console.debug("[actions][addItem] Missing/invalid cartId cookie (", cartId, "). Creating cart...");
       const cart = await createCart();
-      cartId = normalizeCartId(cart.id!)!;
+      cartId = cart.id!; // Keep full id with ?key
       (await cookies()).set("cartId", cartId);
       console.debug("[actions][addItem] Created cart:", cartId);
     }

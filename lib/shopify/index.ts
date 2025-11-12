@@ -66,6 +66,11 @@ type ExtractVariables<T> = T extends { variables: object }
   ? T["variables"]
   : never;
 
+// Keep cartId as returned by Shopify (includes ?key=...)
+function isValidCartId(id?: string): boolean {
+  return !!id && id.startsWith("gid://shopify/Cart/") && id.includes("?key=");
+}
+
 export async function shopifyFetch<T>({
   headers,
   query,
@@ -275,7 +280,8 @@ export async function addToCart(
   lines: { merchandiseId: string; quantity: number }[],
   cartIdOverride?: string,
 ): Promise<Cart> {
-  const cartId = cartIdOverride ?? (await cookies()).get("cartId")?.value!;
+  const cookieId = (await cookies()).get("cartId")?.value;
+  const cartId = cartIdOverride ?? cookieId!;
   console.debug("[lib][addToCart] Using cartId:", cartId);
   const res = await shopifyFetch<ShopifyAddToCartOperation>({
     query: addToCartMutation,
@@ -320,15 +326,15 @@ export async function updateCart(
 }
 
 export async function getCart(): Promise<Cart | undefined> {
-  const cartId = (await cookies()).get("cartId")?.value;
+  const cartId = (await cookies()).get("cartId")?.value ;
 
-  if (!cartId) {
+  if (!cartId && !isValidCartId(cartId)) {
     return undefined;
   }
 
   const res = await shopifyFetch<ShopifyCartOperation>({
     query: getCartQuery,
-    variables: { cartId },
+    variables: { cartId: cartId! },
   });
 
   // Old carts becomes `null` when you checkout.

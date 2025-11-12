@@ -1,25 +1,25 @@
 import {
-    HIDDEN_PRODUCT_TAG,
-    SHOPIFY_GRAPHQL_API_ENDPOINT
+  HIDDEN_PRODUCT_TAG,
+  SHOPIFY_GRAPHQL_API_ENDPOINT
 } from "lib/constants";
 import { isShopifyError } from "lib/type-guards";
 import { ensureStartsWith } from "lib/utils";
 import {
-    getProductQuery
+  getProductQuery
 } from "./queries/product";
 import {
-    BackendImageOperation,
-    Connection,
-    Image,
-    Product,
-    ShopifyProduct,
-    ShopifyProductOperation,
+  BackendImageOperation,
+  Connection,
+  Image,
+  Product,
+  ShopifyProduct,
+  ShopifyProductOperation,
 } from "./types";
 const domain = process.env.SHOPIFY_STORE_DOMAIN
   ? ensureStartsWith(process.env.SHOPIFY_STORE_DOMAIN, "https://")
   : "";
 const endpoint = `${domain}${SHOPIFY_GRAPHQL_API_ENDPOINT}`;
-const BACKEND_URL = "http://localhost:3050";
+const BACKEND_URL = process.env.SHOPIFY_BACKEND_URL || "http://localhost:3050";
 const key = process.env.SHOPIFY_STOREFRONT_ACCESS_TOKEN!;
 
 type ExtractVariables<T> = T extends { variables: object }
