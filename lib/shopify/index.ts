@@ -282,6 +282,7 @@ export async function addToCart(
       lines,
     },
   });
+  console.debug("AddToCartOperation response:", res);
   return reshapeCart(res.body.data.cartLinesAdd.cart);
 }
 

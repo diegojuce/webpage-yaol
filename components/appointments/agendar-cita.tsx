@@ -942,14 +942,8 @@ export function AppointmentEmbedded({ onClose }: { onClose: () => void }) {
       );
       return;
     }
-    // const { variants } = product;
-    // const defaultVariantId =
-    //   variants.length === 1 ? variants[0]?.id : undefined;
-    const selectedVariantId = instVarIDs[sucursalCode as keyof typeof instVarIDs] || "1";
-    // const finalVariant = variants.find(
-    //   (variant) => variant.id === selectedVariantId
-    // );
 
+    const selectedVariantId = instVarIDs[sucursalCode as keyof typeof instVarIDs] || "1";
     const finalVariant : ProductVariant  = {
       availableForSale: true,
       id: selectedVariantId,
@@ -966,7 +960,7 @@ export function AppointmentEmbedded({ onClose }: { onClose: () => void }) {
       );
       return;
     }
-    // variantId
+    product.variants = [finalVariant];
     const quantity = 1;
     const addItemPayload ={
       selectedVariantId,
@@ -976,12 +970,12 @@ export function AppointmentEmbedded({ onClose }: { onClose: () => void }) {
       // await createAppointment(payload);
       setSubmitStatus("success");
       setSubmitMessage("¡Tu cita ha sido confirmada con éxito!");
-      console.debug("[agendar-cita] Adding item:", finalVariant, product, quantity);
-      console.debug("[agendar-cita] Form action:", selectedVariantId, quantity);
+      console.debug("[agendar-cita] addCartItem:", finalVariant, product, quantity);
+      console.debug("[agendar-cita] addItem:", selectedVariantId, quantity);
+      addCartItem(finalVariant, product, quantity);
       await addItem(null, addItemPayload).then((r) => {
         if (r) console.debug("Added to cart:", r);
       });
-      addCartItem(finalVariant, product, 1);
     } catch (error) {
       setSubmitStatus("error");
       setSubmitMessage(

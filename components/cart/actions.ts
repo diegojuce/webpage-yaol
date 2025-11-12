@@ -29,7 +29,11 @@ export async function addItem(
   );
 
   try {
-    await addToCart([{ merchandiseId: selectedVariantId, quantity }]);
+    await addToCart([{ merchandiseId: selectedVariantId, quantity }]).then(
+      (r) => {
+        console.debug("[actions][addItem] addToCart response:", r);
+      }
+    );
     revalidateTag(TAGS.cart);
   } catch (e) {
     return "Error adding item to cart";
