@@ -17,7 +17,7 @@ import {
   getRawProduct
 } from "lib/shopify/noCacheGetProduct";
 import { ProductVariant } from "lib/shopify/types";
-import { Fragment, useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState, useActionState, startTransition } from "react";
 import { addItem } from "../cart/actions";
 import { useCart } from "../cart/cart-context";
 
@@ -830,6 +830,7 @@ export function AppointmentEmbedded({ onClose }: { onClose: () => void }) {
     [currentMonth]
   );
   const { addCartItem } = useCart();
+  const [, formAction] = useActionState(addItem, null);
 
   // same useEffects for resetting (omit the isOpen guard), fetching availableTimes, etc.
   useEffect(() => {
@@ -968,13 +969,13 @@ export function AppointmentEmbedded({ onClose }: { onClose: () => void }) {
     }
     try {
       // await createAppointment(payload);
-      setSubmitStatus("success");
-      setSubmitMessage("¡Tu cita ha sido confirmada con éxito!");
-      console.debug("[agendar-cita] addCartItem:", finalVariant, product, quantity);
-      console.debug("[agendar-cita] addItem:", selectedVariantId, quantity);
-      addCartItem(finalVariant, product, quantity);
-      await addItem(null, addItemPayload).then((r) => {
-        if (r) console.debug("Added to cart:", r);
+      startTransition(() => {
+        setSubmitStatus("success");
+        setSubmitMessage("¡Tu cita ha sido confirmada con éxito!");
+        console.debug("[agendar-cita] addCartItem:", finalVariant, product, quantity);
+        console.debug("[agendar-cita] addItem:", selectedVariantId, quantity);
+        addCartItem(finalVariant, product, quantity);
+        formAction(addItemPayload);
       });
     } catch (error) {
       setSubmitStatus("error");

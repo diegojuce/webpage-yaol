@@ -273,8 +273,10 @@ export async function createCart(): Promise<Cart> {
 
 export async function addToCart(
   lines: { merchandiseId: string; quantity: number }[],
+  cartIdOverride?: string,
 ): Promise<Cart> {
-  const cartId = (await cookies()).get("cartId")?.value!;
+  const cartId = cartIdOverride ?? (await cookies()).get("cartId")?.value!;
+  console.debug("[lib][addToCart] Using cartId:", cartId);
   const res = await shopifyFetch<ShopifyAddToCartOperation>({
     query: addToCartMutation,
     variables: {
@@ -282,7 +284,10 @@ export async function addToCart(
       lines,
     },
   });
-  console.debug("AddToCartOperation response:", res);
+  try {
+    console.debug("[lib][addToCart] raw body:", JSON.stringify(res.body));
+  } catch {}
+  console.debug("[AddToCartOperation] response:", res.body?.data?.cartLinesAdd?.cart ?? null);
   return reshapeCart(res.body.data.cartLinesAdd.cart);
 }
 

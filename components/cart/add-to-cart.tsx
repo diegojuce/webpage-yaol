@@ -136,7 +136,7 @@ export function AddToCart({ product }: { product: Product }) {
         console.debug("[add-to-cart] Form action:", selectedVariantId, quantity);
 
         addCartItem(finalVariant, product, quantity);
-        await formAction({ selectedVariantId, quantity });
+        formAction({ selectedVariantId, quantity });
       }}
     >
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3 text-sm font-medium text-black">

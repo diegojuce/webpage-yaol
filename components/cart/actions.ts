@@ -29,11 +29,30 @@ export async function addItem(
   );
 
   try {
-    await addToCart([{ merchandiseId: selectedVariantId, quantity }]).then(
-      (r) => {
-        console.debug("[actions][addItem] addToCart response:", r);
-      }
-    );
+    // Normalize cartId from cookie; create one if invalid/missing.
+    const normalizeCartId = (id?: string) => {
+      if (!id) return undefined;
+      const clean = id.includes("?") ? id.split("?")[0] : id;
+      if (!clean?.startsWith("gid://shopify/Cart/")) return undefined;
+      return clean;
+    };
+
+    let rawCookie = (await cookies()).get("cartId")?.value;
+    let cartId = normalizeCartId(rawCookie);
+    if (!cartId) {
+      console.debug("[actions][addItem] Invalid/missing cartId cookie (", rawCookie, "). Creating cart...");
+      const cart = await createCart();
+      cartId = normalizeCartId(cart.id!)!;
+      (await cookies()).set("cartId", cartId);
+      console.debug("[actions][addItem] Created cart:", cartId);
+    }
+
+    await addToCart(
+      [{ merchandiseId: selectedVariantId, quantity }],
+      cartId
+    ).then((r) => {
+      console.debug("[actions][addItem] addToCart response:", r);
+    });
     revalidateTag(TAGS.cart);
   } catch (e) {
     return "Error adding item to cart";
