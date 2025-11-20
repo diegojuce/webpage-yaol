@@ -40,11 +40,11 @@ export default function Search({ className }: SearchProps) {
         key={searchParams?.get("q")}
         type="text"
         name="q"
-        placeholder="Escribe tu medida. Ej. 205/55 R16"
+        placeholder="Escribe tu medida"
         autoComplete="off"
         enterKeyHint="search"
         defaultValue={searchParams?.get("q") || ""}
-        className="text-sm w-full rounded-lg border-2 bg-white px-4 py-2 text-black placeholder:text-neutral-500 md:text-sm focus:!border-white dark:focus:!border-black focus:outline-none focus:ring-0 transition-colors duration-150 dark:border-neutral-800 dark:bg-transparent dark:text-white dark:placeholder:text-black"
+        className="text-sm w-full rounded-lg border-2 bg-white px-4 py-2 text-black placeholder:text-neutral-500 md:text-sm focus:!border-white dark:focus:!border-black focus:outline-none focus:ring-0 transition-colors duration-150 dark:border-neutral-800 dark:bg-transparent dark:text-black dark:placeholder:text-black"
       />
       <button
         type="submit"

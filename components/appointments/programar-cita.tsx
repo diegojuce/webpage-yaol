@@ -59,7 +59,7 @@ export default function ServiceModal() {
                   <CloseCart />
                 </button> */}
               </div>
-              <div className="flex h-full flex-col overflow-hidden p-1">
+              <div className="flex h-full flex-col overflow-y-auto p-1">
                 <AppointmentEmbedded onClose={closeService} />
               </div>
             </Dialog.Panel>

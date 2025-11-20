@@ -34,7 +34,7 @@ export async function ThreeItemGrid() {
   const productTiles = homepageItems.filter(Boolean).slice(0, 5) as Product[];
 
   return (
-    <section className="bg-[#6E6E6E] mx-auto max-w-(--breakpoint-2xl) pt-20 0">
+    <section className="bg-white mx-auto max-w-(--breakpoint-2xl) pt-20 0">
       <div className="absolute w-[70vw] h-[70vw] mt-20 right-0  md:w-[44vw] md:h-[44vw] md:mt-2 md:block md:col-span-5 md:mt-0">
             <div className="relative overflow-hidden">
               <Image
@@ -52,18 +52,18 @@ export async function ThreeItemGrid() {
         <div className="relative grid  gap-0 md:grid-cols-12 md:items-top">
           <div className="flex flex-col gap-10 md:col-span-7 mt-20 mb-10 md:mb-40">
             <div>
-              <h1 className=" text-2xl font-black uppercase tracking-[0.35em] text-white sm:text-4xl lg:text-6xl">
+              <h1 className=" text-2xl font-black uppercase tracking-[0.35em] text-[#6E6E6E] sm:text-4xl lg:text-6xl">
                 LA MEJOR
               </h1>
-              <h2 className="mt-2 text-2xl font-black uppercase tracking-[0.35em] text-white sm:text-4xl lg:text-6xl">
+              <h2 className="mt-2 text-2xl font-black uppercase tracking-[0.35em] text-[#6E6E6E] sm:text-4xl lg:text-6xl">
                 EXPERIENCIA
               </h2>
-              <p className="mt-4 text-sm italic text-neutral-300 sm:text-xl">
+              <p className="mt-4 text-sm italic text-[#6E6E6E] sm:text-xl">
                 EN LLANTAS Y SERVICIO AUTOMOTRÍZ
               </p>
             </div>
 
-            <div className="flex flex-col md:w-full border border-white rounded py-5 mt-5  px-5 md:px-4 md:mt-0 gap-4 ">
+            <div className="flex flex-col md:w-2/3 rounded-2xl border border-neutral-200 bg-neutral-50 py-5 mt-5  px-5 md:px-4 md:mt-0 gap-4 ">
               <div className= "flex flex-row gap-4 mb-5">
                 <button className="bg-yellow-500 text-black rounded w-25 py-1 text-sm hover:bg-yellow-500">Por Medida</button>
                 <button className=" border border-yellow-500 rounded text-yellow-500 w-25 py-1 text-sm hover:bg-yellow-500">Por Auto</button>
@@ -72,7 +72,7 @@ export async function ThreeItemGrid() {
               {/* <TireSearchCTA className={HERO_CTA_CLASSES} /> */}
               {/* <AgendarCita triggerClassName="relative flex-1  bg-yellow-500 px-6 py-3 text-center text-base font-semibold uppercase tracking-[0.25em] text-black transition-transform duration-150 ease-out hover:-translate-y-0.5 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-yellow-300 focus-visible:ring-offset-2 focus-visible:ring-offset-black dark:focus-visible:ring-yellow-400" /> */}
               {/* <ServiceModal></ServiceModal> */}
-              <div className="flex flex-col md:flex-row">
+              <div className="flex flex-col md:flex-row ">
                 <div className="flex flex-row gap-5">
                 <input className="text-sm h-10 p-3 w-full text-black placeholder:text-black bg-white" placeholder="Alto"></input>
                 <input className="text-sm h-10 p-3 w-full  text-black placeholder:text-black bg-white" placeholder="Ancho"></input>

@@ -1,7 +1,7 @@
 import Grid from "components/grid";
+import ProductGridItems from "components/layout/product-grid-items";
 import Collections from "components/layout/search/collections";
 import FilterList from "components/layout/search/filter";
-import ProductGridItems from "components/layout/product-grid-items";
 import { defaultSort, sorting } from "lib/constants";
 import { getProducts } from "lib/shopify";
 
@@ -25,7 +25,7 @@ export default async function SearchPage(props: {
   const hasProducts = products.length > 0;
 
   return (
-    <div className="mx-auto w-full max-w-(--breakpoint-2xl) px-4 pb-10 text-black dark:text-white">
+    <div className="mx-auto w-full max-w-(--breakpoint-2xl) px-4 pb-10 text-black dark:text-white mt-40">
       <div className="flex flex-col gap-8 lg:flex-row">
         <aside className="w-full flex-none lg:max-w-[240px]">
           <div className="space-y-8 rounded-lg border border-neutral-200 bg-white p-4 shadow-sm dark:border-neutral-800 dark:bg-neutral-900 lg:sticky lg:top-24">
