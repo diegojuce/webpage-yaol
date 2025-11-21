@@ -8,6 +8,15 @@ export default function SearchBox() {
   const [parts, setParts] = useState({ alto: "", ancho: "", rin: "" });
   const _searchParams = useSearchParams();
 
+  const range = (start: number, end: number, step: number) =>
+    Array.from({ length: Math.floor((end - start) / step) + 1 }, (_, i) => (
+      start + i * step
+    ));
+
+  const altoOptions = range(135, 325, 10);
+  const anchoOptions = range(30, 90, 5);
+  const rinOptions = range(13, 25, 1);
+
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
@@ -39,21 +48,45 @@ export default function SearchBox() {
               onChange={(e) => setParts({ ...parts, alto: e.target.value })}
               className="text-sm h-10 p-3 w-full text-black placeholder:text-black bg-white"
               placeholder="Alto"
+              list="alto-list"
+              inputMode="numeric"
+              pattern="[0-9]*"
             />
+            <datalist id="alto-list">
+              {altoOptions.map((opt) => (
+                <option key={opt} value={opt} />
+              ))}
+            </datalist>
             <input
               name="ancho"
               value={parts.ancho}
               onChange={(e) => setParts({ ...parts, ancho: e.target.value })}
               className="text-sm h-10 p-3 w-full text-black placeholder:text-black bg-white"
               placeholder="Ancho"
+              list="ancho-list"
+              inputMode="numeric"
+              pattern="[0-9]*"
             />
+            <datalist id="ancho-list">
+              {anchoOptions.map((opt) => (
+                <option key={opt} value={opt} />
+              ))}
+            </datalist>
             <input
               name="rin"
               value={parts.rin}
               onChange={(e) => setParts({ ...parts, rin: e.target.value })}
               className="text-sm h-10 p-3 w-full text-black placeholder:text-black bg-white"
               placeholder="Rin"
+              list="rin-list"
+              inputMode="numeric"
+              pattern="[0-9]*"
             />
+            <datalist id="rin-list">
+              {rinOptions.map((opt) => (
+                <option key={opt} value={opt} />
+              ))}
+            </datalist>
           </div>
           <button className="rounded bg-yellow-500 mt-5 md:mt-0 md:mx-5 w-full h-10 hover:bg-white hover:text-black">
             Buscar
