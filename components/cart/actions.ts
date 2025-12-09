@@ -48,7 +48,7 @@ export async function addItem(
     ).then((r) => {
       console.debug("[actions][addItem] addToCart response:", r);
     });
-    revalidateTag(TAGS.cart);
+    revalidateTag(TAGS.cart, { expire: 0 });
   } catch (e) {
     return "Error adding item to cart";
   }
@@ -68,7 +68,7 @@ export async function removeItem(prevState: any, merchandiseId: string) {
 
     if (lineItem && lineItem.id) {
       await removeFromCart([lineItem.id]);
-      revalidateTag(TAGS.cart);
+      revalidateTag(TAGS.cart, { expire: 0 });
     } else {
       return "Item not found in cart";
     }
@@ -114,7 +114,7 @@ export async function updateItemQuantity(
       await addToCart([{ merchandiseId, quantity }]);
     }
 
-    revalidateTag(TAGS.cart);
+    revalidateTag(TAGS.cart, { expire: 0 });
   } catch (e) {
     console.error(e);
     return "Error updating item quantity";
