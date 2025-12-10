@@ -178,17 +178,79 @@ const removeEdgesAndNodes = <T>(array: Connection<T>): T[] => {
 };
 
 const reshapeCart = (cart: ShopifyCart): Cart => {
+  // Ensure tax field
   if (!cart.cost?.totalTaxAmount) {
     cart.cost.totalTaxAmount = {
       amount: "0.0",
       currencyCode: cart.cost.totalAmount.currencyCode,
-    };
+    } as any;
+  }
+
+  // Fallbacks for line amounts and images using product data
+  const edges = (cart.lines as any)?.edges ?? [];
+  let computedSubtotal = 0;
+  let currencyCode: string | undefined = undefined;
+
+  for (const edge of edges) {
+    const node = edge?.node;
+    if (!node) continue;
+
+    const lineQty = Number(node.quantity) || 0;
+    const lineCost = node.cost?.totalAmount?.amount;
+    const lineCurrency = node.cost?.totalAmount?.currencyCode;
+    let amountNum = parseFloat(lineCost);
+
+    // Establish currency preference order
+    const productMinPrice = node?.merchandise?.product?.priceRange?.minVariantPrice;
+    const fallbackAmountStr = productMinPrice?.amount;
+    const fallbackCurrency = productMinPrice?.currencyCode || lineCurrency;
+
+    if (!Number.isFinite(amountNum) || amountNum <= 0) {
+      const fallbackAmountNum = parseFloat(fallbackAmountStr);
+      if (Number.isFinite(fallbackAmountNum) && fallbackAmountNum > 0) {
+        amountNum = fallbackAmountNum * (lineQty || 1);
+        node.cost = node.cost || {};
+        node.cost.totalAmount = {
+          amount: amountNum.toString(),
+          currencyCode: fallbackCurrency || "MXN",
+        };
+      }
+    } else {
+      amountNum = amountNum; // keep
+    }
+
+    if (!currencyCode) {
+      currencyCode = node.cost?.totalAmount?.currencyCode || fallbackCurrency;
+    }
+
+    computedSubtotal += Number.isFinite(amountNum) ? amountNum : 0;
+
+    // Ensure featured image exists: fallback to first product image
+    const product = node?.merchandise?.product;
+    if (product && !product?.featuredImage) {
+      const firstImg = (product?.images?.edges?.[0]?.node) || null;
+      if (firstImg) {
+        product.featuredImage = firstImg;
+      }
+    }
+  }
+
+  // Recompute cart totals from lines if needed
+  if (computedSubtotal > 0) {
+    cart.cost.subtotalAmount = {
+      amount: computedSubtotal.toString(),
+      currencyCode: currencyCode || cart.cost.totalAmount.currencyCode,
+    } as any;
+    cart.cost.totalAmount = {
+      amount: computedSubtotal.toString(),
+      currencyCode: currencyCode || cart.cost.totalAmount.currencyCode,
+    } as any;
   }
 
   return {
-    ...cart,
-    lines: removeEdgesAndNodes(cart.lines),
-  };
+    ...(cart as any),
+    lines: removeEdgesAndNodes(cart.lines as any),
+  } as Cart;
 };
 
 const reshapeCollection = (

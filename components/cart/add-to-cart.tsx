@@ -83,6 +83,13 @@ export function AddToCart({ product }: { product: Product }) {
       : undefined;
 
   useEffect(() => {
+    // If user explicitly chose variant via two-option toggle, don't gate by variant stock here.
+    const usingTwoOptionToggle = !!chosenVariantIdFromState;
+    if (usingTwoOptionToggle) {
+      if (quantity === 0) setQuantity(1);
+      return;
+    }
+
     if (typeof availableQuantity !== "number") {
       return;
     }
@@ -102,11 +109,12 @@ export function AddToCart({ product }: { product: Product }) {
     if (quantity > availableQuantity) {
       setQuantity(availableQuantity);
     }
-  }, [availableQuantity, quantity, setQuantity]);
+  }, [availableQuantity, quantity, setQuantity, chosenVariantIdFromState]);
 
   const handleIncrement = () =>
     setQuantity((prev) => {
-      if (typeof availableQuantity === "number") {
+      const usingTwoOptionToggle = !!chosenVariantIdFromState;
+      if (!usingTwoOptionToggle && typeof availableQuantity === "number") {
         if (availableQuantity <= 0) {
           return 0;
         }
@@ -117,8 +125,9 @@ export function AddToCart({ product }: { product: Product }) {
 
   const handleDecrement = () =>
     setQuantity((prev) => {
+      const usingTwoOptionToggle = !!chosenVariantIdFromState;
       if (prev <= 1) {
-        if (typeof availableQuantity === "number" && availableQuantity <= 0) {
+        if (!usingTwoOptionToggle && typeof availableQuantity === "number" && availableQuantity <= 0) {
           return 0;
         }
         return 1;

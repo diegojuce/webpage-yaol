@@ -168,13 +168,24 @@ export default function CartModal() {
                                 </Link>
                               </div>
                               <div className="flex h-16 flex-col justify-between">
-                                <Price
-                                  className="flex justify-end space-y-2 text-right text-sm"
-                                  amount={item.cost.totalAmount.amount}
-                                  currencyCode={
-                                    item.cost.totalAmount.currencyCode
-                                  }
-                                />
+                                {(() => {
+                                  const productAny = (item?.merchandise?.product ?? {}) as any;
+                                  const fallbackAmount =
+                                    productAny?.priceRange?.minVariantPrice?.amount;
+                                  const fallbackCurrency =
+                                    productAny?.priceRange?.minVariantPrice?.currencyCode;
+                                  const amount =
+                                    item?.cost?.totalAmount?.amount || fallbackAmount || "0";
+                                  const currencyCode =
+                                    item?.cost?.totalAmount?.currencyCode || fallbackCurrency || "MXN";
+                                  return (
+                                    <Price
+                                      className="flex justify-end space-y-2 text-right text-sm"
+                                      amount={amount}
+                                      currencyCode={currencyCode}
+                                    />
+                                  );
+                                })()}
                                 <div className="ml-auto flex h-9 flex-row items-center rounded-full border border-neutral-200 dark:border-neutral-700">
                                   <EditItemQuantityButton
                                     item={item}
