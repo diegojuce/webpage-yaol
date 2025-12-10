@@ -12,19 +12,84 @@ import Image from "next/image";
 import Link from "next/link";
 import { Fragment, useEffect, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
-import { createCartAndSetCookie, redirectToCheckout } from "./actions";
+import { createCartAndSetCookie, redirectToCheckout, updateItemVariant } from "./actions";
 import { useCart } from "./cart-context";
 import { DeleteItemButton } from "./delete-item-button";
 import { EditItemQuantityButton } from "./edit-item-quantity-button";
 import OpenCart from "./open-cart";
-import { ShippingType } from "./shipping";
+// Removed unused static ShippingType in favor of per-line selector
+import type { CartItem, Product, ProductVariant } from "lib/shopify/types";
+import { useActionState } from "react";
+
+function LineShippingSelector({
+  item,
+  optimisticUpdate,
+}: {
+  item: CartItem;
+  optimisticUpdate: (lineId: string, variant: ProductVariant, product: Product) => void;
+}) {
+  const [message, formAction] = useActionState(updateItemVariant, null);
+
+  // Extract variants from product on the cart line
+  const productAny = (item?.merchandise?.product ?? {}) as any;
+  const edges = productAny?.variants?.edges ?? [];
+  const variants: ProductVariant[] = edges.map((e: any) => e.node);
+  const first = variants[0];
+  const second = variants[1];
+  if (!first || !second) return null;
+
+  const currentVariantId = item.merchandise.id;
+
+  const handleSelect = async (targetId: string) => {
+    const chosen = variants.find((v) => v.id === targetId) || first;
+    // Optimistic update
+    optimisticUpdate(item.id!, chosen, productAny as Product);
+    // Server update
+    const payload = { lineId: item.id!, merchandiseId: chosen.id };
+    const action = formAction.bind(null, payload);
+    await action();
+  };
+
+  return (
+    <div className="mb-2 mx-7">
+      <h3 className="text-sm font-semibold mb-2 text-yellow-600">Seleccione el tipo de envío:</h3>
+      <div className="mx-4">
+        <div className="flex flex-col gap-4">
+          <label className="flex items-center gap-2">
+            <input
+              type="radio"
+              name={`shippingType-${item.id}`}
+              value={first.id}
+              checked={currentVariantId === first.id}
+              onChange={() => handleSelect(first.id)}
+              className="form-radio h-3 w-3 text-yellow-600"
+            />
+            <span className="text-xs">Instalar en Yantissimo</span>
+          </label>
+          <label className="flex items-center gap-2">
+            <input
+              type="radio"
+              name={`shippingType-${item.id}`}
+              value={second.id}
+              checked={currentVariantId === second.id}
+              onChange={() => handleSelect(second.id)}
+              className="form-radio h-3 w-3 text-yellow-600"
+            />
+            <span className="text-xs">Envio a domicilio</span>
+          </label>
+        </div>
+      </div>
+      <p aria-live="polite" className="sr-only" role="status">{message}</p>
+    </div>
+  );
+}
 
 type MerchandiseSearchParams = {
   [key: string]: string;
 };
 
 export default function CartModal() {
-  const { cart, updateCartItem } = useCart();
+  const { cart, updateCartItem, updateCartItemVariant } = useCart();
   const [isOpen, setIsOpen] = useState(false);
   const quantityRef = useRef(cart?.totalQuantity);
   const [shippingType, setShippingType] = useState<string>("store");
@@ -205,10 +270,7 @@ export default function CartModal() {
                                 </div>
                               </div>
                             </div>
-                            <div>
-                              <ShippingType></ShippingType>
-
-                            </div>
+                            <LineShippingSelector item={item} optimisticUpdate={updateCartItemVariant} />
                           </li>
                         );
                       })}

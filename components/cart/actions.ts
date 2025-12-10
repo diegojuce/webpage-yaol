@@ -121,6 +121,39 @@ export async function updateItemQuantity(
   }
 }
 
+export async function updateItemVariant(
+  prevState: any,
+  payload: {
+    lineId: string;
+    merchandiseId: string; // new variant id
+  }
+) {
+  try {
+    const cart = await getCart();
+    if (!cart) {
+      return "Error fetching cart";
+    }
+
+    const lineItem = cart.lines.find((line) => line.id === payload.lineId);
+    if (!lineItem) {
+      return "Line item not found";
+    }
+
+    await updateCart([
+      {
+        id: lineItem.id!,
+        merchandiseId: payload.merchandiseId,
+        quantity: lineItem.quantity,
+      },
+    ]);
+
+    revalidateTag(TAGS.cart, { expire: 0 });
+  } catch (e) {
+    console.error(e);
+    return "Error updating item variant";
+  }
+}
+
 export async function redirectToCheckout() {
   let cart = await getCart();
   redirect(cart!.checkoutUrl);

@@ -24,6 +24,10 @@ type CartAction =
   | {
       type: "ADD_ITEM";
       payload: { variant: ProductVariant; product: Product; quantity: number };
+    }
+  | {
+      type: "UPDATE_ITEM_VARIANT";
+      payload: { lineId: string; variant: ProductVariant; product: Product };
     };
 
 type CartContextType = {
@@ -205,6 +209,45 @@ function cartReducer(state: Cart | undefined, action: CartAction): Cart {
         lines: updatedLines,
       };
     }
+    case "UPDATE_ITEM_VARIANT": {
+      const { lineId, variant, product } = action.payload;
+      const updatedLines = currentCart.lines.map((item) => {
+        if (item.id !== lineId) return item;
+
+        // Keep quantity; recalc price with fallback
+        const variantAmount = Number(variant?.price?.amount);
+        const useVariantPrice = Number.isFinite(variantAmount) && variantAmount > 0;
+        const priceAmountStr = useVariantPrice
+          ? variant.price.amount
+          : (product as any)?.priceRange?.minVariantPrice?.amount ?? "0";
+        const currencyCode =
+          (variant?.price?.currencyCode as string | undefined) ||
+          (product as any)?.priceRange?.minVariantPrice?.currencyCode ||
+          item.cost.totalAmount.currencyCode;
+
+        const newTotalAmount = calculateItemCost(item.quantity, priceAmountStr);
+
+        return {
+          ...item,
+          cost: {
+            ...item.cost,
+            totalAmount: { amount: newTotalAmount, currencyCode },
+          },
+          merchandise: {
+            ...item.merchandise,
+            id: variant.id,
+            title: variant.title || item.merchandise.title,
+            selectedOptions: variant.selectedOptions,
+          },
+        };
+      });
+
+      return {
+        ...currentCart,
+        ...updateCartTotals(updatedLines),
+        lines: updatedLines,
+      };
+    }
     default:
       return currentCart;
   }
@@ -254,11 +297,23 @@ export function useCart() {
     });
   };
 
+  const updateCartItemVariant = (
+    lineId: string,
+    variant: ProductVariant,
+    product: Product
+  ) => {
+    updateOptimisticCart({
+      type: "UPDATE_ITEM_VARIANT",
+      payload: { lineId, variant, product },
+    });
+  };
+
   return useMemo(
     () => ({
       cart: optimisticCart,
       updateCartItem,
       addCartItem,
+      updateCartItemVariant,
     }),
     [optimisticCart]
   );
