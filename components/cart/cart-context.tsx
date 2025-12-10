@@ -73,7 +73,18 @@ function createOrUpdateCartItem(
 ): CartItem {
   const baseQuantity = existingItem ? existingItem.quantity : 0;
   const newQuantity = baseQuantity + quantityToAdd;
-  const totalAmount = calculateItemCost(newQuantity, variant.price.amount);
+
+  // Fallback to product-level price if variant price is missing/invalid.
+  const variantAmount = Number(variant?.price?.amount);
+  const useVariantPrice = Number.isFinite(variantAmount) && variantAmount > 0;
+  const priceAmountStr = useVariantPrice
+    ? variant.price.amount
+    : product.priceRange.minVariantPrice.amount;
+  const currencyCode =
+    (variant?.price?.currencyCode as string | undefined) ||
+    product.priceRange.minVariantPrice.currencyCode;
+
+  const totalAmount = calculateItemCost(newQuantity, priceAmountStr);
 
   return {
     id: existingItem?.id,
@@ -81,12 +92,12 @@ function createOrUpdateCartItem(
     cost: {
       totalAmount: {
         amount: totalAmount,
-        currencyCode: variant.price.currencyCode,
+        currencyCode,
       },
     },
     merchandise: {
       id: variant.id,
-      title: variant.title,
+      title: variant.title || product.title,
       selectedOptions: variant.selectedOptions,
       product: {
         id: product.id,

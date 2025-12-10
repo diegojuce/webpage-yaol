@@ -192,7 +192,7 @@ const reshapeCart = (cart: ShopifyCart): Cart => {
 };
 
 const reshapeCollection = (
-  collection: ShopifyCollection,
+  collection: ShopifyCollection
 ): Collection | undefined => {
   if (!collection) {
     return undefined;
@@ -234,7 +234,7 @@ const reshapeImages = (images: Connection<Image>, productTitle: string) => {
 
 export const reshapeProduct = (
   product: ShopifyProduct,
-  filterHiddenProducts: boolean = true,
+  filterHiddenProducts: boolean = true
 ) => {
   if (
     !product ||
@@ -278,7 +278,7 @@ export async function createCart(): Promise<Cart> {
 
 export async function addToCart(
   lines: { merchandiseId: string; quantity: number }[],
-  cartIdOverride?: string,
+  cartIdOverride?: string
 ): Promise<Cart> {
   const cookieId = (await cookies()).get("cartId")?.value;
   const cartId = cartIdOverride ?? cookieId!;
@@ -293,7 +293,10 @@ export async function addToCart(
   try {
     console.debug("[lib][addToCart] raw body:", JSON.stringify(res.body));
   } catch {}
-  console.debug("[AddToCartOperation] response:", res.body?.data?.cartLinesAdd?.cart ?? null);
+  console.debug(
+    "[AddToCartOperation] response:",
+    res.body?.data?.cartLinesAdd?.cart ?? null
+  );
   return reshapeCart(res.body.data.cartLinesAdd.cart);
 }
 
@@ -311,7 +314,7 @@ export async function removeFromCart(lineIds: string[]): Promise<Cart> {
 }
 
 export async function updateCart(
-  lines: { id: string; merchandiseId: string; quantity: number }[],
+  lines: { id: string; merchandiseId: string; quantity: number }[]
 ): Promise<Cart> {
   const cartId = (await cookies()).get("cartId")?.value!;
   const res = await shopifyFetch<ShopifyUpdateCartOperation>({
@@ -326,7 +329,7 @@ export async function updateCart(
 }
 
 export async function getCart(): Promise<Cart | undefined> {
-  const cartId = (await cookies()).get("cartId")?.value ;
+  const cartId = (await cookies()).get("cartId")?.value;
 
   if (!cartId && !isValidCartId(cartId)) {
     return undefined;
@@ -346,7 +349,7 @@ export async function getCart(): Promise<Cart | undefined> {
 }
 
 export async function getCollection(
-  handle: string,
+  handle: string
 ): Promise<Collection | undefined> {
   "use cache";
   cacheTag(TAGS.collections);
@@ -390,7 +393,7 @@ export async function getCollectionProducts({
   }
 
   return reshapeProducts(
-    removeEdgesAndNodes(res.body.data.collection.products),
+    removeEdgesAndNodes(res.body.data.collection.products)
   );
 }
 
@@ -418,7 +421,7 @@ export async function getCollections(): Promise<Collection[]> {
     // Filter out the `hidden` collections.
     // Collections that start with `hidden-*` need to be hidden on the search page.
     ...reshapeCollections(shopifyCollections).filter(
-      (collection) => !collection.handle.startsWith("hidden"),
+      (collection) => !collection.handle.startsWith("hidden")
     ),
   ];
 
@@ -466,7 +469,7 @@ export async function getPages(): Promise<Page[]> {
 }
 
 export async function _getProduct(
-  handle: string,
+  handle: string
 ): Promise<Product | undefined> {
   "use cache";
   cacheTag(TAGS.products);
@@ -521,13 +524,14 @@ export async function getProduct(handle: string): Promise<Product | undefined> {
     },
   });
   const product = res.body.data.product;
-  console.log({ product });
 
-  return reshapeProduct(product, false);
+  const reshaped = reshapeProduct(product, false);
+  console.dir(reshaped, { depth: null });
+  return reshaped;
 }
 
 export async function getProductRecommendations(
-  productId: string,
+  productId: string
 ): Promise<Product[]> {
   "use cache";
   cacheTag(TAGS.products);

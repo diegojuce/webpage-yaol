@@ -68,8 +68,12 @@ export function AddToCart({ product }: { product: Product }) {
       (option) => option.value === state[option.name.toLowerCase()]
     )
   );
-  const defaultVariantId = variants.length === 1 ? variants[0]?.id : undefined;
-  const selectedVariantId = variant?.id || defaultVariantId;
+  // If a variantId is explicitly chosen via the two-variant toggle, prefer it.
+  const chosenVariantIdFromState =
+    typeof state["variantId"] === "string" ? state["variantId"] : undefined;
+  const defaultVariantId = variants[0]?.id;
+  const selectedVariantId =
+    chosenVariantIdFromState || variant?.id || defaultVariantId;
   const finalVariant = variants.find(
     (variant) => variant.id === selectedVariantId
   );
@@ -132,10 +136,28 @@ export function AddToCart({ product }: { product: Product }) {
         if (!selectedVariantId || !finalVariant || quantity <= 0) {
           return;
         }
-        console.debug("[add-to-cart] Adding item:", finalVariant, product, quantity);
-        console.debug("[add-to-cart] Form action:", selectedVariantId, quantity);
+        // Normalize variant price if missing; fallback to product-level price
+        const amountNum = Number(finalVariant?.price?.amount);
+        const normalizedVariant = {
+          ...finalVariant,
+          price:
+            Number.isFinite(amountNum) && amountNum > 0
+              ? finalVariant.price
+              : product.priceRange.minVariantPrice,
+        } as ProductVariant;
+        console.debug(
+          "[add-to-cart] Adding item:",
+          normalizedVariant,
+          product,
+          quantity
+        );
+        console.debug(
+          "[add-to-cart] Form action:",
+          selectedVariantId,
+          quantity
+        );
 
-        addCartItem(finalVariant, product, quantity);
+        addCartItem(normalizedVariant, product, quantity);
         formAction({ selectedVariantId, quantity });
       }}
     >

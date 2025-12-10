@@ -38,10 +38,15 @@ export function PaymentOptions({ product }: { product: Product }) {
     () => findVariantFromState(variants, state),
     [variants, state],
   );
+  const chosenVariantId = typeof state["variantId"] === "string" ? state["variantId"] : undefined;
+  const overrideVariant = useMemo(
+    () => variants.find((v) => v.id === chosenVariantId),
+    [variants, chosenVariantId],
+  );
 
   const [isOpen, setIsOpen] = useState(true);
 
-  if (hasMultipleVariants && !selectedVariant) {
+  if (hasMultipleVariants && !selectedVariant && !overrideVariant) {
     return (
       <section className="mt-6 rounded-2xl border border-neutral-200 bg-neutral-50 p-4 text-sm text-black">
         <h3 className="mb-3 text-base font-semibold">Opciones de pago</h3>
@@ -53,20 +58,23 @@ export function PaymentOptions({ product }: { product: Product }) {
     );
   }
 
-  const variant = selectedVariant ?? variants[0];
+  const variant = overrideVariant ?? selectedVariant ?? variants[0];
 
   if (!variant) {
     return null;
   }
 
-  const unitPrice = parseFloat(priceRange.minVariantPrice.amount);
+  const unitPrice = parseFloat(
+    (overrideVariant ?? selectedVariant ?? variants[0])?.price?.amount ??
+      priceRange.minVariantPrice.amount,
+  );
   if (Number.isNaN(unitPrice)) {
     return null;
   }
 
   const currencyCode =
     variant.price.currencyCode ??
-    priceRange.maxVariantPrice.currencyCode ??
+    priceRange.minVariantPrice.currencyCode ??
     "USD";
   const totalPrice = unitPrice * quantity;
 
