@@ -35,7 +35,7 @@ export async function ThreeItemGrid() {
   const productTiles = homepageItems.filter(Boolean).slice(0, 5) as Product[];
 
   return (
-    <section className="bg-white mx-auto max-w-(--breakpoint-2xl) pt-20 0">
+    <section className="bg-white mx-auto max-w-(--breakpoint-2xl)">
       <div className="absolute w-[70vw] h-[70vw] mt-20 right-0  md:w-[44vw] md:h-[44vw] md:mt-2 md:block md:col-span-5 md:mt-0">
         <div className="relative overflow-hidden">
           <Image
@@ -49,7 +49,7 @@ export async function ThreeItemGrid() {
           />
         </div>
       </div>
-      <div className="relative md:h-[42vw] xl:h-[35vw] overflow-hidden px-6 py-10 shadow-[0_35px_120px_rgba(15,15,15,0.55)] sm:px-10 md:px-14 md:py-0">
+      <div className="relative md:h-[42vw] xl:h-[35vw] overflow-hidden px-6 py-10  sm:px-10 md:px-14 md:py-0">
         <div className="relative grid  gap-0 md:grid-cols-12 md:items-top">
           <div className="flex flex-col gap-10 md:col-span-7 mt-20 mb-10 md:mb-40">
             <div>

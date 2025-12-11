@@ -10,7 +10,7 @@ type Product = {
   title: string;
   vendor?: string;
   featuredImage?: { url: string };
-  priceRange: { maxVariantPrice: { amount: string; currencyCode: string } };
+  priceRange: { minVariantPrice: { amount: string; currencyCode: string } };
   // Si tienes compareAt a nivel producto o variante:
   compareAtPrice?: { amount: string };
 };
@@ -61,8 +61,8 @@ export default function FeaturedProducts({ productTiles }: { productTiles: Produ
           className="flex gap-4 md:justify-center overflow-x-auto py-4  snap-x snap-mandatory [scrollbar-width:none] [-ms-overflow-style:none]"
         >
           {productTiles.map((product, index) => {
-            const amount = product.priceRange?.maxVariantPrice?.amount;
-            const currency = product.priceRange?.maxVariantPrice?.currencyCode;
+            const amount = product.priceRange?.minVariantPrice?.amount;
+            const currency = product.priceRange?.minVariantPrice?.currencyCode;
             const compareAt =
               product.compareAtPrice?.amount ?? null;
 

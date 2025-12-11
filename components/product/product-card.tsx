@@ -39,8 +39,8 @@ export default function ProductCard({ product, className }: ProductCardProps) {
             {product.title}
           </span>
           <Price
-            amount={product.priceRange.maxVariantPrice.amount}
-            currencyCode={product.priceRange.maxVariantPrice.currencyCode}
+            amount={product.priceRange.minVariantPrice.amount}
+            currencyCode={product.priceRange.minVariantPrice.currencyCode}
             className="flex-none rounded-full bg-yellow-500 px-3 py-1 text-sm font-bold text-black"
             currencyCodeClassName="text-[10px] font-semibold uppercase text-black/70"
           />
