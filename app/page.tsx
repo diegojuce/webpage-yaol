@@ -6,7 +6,7 @@ import Image from "next/image";
 export const dynamic = "force-dynamic";
 export const metadata = {
   description:
-    "High-performance ecommerce store built with Next.js, Vercel, and Shopify.",
+    "Tienda en línea de alto rendimiento construida con Next.js, Vercel y Shopify.",
   openGraph: {
     type: "website",
   },

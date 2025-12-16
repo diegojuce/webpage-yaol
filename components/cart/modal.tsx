@@ -75,7 +75,8 @@ function LineShippingSelector({
               onChange={() => handleSelect(second.id)}
               className="form-radio h-3 w-3 text-yellow-600"
             />
-            <span className="text-xs">Envio a domicilio</span>
+            <span className="text-xs">Envío a domicilio</span>
+            <span className="text-xs">Envío a domicilio</span>
           </label>
         </div>
       </div>
@@ -117,7 +118,7 @@ export default function CartModal() {
 
   return (
     <>
-      <button aria-label="Open cart" onClick={openCart}>
+      <button aria-label="Abrir carrito" onClick={openCart}>
         <OpenCart quantity={cart?.totalQuantity} />
       </button>
       <Transition show={isOpen}>
@@ -147,8 +148,8 @@ export default function CartModal() {
           >
             <Dialog.Panel className="fixed bottom-0 right-0 top-0 z-[220] flex h-full w-full flex-col border-l border-neutral-200 bg-white/80 p-6 text-black backdrop-blur-xl md:w-[390px] dark:border-neutral-700 dark:bg-black/80 dark:text-white">
               <div className="flex items-center justify-between">
-                <p className="text-lg font-semibold">My Cart</p>
-                <button aria-label="Close cart" onClick={closeCart}>
+                <p className="text-lg font-semibold">Mi carrito</p>
+                <button aria-label="Cerrar carrito" onClick={closeCart}>
                   <CloseCart />
                 </button>
               </div>
@@ -157,7 +158,7 @@ export default function CartModal() {
                 <div className="mt-20 flex w-full flex-col items-center justify-center overflow-hidden">
                   <ShoppingCartIcon className="h-16" />
                   <p className="mt-6 text-center text-2xl font-bold">
-                    Your cart is empty.
+                    Tu carrito está vacío.
                   </p>
                 </div>
               ) : (
@@ -285,7 +286,7 @@ export default function CartModal() {
                       />
                     </div> */}
                     <div className="mb-3 flex items-center justify-between border-b border-neutral-200 pb-1 pt-1 dark:border-neutral-700">
-                      <p>Tipo de envio</p>
+                      <p>Tipo de envío</p>
                       <p className="text-right">GRATIS</p>
                     </div>
                     <div className="mb-3 flex items-center justify-between border-b border-neutral-200 pb-1 pt-1 dark:border-neutral-700">

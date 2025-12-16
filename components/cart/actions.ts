@@ -20,7 +20,7 @@ export async function addItem(
   const { selectedVariantId, quantity } = payload;
 
   if (!selectedVariantId || quantity < 1) {
-    return "Error adding item to cart";
+    return "Error al agregar el producto al carrito";
   }
   console.debug(
     "[actions][addItem] Adding to cart:",
@@ -50,7 +50,7 @@ export async function addItem(
     });
     revalidateTag(TAGS.cart, { expire: 0 });
   } catch (e) {
-    return "Error adding item to cart";
+    return "Error al agregar el producto al carrito";
   }
 }
 
@@ -59,7 +59,7 @@ export async function removeItem(prevState: any, merchandiseId: string) {
     const cart = await getCart();
 
     if (!cart) {
-      return "Error fetching cart";
+      return "Error al obtener el carrito";
     }
 
     const lineItem = cart.lines.find(
@@ -70,10 +70,10 @@ export async function removeItem(prevState: any, merchandiseId: string) {
       await removeFromCart([lineItem.id]);
       revalidateTag(TAGS.cart, { expire: 0 });
     } else {
-      return "Item not found in cart";
+      return "Producto no encontrado en el carrito";
     }
   } catch (e) {
-    return "Error removing item from cart";
+    return "Error al eliminar el producto del carrito";
   }
 }
 
@@ -84,18 +84,40 @@ export async function updateItemQuantity(
     quantity: number;
   }
 ) {
-  const { merchandiseId, quantity } = payload;
+  const { merchandiseId } = payload;
+  let { quantity } = payload;
 
   try {
     const cart = await getCart();
 
     if (!cart) {
-      return "Error fetching cart";
+      return "Error al obtener el carrito";
     }
 
     const lineItem = cart.lines.find(
       (line) => line.merchandise.id === merchandiseId
     );
+
+    if (lineItem) {
+      const productAny = (lineItem.merchandise?.product ?? {}) as any;
+      const edges = productAny?.variants?.edges ?? [];
+      const variants = edges.map((e: any) => e.node);
+      const currentVariant = variants.find(
+        (variant: any) => variant.id === lineItem.merchandise.id
+      );
+      const maxAvailable =
+        typeof currentVariant?.quantityAvailable === "number"
+          ? currentVariant.quantityAvailable
+          : undefined;
+
+      if (typeof maxAvailable === "number") {
+        if (maxAvailable <= 0) {
+          quantity = 0;
+        } else if (quantity > maxAvailable) {
+          quantity = maxAvailable;
+        }
+      }
+    }
 
     if (lineItem && lineItem.id) {
       if (quantity === 0) {
@@ -117,7 +139,7 @@ export async function updateItemQuantity(
     revalidateTag(TAGS.cart, { expire: 0 });
   } catch (e) {
     console.error(e);
-    return "Error updating item quantity";
+    return "Error al actualizar la cantidad del producto";
   }
 }
 
@@ -131,12 +153,12 @@ export async function updateItemVariant(
   try {
     const cart = await getCart();
     if (!cart) {
-      return "Error fetching cart";
+      return "Error al obtener el carrito";
     }
 
     const lineItem = cart.lines.find((line) => line.id === payload.lineId);
     if (!lineItem) {
-      return "Line item not found";
+      return "Línea de producto no encontrada";
     }
 
     await updateCart([
@@ -150,7 +172,7 @@ export async function updateItemVariant(
     revalidateTag(TAGS.cart, { expire: 0 });
   } catch (e) {
     console.error(e);
-    return "Error updating item variant";
+    return "Error al actualizar la variante del producto";
   }
 }
 

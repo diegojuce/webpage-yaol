@@ -46,9 +46,29 @@ function updateCartItem(
 ): CartItem | null {
   if (updateType === "delete") return null;
 
-  const newQuantity =
+  const productAny = (item.merchandise?.product ?? {}) as any;
+  const edges = productAny?.variants?.edges ?? [];
+  const variants: ProductVariant[] = edges.map((e: any) => e.node);
+  const currentVariant = variants.find(
+    (variant) => variant.id === item.merchandise.id
+  );
+  const maxAvailable =
+    typeof currentVariant?.quantityAvailable === "number"
+      ? currentVariant.quantityAvailable
+      : undefined;
+
+  let newQuantity =
     updateType === "plus" ? item.quantity + 1 : item.quantity - 1;
-  if (newQuantity === 0) return null;
+
+  if (updateType === "plus" && typeof maxAvailable === "number") {
+    if (item.quantity >= maxAvailable) {
+      return item;
+    }
+
+    newQuantity = Math.min(item.quantity + 1, maxAvailable);
+  }
+
+  if (newQuantity <= 0) return null;
 
   const currentAmountNum = Number(item.cost.totalAmount.amount);
   const singleItemAmount =
@@ -82,7 +102,20 @@ function createOrUpdateCartItem(
   quantityToAdd: number
 ): CartItem {
   const baseQuantity = existingItem ? existingItem.quantity : 0;
-  const newQuantity = baseQuantity + quantityToAdd;
+  let newQuantity = baseQuantity + quantityToAdd;
+
+  const maxAvailable =
+    typeof variant.quantityAvailable === "number"
+      ? variant.quantityAvailable
+      : undefined;
+
+  if (typeof maxAvailable === "number") {
+    if (maxAvailable <= 0) {
+      newQuantity = baseQuantity;
+    } else {
+      newQuantity = Math.min(newQuantity, maxAvailable);
+    }
+  }
 
   // Fallback to product-level price if variant price is missing/invalid.
   const variantAmount = Number(variant?.price?.amount);

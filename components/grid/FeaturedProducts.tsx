@@ -72,7 +72,7 @@ export default function FeaturedProducts({ productTiles }: { productTiles: Produ
                   
                   {/* Badge de oferta */}
                   <div className="absolute left-4 top-4 rounded-md border border-yellow-400/40 bg-yellow-500/10 px-2 py-1">
-                    <div className="text-xs font-extrabold text-yellow-300 leading-none">20% OFF</div>
+                    <div className="text-xs font-extrabold text-yellow-300 leading-none">20% DESCUENTO</div>
                     <div className="text-[10px] font-semibold text-yellow-300/90 leading-tight"></div>
                   </div>
 

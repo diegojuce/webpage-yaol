@@ -1,10 +1,9 @@
-// app/aviso/page.tsx
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy | yaol_commerce",
+  title: "Política de garantía y devoluciones | yaol_commerce",
   description:
-    "How yaol_commerce collects, uses, and discloses your personal information when you visit or shop with us.",
+    "Conoce las políticas de garantía y devoluciones de yaol_commerce.",
 };
 
 export default function ReturnPolicyPage() {

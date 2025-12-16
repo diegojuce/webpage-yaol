@@ -70,7 +70,7 @@ export function SearchSkeleton({ className }: SearchSkeletonProps) {
       )}
     >
       <input
-        placeholder="Search for products..."
+        placeholder="Buscar productos..."
         className="w-full rounded-lg border bg-white px-4 py-2 text-sm text-black placeholder:text-neutral-500 focus:!border-white dark:focus:!border-white focus:outline-none focus:ring-0 transition-colors duration-150 dark:border-neutral-800 dark:bg-transparent dark:text-white dark:placeholder:text-neutral-400"
       />
       <div className="absolute right-0 top-0 mr-3 flex h-full items-center">

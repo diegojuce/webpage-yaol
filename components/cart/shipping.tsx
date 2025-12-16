@@ -20,12 +20,11 @@ return(
         </label>
         <label className="flex items-center gap-2">
             <input type="radio" name="shippingType" value="adress" checked={selectedShipping === "adress"} onChange={handleShippingChange} className="form-radio h-3 w-3 text-yellow-600" />
-            <span className="text-xs">Envio a domicilio</span>
+            <span className="text-xs">Envío a domicilio</span>
         </label>
         </form>
         </div> 
     </div>
 )
 }
-
 

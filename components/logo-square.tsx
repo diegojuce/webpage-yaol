@@ -3,7 +3,7 @@ import clsx from "clsx";
 const LOGO_SRC = "/logo.svg";
 
 export default function LogoSquare({ size }: { size?: "sm" | undefined }) {
-  const storeName = process.env.SITE_NAME || "Store";
+  const storeName = process.env.SITE_NAME || "Tienda";
   const containerHeightClass = size === "sm" ? "h-6" : "h-8";
 
   return (
@@ -15,7 +15,7 @@ export default function LogoSquare({ size }: { size?: "sm" | undefined }) {
     >
       <img
         src={LOGO_SRC}
-        alt={`${storeName} logo`}
+        alt={`${storeName} logotipo`}
         className="hidden md:flex md:h-full md:w-auto object-contain"
         loading="eager"
       />

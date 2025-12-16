@@ -43,7 +43,7 @@ export function Gallery({
                   const newState = updateImage(previousImageIndex.toString());
                   updateURL(newState);
                 }}
-                aria-label="Previous product image"
+                aria-label="Imagen anterior del producto"
                 className={buttonClassName}
               >
                 <ArrowLeftIcon className="h-5" />
@@ -54,7 +54,7 @@ export function Gallery({
                   const newState = updateImage(nextImageIndex.toString());
                   updateURL(newState);
                 }}
-                aria-label="Next product image"
+                aria-label="Imagen siguiente del producto"
                 className={buttonClassName}
               >
                 <ArrowRightIcon className="h-5" />
@@ -76,7 +76,7 @@ export function Gallery({
                     const newState = updateImage(index.toString());
                     updateURL(newState);
                   }}
-                  aria-label="Select product image"
+                  aria-label="Seleccionar imagen del producto"
                   className="h-full w-full"
                 >
                   <GridTileImage

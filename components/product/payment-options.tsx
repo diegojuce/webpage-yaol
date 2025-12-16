@@ -98,28 +98,12 @@ export function PaymentOptions({ product }: { product: Product }) {
         }
       >
         <summary className="flex cursor-pointer list-none items-center justify-between">
-          <h3 className="text-base font-semibold">Opciones de pago</h3>
+          <h3 className="text-base font-semibold">Pago a meses disponibe</h3>
           <PlusIcon className="h-5" />
         </summary>
         <div className="mt-3">
-          <p className="mb-3 text-xs text-neutral-600">
-            Precio base seleccionado: {formatCurrency(totalPrice, currencyCode)}{" "}
-            {currencyCode}
-          </p>
-          <ul className="space-y-2">
-            {plans.map(({ label, months, monthlyAmount }) => (
-              <li className="flex items-center justify-between" key={months}>
-                <span>{label}</span>
-                <span className="font-semibold">
-                  {formatCurrency(monthlyAmount, currencyCode)} {currencyCode} /
-                  mes
-                </span>
-              </li>
-            ))}
-          </ul>
           <p className="mt-2 text-xs text-neutral-500">
-            Los montos incluyen el incremento porcentual indicado y se dividen
-            entre el número de pagos.
+            Los pagos hasta 12 meses con intereses estan disponibles en el checkout 
           </p>
         </div>
       </details>

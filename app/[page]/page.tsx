@@ -36,8 +36,8 @@ export default async function Page(props: {
       <h1 className="mb-8 text-5xl font-bold">{page.title}</h1>
       <Prose className="mb-8" html={page.body} />
       <p className="text-sm italic">
-        {`This document was last updated on ${new Intl.DateTimeFormat(
-          undefined,
+        {`Este documento se actualizó por última vez el ${new Intl.DateTimeFormat(
+          "es-MX",
           {
             year: "numeric",
             month: "long",

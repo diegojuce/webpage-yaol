@@ -135,7 +135,7 @@ export function VariantSelector({
                 key={value}
                 aria-disabled={!isAvailableForSale}
                 disabled={!isAvailableForSale}
-                title={`${option.name} ${value}${!isAvailableForSale ? " (Out of Stock)" : ""}`}
+                title={`${option.name} ${value}${!isAvailableForSale ? " (Agotado)" : ""}`}
                 className={clsx(
                   "flex min-w-[48px] items-center justify-center rounded-full px-3 py-1 text-sm font-medium transition duration-200 ease-in-out bg-transparent !text-black hover:!text-black dark:!text-white dark:hover:!text-white",
                   {
