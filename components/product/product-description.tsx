@@ -9,7 +9,7 @@ export function ProductDescription({ product }: { product: Product }) {
   return (
     <>
       <div className="mb-6 flex flex-col border-b pb-6 dark:border-neutral-700">
-        <h1 className="mb-2 text-5xl font-medium">{product.title}</h1>
+        <h1 className="mb-2 text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-medium">{product.title}</h1>
         <div className=" flex">
           <div className="w-auto rounded-full p-2 text-sm text-black line-through">
             <Price
