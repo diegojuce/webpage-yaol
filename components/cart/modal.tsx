@@ -76,7 +76,6 @@ function LineShippingSelector({
               className="form-radio h-3 w-3 text-yellow-600"
             />
             <span className="text-xs">Envío a domicilio</span>
-            <span className="text-xs">Envío a domicilio</span>
           </label>
         </div>
       </div>

@@ -62,6 +62,8 @@ export function AddToCart({ product }: { product: Product }) {
   const { addCartItem } = useCart();
   const { state, quantity, setQuantity } = useProduct();
   const [message, formAction] = useActionState(addItem, null);
+  console.debug("[add-to-cart] Product:", product);
+  console.debug("[add-to-cart] Product:", product.variants[0]?.selectedOptions);
 
   const variant = variants.find((variant: ProductVariant) =>
     variant.selectedOptions.every(
