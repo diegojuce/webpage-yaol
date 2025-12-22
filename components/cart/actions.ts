@@ -8,6 +8,7 @@ import {
   removeFromCart,
   updateCart,
 } from "lib/shopify";
+import { getRawProduct } from "lib/shopify/noCacheGetProduct";
 import { revalidateTag } from "next/cache";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
@@ -17,7 +18,8 @@ export async function addItem(
   payload: { selectedVariantId: string | undefined; quantity: number }
 ) {
   console.debug("[actions][addItem] Payload:", payload);
-  const { selectedVariantId, quantity } = payload;
+  const { selectedVariantId } = payload;
+  let { quantity } = payload;
 
   if (!selectedVariantId || quantity < 1) {
     return "Error al agregar el producto al carrito";
@@ -34,20 +36,84 @@ export async function addItem(
       !!id && id.startsWith("gid://shopify/Cart/") && id.includes("?key=");
 
     let cartId = (await cookies()).get("cartId")?.value;
+    let cart: import("lib/shopify/types").Cart | undefined;
+
     if (!isValidCartId(cartId)) {
       console.debug("[actions][addItem] Missing/invalid cartId cookie (", cartId, "). Creating cart...");
-      const cart = await createCart();
-      cartId = cart.id!; // Keep full id with ?key
+      const newCart = await createCart();
+      cartId = newCart.id!; // Keep full id with ?key
       (await cookies()).set("cartId", cartId);
       console.debug("[actions][addItem] Created cart:", cartId);
+      cart = newCart;
+    } else {
+      cart = await getCart();
     }
 
-    await addToCart(
-      [{ merchandiseId: selectedVariantId, quantity }],
-      cartId
-    ).then((r) => {
-      console.debug("[actions][addItem] addToCart response:", r);
-    });
+    // Si ya existe una línea con este variant en el carrito, actualizar su cantidad
+    const existingLine = cart?.lines.find(
+      (line) => line.merchandise.id === selectedVariantId
+    );
+
+    if (existingLine) {
+      const handle = (existingLine.merchandise as any)?.product?.handle;
+      let maxAvailable: number | undefined;
+
+      // Preferir stock desde el backend propio
+      if (handle) {
+        const backendProduct = await getRawProduct(handle);
+        const backendVariant = backendProduct?.variants.find(
+          (variant) => variant.id === selectedVariantId
+        );
+
+        if (typeof backendVariant?.quantityAvailable === "number") {
+          maxAvailable = backendVariant.quantityAvailable;
+        }
+      }
+
+      // Si el backend no devolvió stock, usar el de Shopify como respaldo
+      if (typeof maxAvailable !== "number") {
+        const productAny = (existingLine.merchandise?.product ?? {}) as any;
+        const edges = productAny?.variants?.edges ?? [];
+        const variants = edges.map((e: any) => e.node);
+        const currentVariant = variants.find(
+          (variant: any) => variant.id === existingLine.merchandise.id
+        );
+        if (typeof currentVariant?.quantityAvailable === "number") {
+          maxAvailable = currentVariant.quantityAvailable;
+        }
+      }
+
+      let newQuantity = existingLine.quantity + quantity;
+
+      if (typeof maxAvailable === "number") {
+        if (maxAvailable <= 0) {
+          newQuantity = 0;
+        } else if (newQuantity > maxAvailable) {
+          newQuantity = maxAvailable;
+        }
+      }
+
+      if (newQuantity <= 0) {
+        await removeFromCart([existingLine.id!]);
+      } else if (newQuantity !== existingLine.quantity) {
+        await updateCart([
+          {
+            id: existingLine.id!,
+            merchandiseId: selectedVariantId,
+            quantity: newQuantity,
+          },
+        ]);
+      }
+    } else {
+      // Si no existe en el carrito, usar la lógica normal de Shopify
+      await addToCart(
+        [{ merchandiseId: selectedVariantId, quantity }],
+        cartId
+      ).then((r) => {
+        console.debug("[actions][addItem] addToCart response:", r);
+      });
+    }
+
     revalidateTag(TAGS.cart, { expire: 0 });
   } catch (e) {
     return "Error al agregar el producto al carrito";
@@ -99,16 +165,33 @@ export async function updateItemQuantity(
     );
 
     if (lineItem) {
-      const productAny = (lineItem.merchandise?.product ?? {}) as any;
-      const edges = productAny?.variants?.edges ?? [];
-      const variants = edges.map((e: any) => e.node);
-      const currentVariant = variants.find(
-        (variant: any) => variant.id === lineItem.merchandise.id
-      );
-      const maxAvailable =
-        typeof currentVariant?.quantityAvailable === "number"
-          ? currentVariant.quantityAvailable
-          : undefined;
+      const handle = (lineItem.merchandise as any)?.product?.handle;
+      let maxAvailable: number | undefined;
+
+      // Preferir stock desde el backend propio
+      if (handle) {
+        const backendProduct = await getRawProduct(handle);
+        const backendVariant = backendProduct?.variants.find(
+          (variant) => variant.id === merchandiseId
+        );
+
+        if (typeof backendVariant?.quantityAvailable === "number") {
+          maxAvailable = backendVariant.quantityAvailable;
+        }
+      }
+
+      // Si el backend no devolvió stock, usar el de Shopify como respaldo
+      if (typeof maxAvailable !== "number") {
+        const productAny = (lineItem.merchandise?.product ?? {}) as any;
+        const edges = productAny?.variants?.edges ?? [];
+        const variants = edges.map((e: any) => e.node);
+        const currentVariant = variants.find(
+          (variant: any) => variant.id === lineItem.merchandise.id
+        );
+        if (typeof currentVariant?.quantityAvailable === "number") {
+          maxAvailable = currentVariant.quantityAvailable;
+        }
+      }
 
       if (typeof maxAvailable === "number") {
         if (maxAvailable <= 0) {

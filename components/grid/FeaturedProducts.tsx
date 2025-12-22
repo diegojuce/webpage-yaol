@@ -134,9 +134,7 @@ export default function FeaturedProducts({ productTiles }: { productTiles: Produ
                   <p className="mt-2 text-[11px] leading-4 text-neutral-300">
                     INCLUYE: Montaje, válvulas, nitrógeno y balanceo
                   </p>
-
-                  {/* Borde inferior “highlight” */}
-                  <div className="pointer-events-none absolute inset-x-0 bottom-0 h-[3px] rounded-b-2xl bg-gradient-to-r from-yellow-500/10 via-yellow-400/60 to-yellow-500/10" />
+                  
                 </article>
               </Link>
             );
