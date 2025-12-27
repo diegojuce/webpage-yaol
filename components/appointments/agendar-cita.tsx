@@ -13,7 +13,6 @@ import {
   type SaveAndSchedulePayload,
   type Service,
 } from "lib/api/appointments";
-import { getRawProduct } from "lib/shopify/noCacheGetProduct";
 import { ProductVariant } from "lib/shopify/types";
 import {
   Fragment,
@@ -730,7 +729,7 @@ export function AppointmentEmbedded({ onClose }: { onClose: () => void }) {
     () => buildCalendarDays(currentMonth),
     [currentMonth]
   );
-  const { addCartItem } = useCart();
+  // const { addCartItem } = useCart();
   const { cart } = useCart();
   const [, formAction] = useActionState(addItem, null);
 
@@ -827,26 +826,26 @@ export function AppointmentEmbedded({ onClose }: { onClose: () => void }) {
       );
       return;
     }
-    const productGid =
-      sucursalCode in instProdIDs
-        ? instProdIDs[sucursalCode as keyof typeof instProdIDs]
-        : undefined;
-    if (!productGid) {
-      setSubmitStatus("error");
-      setSubmitMessage(
-        "No se pudo resolver el producto de instalación para la sucursal seleccionada."
-      );
-      return;
-    }
-    // const sucProduct = await backendFetch(`${sucursalCode}-inst-00`);
-    const product = await getRawProduct(productGid);
-    if (!product) {
-      setSubmitStatus("error");
-      setSubmitMessage(
-        "No se pudo obtener el producto de instalación para la sucursal seleccionada."
-      );
-      return;
-    }
+    // const productGid =
+    //   sucursalCode in instProdIDs
+    //     ? instProdIDs[sucursalCode as keyof typeof instProdIDs]
+    //     : undefined;
+    // if (!productGid) {
+    //   setSubmitStatus("error");
+    //   setSubmitMessage(
+    //     "No se pudo resolver el producto de instalación para la sucursal seleccionada."
+    //   );
+    //   return;
+    // }
+    // // const sucProduct = await backendFetch(`${sucursalCode}-inst-00`);
+    // const product = await getRawProduct(productGid);
+    // if (!product) {
+    //   setSubmitStatus("error");
+    //   setSubmitMessage(
+    //     "No se pudo obtener el producto de instalación para la sucursal seleccionada."
+    //   );
+    //   return;
+    // }
 
     const selectedVariantId =
       instVarIDs[sucursalCode as keyof typeof instVarIDs] || "1";
@@ -866,12 +865,12 @@ export function AppointmentEmbedded({ onClose }: { onClose: () => void }) {
       );
       return;
     }
-    product.variants = [finalVariant];
-    const quantity = 1;
-    const addItemPayload = {
-      selectedVariantId,
-      quantity,
-    };
+    // product.variants = [finalVariant];
+    // const quantity = 1;
+    // const addItemPayload = {
+    //   selectedVariantId,
+    //   quantity,
+    // };
     try {
       // Build save-and-schedule payload including cart items
       const hhmm = extractHHMM(selectedTime);
@@ -907,8 +906,8 @@ export function AppointmentEmbedded({ onClose }: { onClose: () => void }) {
         setSubmitStatus("success");
         setSubmitMessage("¡Tu cita ha sido confirmada con éxito!");
         // Keep adding the installation product to cart as before
-        addCartItem(finalVariant, product, quantity);
-        formAction(addItemPayload);
+        // addCartItem(finalVariant, product, quantity);
+        // formAction(addItemPayload);
       });
     } catch (error) {
       setSubmitStatus("error");
