@@ -1,6 +1,6 @@
 "use client";
 
-export const API_BASE_URL = "https://stg-back.yantissimo.com";
+export const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL ?? "";
 
 export type Branch = {
   id: string;
@@ -199,4 +199,38 @@ function buildStartAtISO(date: string, time: string): string | null {
 
   const localDate = new Date(year, month - 1, day, hours, minutes, seconds);
   return Number.isNaN(localDate.getTime()) ? null : localDate.toISOString();
+}
+
+// Payload for the Save-and-Schedule endpoint
+export type SaveAndSchedulePayload = {
+  client_name: string;
+  phone: string;
+  sucursal: string; // e.g., "NHS", "TEC"
+  additional_notes?: string;
+  items: Array<{
+    merchandise_id?: string;
+    product_id?: string;
+    title?: string;
+    variant_title?: string;
+    quantity: number;
+    unit_price?: number;
+    total_price?: number;
+    currency?: string;
+    selected_options?: Array<{ name: string; value: string }>;
+  }>;
+  start_at: string; // ISO like 2025-01-31T09:00:00
+  duration_minutes: number;
+};
+
+export async function saveAndSchedule(data: SaveAndSchedulePayload) {
+  const res = await fetch(buildUrl("/bypass/yaol/save-and-schedule"), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(text || "Error al guardar y programar la cita");
+  }
+  return res.json();
 }

@@ -16,13 +16,13 @@ export default function ProductCard({ product, className }: ProductCardProps) {
     <Link
       className={clsx(
         "group relative block h-full w-full transition-transform duration-150 ease-out hover:-translate-y-1",
-        className,
+        className
       )}
       href={`/product/${product.handle}`}
       prefetch
     >
       <article className="flex h-full flex-col overflow-hidden rounded-3xl border border-neutral-800 bg-neutral-950/90 p-5 shadow-[0_25px_80px_rgba(10,10,15,0.45)] transition-colors duration-150 group-hover:border-yellow-500/60 group-hover:bg-neutral-950">
-        <div className="relative aspect-[4/3] bg-white w-full overflow-hidden rounded-2xl bg-neutral-900/60">
+        <div className="relative aspect-[4/3] bg-white w-full overflow-hidden rounded-2xl">
           {image?.url ? (
             <Image
               src={image.url}

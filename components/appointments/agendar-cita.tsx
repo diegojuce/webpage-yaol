@@ -7,25 +7,24 @@ import {
 } from "@heroicons/react/24/outline";
 import clsx from "clsx";
 import {
-  createAppointment,
   fetchAvailableTimes,
+  saveAndSchedule,
   type Branch,
-  type CreateAppointmentPayload,
+  type SaveAndSchedulePayload,
   type Service,
 } from "lib/api/appointments";
-import {
-  getRawProduct
-} from "lib/shopify/noCacheGetProduct";
+import { getRawProduct } from "lib/shopify/noCacheGetProduct";
 import { ProductVariant } from "lib/shopify/types";
-import { Fragment, startTransition, useActionState, useEffect, useMemo, useState } from "react";
-import type { ChangeEvent } from "react";
+import {
+  Fragment,
+  startTransition,
+  useActionState,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { addItem } from "../cart/actions";
 import { useCart } from "../cart/cart-context";
-
-type AgendarCitaProps = {
-  triggerClassName?: string;
-  triggerLabel?: string;
-};
 
 type CalendarDay = {
   key: string;
@@ -74,33 +73,6 @@ const services: Service[] = [
   { id: "5", name: "FRENOS", duration: 120 },
 ];
 
-export function AgendarCita({
-  triggerClassName,
-  triggerLabel = "AGENDAR CITA",
-}: AgendarCitaProps) {
-  const [isOpen, setIsOpen] = useState(false);
-
-  const open = () => setIsOpen(true);
-  const close = () => setIsOpen(false);
-
-  return (
-    <>
-      <button
-        type="button"
-        onClick={open}
-        className={clsx(
-          "uppercase tracking-[0.25em]",
-          "transition-transform duration-150 ease-out",
-          triggerClassName
-        )}
-      >
-        {triggerLabel}
-      </button>
-      <AppointmentModal isOpen={isOpen} onClose={close} />
-    </>
-  );
-}
-
 function AppointmentModal({
   isOpen,
   onClose,
@@ -115,11 +87,9 @@ function AppointmentModal({
   const [servicesError, setServicesError] = useState<string | null>(null);
 
   const [selectedBranchId, setSelectedBranchId] = useState("");
-  const [selectedServiceId, setSelectedServiceId] = useState("1");
+  const [selectedServiceId, setSelectedServiceId] = useState("");
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedTime, setSelectedTime] = useState("");
-  const [customerName, setCustomerName] = useState("");
-  const [customerPhone, setCustomerPhone] = useState("");
 
   const [availableDates, setAvailableDates] = useState<string[]>([]);
   const [datesLoading, setDatesLoading] = useState(false);
@@ -132,21 +102,25 @@ function AppointmentModal({
   const [submitStatus, setSubmitStatus] = useState<SubmitStatus>("idle");
   const [submitMessage, setSubmitMessage] = useState<string | null>(null);
 
+  // User info fields required by backend
+  const [clientName, setClientName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [notes, setNotes] = useState("");
+  const { cart } = useCart();
+
   const [currentMonth, setCurrentMonth] = useState(() =>
     startOfMonth(new Date())
   );
 
   const todayISO = useMemo(() => formatISODate(new Date()), []);
+  const availableDateSet = useMemo(
+    () => new Set(availableDates),
+    [availableDates]
+  );
   const calendarDays = useMemo(
     () => buildCalendarDays(currentMonth),
     [currentMonth]
   );
-
-  const handleNumericPhone = (event: ChangeEvent<HTMLInputElement>) => {
-    let value = event.target.value.replace(/[^0-9]/g, "");
-    value = value.slice(0, 10);
-    setCustomerPhone(value);
-  };
 
   // Reset form state when the modal closes.
   useEffect(() => {
@@ -155,8 +129,6 @@ function AppointmentModal({
       setSelectedServiceId("");
       setSelectedDate("");
       setSelectedTime("");
-       setCustomerName("");
-       setCustomerPhone("");
       setAvailableDates([]);
       setAvailableTimes([]);
       setDatesError(null);
@@ -268,16 +240,10 @@ function AppointmentModal({
   };
 
   const handleConfirm = async () => {
-    if (
-      !selectedBranchId ||
-      !selectedDate ||
-      !selectedTime ||
-      !customerName.trim() ||
-      customerPhone.trim().length !== 10
-    ) {
+    if (!selectedBranchId || !selectedDate || !selectedTime) {
       setSubmitStatus("error");
       setSubmitMessage(
-        "Ingresa tu nombre, teléfono de 10 dígitos y selecciona sucursal, fecha y horario antes de confirmar."
+        "Selecciona una sucursal, una fecha y un horario disponibles antes de confirmar."
       );
       return;
     }
@@ -285,44 +251,47 @@ function AppointmentModal({
     setSubmitStatus("loading");
     setSubmitMessage("Confirmando cita...");
 
+    // Build payload for save-and-schedule
     const branchName =
-      sucursales.find((branch) => branch.id === selectedBranchId)?.name ?? "";
-    const durationMinutes =
-      services.find((service) => service.id === selectedServiceId)?.duration ||
-      60;
+      sucursales.find((b) => b.id === selectedBranchId)?.name || "";
+    const duration =
+      services.find((s) => s.id === selectedServiceId)?.duration ?? 60;
+    const hhmm = extractHHMM(selectedTime);
+    const startAt = `${selectedDate}T${hhmm}:00`;
 
-    if (!branchName) {
-      setSubmitStatus("error");
-      setSubmitMessage("No se pudo resolver la sucursal seleccionada.");
-      return;
-    }
+    const items = (cart?.lines ?? []).map((line) => {
+      const quantity = line.quantity || 0;
+      const total = Number(line.cost?.totalAmount?.amount || 0);
+      const unit = quantity > 0 ? total / quantity : total;
+      return {
+        merchandise_id: line.merchandise?.id,
+        product_id: line.merchandise?.product?.id,
+        title: line.merchandise?.product?.title,
+        variant_title: line.merchandise?.title,
+        quantity,
+        unit_price: unit,
+        total_price: total,
+        currency: line.cost?.totalAmount?.currencyCode,
+        selected_options: (line.merchandise?.selectedOptions || []).map(
+          (o) => ({ name: o.name, value: o.value })
+        ),
+      };
+    });
 
-    const payload: CreateAppointmentPayload = {
-      branchId: selectedBranchId,
-      branchName,
-      date: selectedDate,
-      time: selectedTime,
-      customerName: customerName.trim(),
-      customerPhone: customerPhone.trim(),
-      durationMinutes,
+    const payload: SaveAndSchedulePayload = {
+      client_name: clientName,
+      phone,
+      sucursal: branchName,
+      additional_notes: notes || undefined,
+      items,
+      start_at: startAt,
+      duration_minutes: duration,
     };
 
-    if (selectedServiceId) {
-      payload.serviceId = selectedServiceId;
-    }
-
     try {
-      const result = await createAppointment(payload);
+      await saveAndSchedule(payload);
       setSubmitStatus("success");
-      const folio =
-        result?.appointment?.id ||
-        result?.appointment?.quote_id ||
-        result?.quote?.id;
-      setSubmitMessage(
-        folio
-          ? `¡Tu cita ha sido confirmada con éxito! Folio ${folio}.`
-          : "¡Tu cita ha sido confirmada con éxito!"
-      );
+      setSubmitMessage("¡Tu cita ha sido confirmada con éxito!");
     } catch (error) {
       setSubmitStatus("error");
       setSubmitMessage(
@@ -337,6 +306,8 @@ function AppointmentModal({
     !selectedBranchId ||
     !selectedDate ||
     !selectedTime ||
+    !clientName.trim() ||
+    !phone.trim() ||
     submitStatus === "loading";
 
   return (
@@ -459,33 +430,38 @@ function AppointmentModal({
                       </section>
                     ) : null}
 
+                    {/* Datos del cliente */}
                     <section>
                       <header className="mb-2">
                         <h3 className="text-sm font-semibold uppercase tracking-[0.3em] text-yellow-400">
-                          Datos de contacto
+                          3. Tus datos
                         </h3>
                       </header>
                       <div className="space-y-3">
                         <input
                           type="text"
-                          value={customerName}
-                          onChange={(event) => setCustomerName(event.target.value)}
+                          placeholder="Nombre completo"
+                          value={clientName}
+                          onChange={(e) => setClientName(e.target.value)}
                           className="w-full rounded-xl border border-neutral-700 bg-neutral-900/80 px-4 py-3 text-sm text-white shadow-[0_10px_30px_rgba(0,0,0,0.35)] focus:border-yellow-400 focus:outline-none"
-                          placeholder="Nombre y apellido"
                         />
                         <input
                           type="tel"
-                          value={customerPhone}
-                          onChange={handleNumericPhone}
-                          className={clsx(
-                            "w-full rounded-xl border bg-neutral-900/80 px-4 py-3 text-sm text-white shadow-[0_10px_30px_rgba(0,0,0,0.35)] focus:outline-none",
-                            customerPhone.trim().length === 0 ||
-                              customerPhone.trim().length === 10
-                              ? "border-neutral-700 focus:border-yellow-400"
-                              : "border-red-500 focus:border-red-500"
-                          )}
                           placeholder="Teléfono"
+                          value={phone}
+                          onChange={(e) => setPhone(e.target.value)}
+                          className="w-full rounded-xl border border-neutral-700 bg-neutral-900/80 px-4 py-3 text-sm text-white shadow-[0_10px_30px_rgba(0,0,0,0.35)] focus:border-yellow-400 focus:outline-none"
                         />
+                        <textarea
+                          placeholder="Notas adicionales (opcional)"
+                          value={notes}
+                          onChange={(e) => setNotes(e.target.value)}
+                          rows={3}
+                          className="w-full rounded-xl border border-neutral-700 bg-neutral-900/80 px-4 py-3 text-sm text-white shadow-[0_10px_30px_rgba(0,0,0,0.35)] focus:border-yellow-400 focus:outline-none"
+                        />
+                        <p className="text-xs text-neutral-400">
+                          Estos datos se usarán para confirmar tu cita.
+                        </p>
                       </div>
                     </section>
 
@@ -513,7 +489,7 @@ function AppointmentModal({
                       <div className="flex items-center justify-between">
                         <div>
                           <h3 className="text-sm font-semibold uppercase tracking-[0.3em] text-yellow-400">
-                            3. Selecciona la fecha
+                            4. Selecciona la fecha
                           </h3>
                           <p className="text-xs text-neutral-400">
                             Los días disponibles se muestran en amarillo.
@@ -600,7 +576,7 @@ function AppointmentModal({
                     <section className="rounded-2xl border border-neutral-800/80 bg-neutral-900/70 p-5">
                       <header className="mb-3">
                         <h3 className="text-sm font-semibold uppercase tracking-[0.3em] text-yellow-400">
-                          4. Selecciona el horario
+                          5. Selecciona el horario
                         </h3>
                         <p className="text-xs text-neutral-400">
                           Solo verás horarios disponibles para la fecha elegida.
@@ -712,13 +688,13 @@ const instVarIDs = {
 };
 
 const instProdIDs = {
-tec: "gid://shopify/Product/8548552900807",
-bjz: "gid://shopify/Product/8548552933575",
-con: "gid://shopify/Product/8548552966343",
-nhs: "gid://shopify/Product/8548552999111",
-rey: "gid://shopify/Product/8548553031879",
-man: "gid://shopify/Product/8548553064647",
-tap: "gid://shopify/Product/8548553097415",
+  tec: "gid://shopify/Product/8548552900807",
+  bjz: "gid://shopify/Product/8548552933575",
+  con: "gid://shopify/Product/8548552966343",
+  nhs: "gid://shopify/Product/8548552999111",
+  rey: "gid://shopify/Product/8548553031879",
+  man: "gid://shopify/Product/8548553064647",
+  tap: "gid://shopify/Product/8548553097415",
 };
 
 export function AppointmentEmbedded({ onClose }: { onClose: () => void }) {
@@ -728,11 +704,9 @@ export function AppointmentEmbedded({ onClose }: { onClose: () => void }) {
   const [servicesLoading, setServicesLoading] = useState(false);
   const [servicesError, setServicesError] = useState<string | null>(null);
   const [selectedBranchId, setSelectedBranchId] = useState("");
-  const [selectedServiceId, setSelectedServiceId] = useState("1");
+  const [selectedServiceId, setSelectedServiceId] = useState("");
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedTime, setSelectedTime] = useState("");
-  const [customerName, setCustomerName] = useState("");
-  const [customerPhone, setCustomerPhone] = useState("");
   const [availableDates, setAvailableDates] = useState<string[]>([]);
   const [datesLoading, setDatesLoading] = useState(false);
   const [datesError, setDatesError] = useState<string | null>(null);
@@ -741,31 +715,31 @@ export function AppointmentEmbedded({ onClose }: { onClose: () => void }) {
   const [timesError, setTimesError] = useState<string | null>(null);
   const [submitStatus, setSubmitStatus] = useState<SubmitStatus>("idle");
   const [submitMessage, setSubmitMessage] = useState<string | null>(null);
+  const [clientName, setClientName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [notes, setNotes] = useState("");
   const [currentMonth, setCurrentMonth] = useState(() =>
     startOfMonth(new Date())
   );
   const todayISO = useMemo(() => formatISODate(new Date()), []);
+  const availableDateSet = useMemo(
+    () => new Set(availableDates),
+    [availableDates]
+  );
   const calendarDays = useMemo(
     () => buildCalendarDays(currentMonth),
     [currentMonth]
   );
-  const { cart, addCartItem } = useCart();
+  const { addCartItem } = useCart();
+  const { cart } = useCart();
   const [, formAction] = useActionState(addItem, null);
-
-  const handleNumericPhone = (event: ChangeEvent<HTMLInputElement>) => {
-    let value = event.target.value.replace(/[^0-9]/g, "");
-    value = value.slice(0, 10);
-    setCustomerPhone(value);
-  };
 
   // same useEffects for resetting (omit the isOpen guard), fetching availableTimes, etc.
   useEffect(() => {
     setSelectedBranchId("");
-    setSelectedServiceId("1");
+    setSelectedServiceId("");
     setSelectedDate("");
     setSelectedTime("");
-    setCustomerName("");
-    setCustomerPhone("");
     setAvailableDates([]);
     setAvailableTimes([]);
     setDatesError(null);
@@ -819,53 +793,22 @@ export function AppointmentEmbedded({ onClose }: { onClose: () => void }) {
     setSelectedTime("");
   };
   const handleConfirm = async () => {
-    if (
-      !selectedBranchId ||
-      !selectedDate ||
-      !selectedTime ||
-      !customerName.trim() ||
-      customerPhone.trim().length !== 10
-    ) {
+    if (!selectedBranchId || !selectedDate || !selectedTime) {
       setSubmitStatus("error");
       setSubmitMessage(
-        "Ingresa tu nombre, teléfono de 10 dígitos y selecciona sucursal, fecha y horario antes de confirmar."
+        "Selecciona una sucursal, una fecha y un horario disponibles antes de confirmar."
       );
+      return;
+    }
+    if (!clientName.trim() || !phone.trim()) {
+      setSubmitStatus("error");
+      setSubmitMessage("Ingresa tu nombre y teléfono para continuar.");
       return;
     }
     setSubmitStatus("loading");
     setSubmitMessage("Confirmando cita...");
-    const payload: CreateAppointmentPayload = {
-      branchId: selectedBranchId,
-      branchName:
-        sucursales.find((b) => b.id === selectedBranchId)?.name ?? "",
-      date: selectedDate,
-      time: selectedTime,
-      customerName: customerName.trim(),
-      customerPhone: customerPhone.trim(),
-      durationMinutes:
-        services.find((service) => service.id === selectedServiceId)
-          ?.duration || 60,
-      items:
-        cart?.lines?.map((line) => ({
-          title: line.merchandise?.title,
-          quantity: line.quantity,
-          merchandiseId: line.merchandise?.id,
-          productHandle: line.merchandise?.product?.handle,
-          productId: line.merchandise?.product?.id,
-          selectedOptions: line.merchandise?.selectedOptions,
-        })) || [],
-      additionalNotes: `Cita de instalación para compra online el ${selectedDate} ${selectedTime}`,
-    };
-    if (!payload.branchName) {
-      setSubmitStatus("error");
-      setSubmitMessage(
-        "No se pudo resolver la sucursal seleccionada para la cita."
-      );
-      return;
-    }
-    if (selectedServiceId) {
-      payload.serviceId = selectedServiceId;
-    }
+    const duration =
+      services.find((s) => s.id === selectedServiceId)?.duration ?? 60;
     const sucursalName = sucursales.find(
       (b) => b.id === selectedBranchId
     )?.name;
@@ -884,7 +827,10 @@ export function AppointmentEmbedded({ onClose }: { onClose: () => void }) {
       );
       return;
     }
-    const productGid = sucursalCode in instProdIDs ? instProdIDs[sucursalCode as keyof typeof instProdIDs] : undefined;
+    const productGid =
+      sucursalCode in instProdIDs
+        ? instProdIDs[sucursalCode as keyof typeof instProdIDs]
+        : undefined;
     if (!productGid) {
       setSubmitStatus("error");
       setSubmitMessage(
@@ -902,16 +848,17 @@ export function AppointmentEmbedded({ onClose }: { onClose: () => void }) {
       return;
     }
 
-    const selectedVariantId = instVarIDs[sucursalCode as keyof typeof instVarIDs] || "1";
-    const finalVariant : ProductVariant  = {
+    const selectedVariantId =
+      instVarIDs[sucursalCode as keyof typeof instVarIDs] || "1";
+    const finalVariant: ProductVariant = {
       availableForSale: true,
       id: selectedVariantId,
-      price: {amount: "0", currencyCode: "MXN"},
+      price: { amount: "0", currencyCode: "MXN" },
       quantityAvailable: 4,
-      selectedOptions: [{name: "Instalacion", value: sucursalCode}],
+      selectedOptions: [{ name: "Instalacion", value: sucursalCode }],
       // sku: `${sucursalCode}-inst-00`,
       title: `Instalación gratuita ${sucursalCode.toLocaleUpperCase()}`,
-    }
+    };
     if (!finalVariant) {
       setSubmitStatus("error");
       setSubmitMessage(
@@ -921,25 +868,45 @@ export function AppointmentEmbedded({ onClose }: { onClose: () => void }) {
     }
     product.variants = [finalVariant];
     const quantity = 1;
-    const addItemPayload ={
+    const addItemPayload = {
       selectedVariantId,
       quantity,
-    }
+    };
     try {
-      const appointmentResult = await createAppointment(payload);
-      const folio =
-        appointmentResult?.appointment?.id ||
-        appointmentResult?.appointment?.quote_id ||
-        appointmentResult?.quote?.id;
+      // Build save-and-schedule payload including cart items
+      const hhmm = extractHHMM(selectedTime);
+      const startAt = `${selectedDate}T${hhmm}:00`;
+      const items = (cart?.lines ?? []).map((line) => {
+        const quantity = line.quantity || 0;
+        const total = Number(line.cost?.totalAmount?.amount || 0);
+        const unit = quantity > 0 ? total / quantity : total;
+        return {
+          merchandise_id: line.merchandise?.id,
+          product_id: line.merchandise?.product?.id,
+          title: line.merchandise?.product?.title,
+          variant_title: line.merchandise?.title,
+          quantity,
+          unit_price: unit,
+          total_price: total,
+          currency: line.cost?.totalAmount?.currencyCode,
+          selected_options: (line.merchandise?.selectedOptions || []).map(
+            (o) => ({ name: o.name, value: o.value })
+          ),
+        };
+      });
+      await saveAndSchedule({
+        client_name: clientName,
+        phone,
+        sucursal: sucursalName || "",
+        additional_notes: notes || undefined,
+        items,
+        start_at: startAt,
+        duration_minutes: duration,
+      });
       startTransition(() => {
         setSubmitStatus("success");
-        setSubmitMessage(
-          folio
-            ? `¡Tu cita ha sido confirmada con éxito! Folio ${folio}.`
-            : "¡Tu cita ha sido confirmada con éxito!"
-        );
-        console.debug("[agendar-cita] addCartItem:", finalVariant, product, quantity);
-        console.debug("[agendar-cita] addItem:", selectedVariantId, quantity);
+        setSubmitMessage("¡Tu cita ha sido confirmada con éxito!");
+        // Keep adding the installation product to cart as before
         addCartItem(finalVariant, product, quantity);
         formAction(addItemPayload);
       });
@@ -957,6 +924,8 @@ export function AppointmentEmbedded({ onClose }: { onClose: () => void }) {
     !selectedBranchId ||
     !selectedDate ||
     !selectedTime ||
+    !clientName.trim() ||
+    !phone.trim() ||
     submitStatus === "loading";
   return (
     <div className="relative w-full p-0 text-white">
@@ -1039,33 +1008,39 @@ export function AppointmentEmbedded({ onClose }: { onClose: () => void }) {
               </div>
             </section>
           ) : null}
+
+          {/* Datos del cliente */}
           <section>
             <header className="mb-2">
               <h3 className="text-sm font-semibold uppercase tracking-[0.3em] text-yellow-400">
-                Datos de contacto
+                3. Tus datos
               </h3>
             </header>
             <div className="space-y-3">
               <input
                 type="text"
-                value={customerName}
-                onChange={(event) => setCustomerName(event.target.value)}
+                placeholder="Nombre completo"
+                value={clientName}
+                onChange={(e) => setClientName(e.target.value)}
                 className="w-full rounded-xl border border-neutral-700 bg-neutral-900/80 px-4 py-3 text-sm text-white shadow-[0_10px_30px_rgba(0,0,0,0.35)] focus:border-yellow-400 focus:outline-none"
-                placeholder="Nombre y apellido"
               />
               <input
                 type="tel"
-                value={customerPhone}
-                onChange={handleNumericPhone}
-                className={clsx(
-                  "w-full rounded-xl border bg-neutral-900/80 px-4 py-3 text-sm text-white shadow-[0_10px_30px_rgba(0,0,0,0.35)] focus:outline-none",
-                  customerPhone.trim().length === 0 ||
-                    customerPhone.trim().length === 10
-                    ? "border-neutral-700 focus:border-yellow-400"
-                    : "border-red-500 focus:border-red-500"
-                )}
                 placeholder="Teléfono"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                className="w-full rounded-xl border border-neutral-700 bg-neutral-900/80 px-4 py-3 text-sm text-white shadow-[0_10px_30px_rgba(0,0,0,0.35)] focus:border-yellow-400 focus:outline-none"
               />
+              <textarea
+                placeholder="Notas adicionales (opcional)"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                rows={3}
+                className="w-full rounded-xl border border-neutral-700 bg-neutral-900/80 px-4 py-3 text-sm text-white shadow-[0_10px_30px_rgba(0,0,0,0.35)] focus:border-yellow-400 focus:outline-none"
+              />
+              <p className="text-xs text-neutral-400">
+                Estos datos se usarán para confirmar tu cita.
+              </p>
             </div>
           </section>
           <section className="rounded-2xl border border-yellow-500/30 bg-yellow-500/5 p-4 text-xs text-neutral-200">
@@ -1087,7 +1062,7 @@ export function AppointmentEmbedded({ onClose }: { onClose: () => void }) {
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-sm font-semibold uppercase tracking-[0.3em] text-yellow-400">
-                  3. Selecciona la fecha
+                  4. Selecciona la fecha
                 </h3>
                 <p className="text-xs text-neutral-400">
                   Los días disponibles se muestran en amarillo.
@@ -1161,7 +1136,7 @@ export function AppointmentEmbedded({ onClose }: { onClose: () => void }) {
           <section className="rounded-2xl border border-neutral-800/80 bg-neutral-900/70 p-5">
             <header className="mb-3">
               <h3 className="text-sm font-semibold uppercase tracking-[0.3em] text-yellow-400">
-                4. Selecciona el horario
+                5. Selecciona el horario
               </h3>
               <p className="text-xs text-neutral-400">
                 Solo verás horarios disponibles para la fecha elegida.
@@ -1191,7 +1166,10 @@ export function AppointmentEmbedded({ onClose }: { onClose: () => void }) {
                   <button
                     key={time}
                     type="button"
-                    onClick={() => {setSelectedTime(time); setSubmitStatus("idle");}}
+                    onClick={() => {
+                      setSelectedTime(time);
+                      setSubmitStatus("idle");
+                    }}
                     className={clsx(
                       "rounded-full border px-4 py-2 text-sm font-semibold uppercase tracking-[0.2em] transition",
                       isSelected
@@ -1379,39 +1357,93 @@ function normalizeServices(data: unknown): Service[] {
 
 function normalizeStringArray(data: unknown): string[] {
   console.log("Raw data for normalization:", data);
+  // Disponibilidad del día: [
+  //   {
+  //     start: '2025-10-30T09:00:00.000Z',
+  //     end: '2025-10-30T10:00:00.000Z'
+  //   },
+  //   {
+  //     start: '2025-10-30T09:30:00.000Z',
+  //     end: '2025-10-30T10:30:00.000Z'
+  //   },
+  //   {
+  //     start: '2025-10-30T10:00:00.000Z',
+  //     end: '2025-10-30T11:00:00.000Z'
+  //   },
+  //   {
+  //     start: '2025-10-30T10:30:00.000Z',
+  //     end: '2025-10-30T11:30:00.000Z'
+  //   },
+  //   {
+  //     start: '2025-10-30T11:00:00.000Z',
+  //     end: '2025-10-30T12:00:00.000Z'
+  //   },
+  //   {
+  //     start: '2025-10-30T11:30:00.000Z',
+  //     end: '2025-10-30T12:30:00.000Z'
+  //   },
+  //   {
+  //     start: '2025-10-30T12:00:00.000Z',
+  //     end: '2025-10-30T13:00:00.000Z'
+  //   },
+  //   {
+  //     start: '2025-10-30T12:30:00.000Z',
+  //     end: '2025-10-30T13:30:00.000Z'
+  //   },
+  //   {
+  //     start: '2025-10-30T13:00:00.000Z',
+  //     end: '2025-10-30T14:00:00.000Z'
+  //   },
+  //   {
+  //     start: '2025-10-30T13:30:00.000Z',
+  //     end: '2025-10-30T14:30:00.000Z'
+  //   },
+  //   {
+  //     start: '2025-10-30T14:00:00.000Z',
+  //     end: '2025-10-30T15:00:00.000Z'
+  //   },
+  //   {
+  //     start: '2025-10-30T14:30:00.000Z',
+  //     end: '2025-10-30T15:30:00.000Z'
+  //   },
+  //   {
+  //     start: '2025-10-30T15:00:00.000Z',
+  //     end: '2025-10-30T16:00:00.000Z'
+  //   },
+  //   {
+  //     start: '2025-10-30T15:30:00.000Z',
+  //     end: '2025-10-30T16:30:00.000Z'
+  //   },
+  //   {
+  //     start: '2025-10-30T16:00:00.000Z',
+  //     end: '2025-10-30T17:00:00.000Z'
+  //   },
+  //   {
+  //     start: '2025-10-30T16:30:00.000Z',
+  //     end: '2025-10-30T17:30:00.000Z'
+  //   },
+  //   {
+  //     start: '2025-10-30T17:00:00.000Z',
+  //     end: '2025-10-30T18:00:00.000Z'
+  //   },
+  //   {
+  //     start: '2025-10-30T17:30:00.000Z',
+  //     end: '2025-10-30T18:30:00.000Z'
+  //   },
+  //   {
+  //     start: '2025-10-30T18:00:00.000Z',
+  //     end: '2025-10-30T19:00:00.000Z'
+  //   }
+  // ]
   if (Array.isArray(data)) {
-    const stringItems = data.filter(
-      (item): item is string => typeof item === "string"
-    );
-
-    const slotItems = data
-      .map((item) => {
-        if (isRecord(item) && typeof item.start === "string") {
-          return formatTimeLabel(item.start);
-        }
-        return null;
-      })
-      .filter((time): time is string => Boolean(time));
-
-    return dedupeAndSortTimes([...stringItems, ...slotItems]);
+    return data.filter((item): item is string => typeof item === "string");
   }
 
   if (isRecord(data)) {
     for (const key of ARRAY_KEYS) {
       const value = data[key];
       if (Array.isArray(value)) {
-        const stringItems = value.filter(
-          (item): item is string => typeof item === "string"
-        );
-        const slotItems = value
-          .map((item) => {
-            if (isRecord(item) && typeof item.start === "string") {
-              return formatTimeLabel(item.start);
-            }
-            return null;
-          })
-          .filter((time): time is string => Boolean(time));
-        return dedupeAndSortTimes([...stringItems, ...slotItems]);
+        return value.filter((item): item is string => typeof item === "string");
       }
     }
   }
@@ -1419,29 +1451,11 @@ function normalizeStringArray(data: unknown): string[] {
   return [];
 }
 
-function formatTimeLabel(iso: string): string | null {
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) {
-    return null;
-  }
-  return date.toLocaleTimeString("es-MX", {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  });
-}
-
-function dedupeAndSortTimes(times: string[]): string[] {
-  const unique = Array.from(new Set(times.filter(Boolean)));
-  return unique.sort((a, b) => toMinutes(a) - toMinutes(b));
-}
-
-function toMinutes(time: string): number {
-  const [hoursStr, minutesStr] = time.split(":");
-  const hours = Number(hoursStr);
-  const minutes = Number(minutesStr);
-  if (Number.isNaN(hours) || Number.isNaN(minutes)) {
-    return Number.MAX_SAFE_INTEGER;
-  }
-  return hours * 60 + minutes;
+function extractHHMM(timeLabel: string): string {
+  // Tries to find HH:mm in the label. Fallback to 00:00
+  const match = timeLabel.match(/(\d{1,2}):(\d{2})/);
+  if (!match) return "00:00";
+  const hh = (match[1] ?? "0").toString().padStart(2, "0");
+  const mm = (match[2] ?? "0").toString().padStart(2, "0");
+  return `${hh}:${mm}`;
 }
