@@ -17,7 +17,8 @@ import {
   getRawProduct
 } from "lib/shopify/noCacheGetProduct";
 import { ProductVariant } from "lib/shopify/types";
-import { Fragment, useEffect, useMemo, useState, useActionState, startTransition } from "react";
+import { Fragment, startTransition, useActionState, useEffect, useMemo, useState } from "react";
+import type { ChangeEvent } from "react";
 import { addItem } from "../cart/actions";
 import { useCart } from "../cart/cart-context";
 
@@ -53,169 +54,24 @@ const sucursales: Branch[] = [
 ];
 
 const services: Service[] = [
-  { id: "1", name: "FRENOS", duration: 120 },
-  { id: "2", name: "FRENO CON SENSOR ELECTRICO", duration: 180 },
-  { id: "3", name: "LIMPIEZA Y AJUSTE DE FRENOS", duration: 60 },
+  { id: "1", name: "MONTAJE", duration: 60 },
+  { id: "6", name: "ALINEACION 3D 2 EJES", duration: 60 },
+  {
+    id: "2",
+    name: "PAQUETE 1 (REVISION,ROTACION Y NITROGENO)",
+    duration: 60,
+  },
+  {
+    id: "3",
+    name: "PAQUETE 2 (REVISION,ROTACION, NITROGENO Y BALANCEO)",
+    duration: 60,
+  },
   {
     id: "4",
-    name: "CAMBIO DE SENSOR ABS Y /O SENSOR DE BALATA",
-    duration: 60,
-  },
-  { id: "5", name: "CAMBIO DE PISTON Y REPUESTO", duration: 60 },
-  { id: "6", name: "M.O DE CAMBIO DE BOMBA DE FRENOS", duration: 120 },
-  {
-    id: "7",
-    name: "M.O DE CAMBIO DE BOMBA DE FRENOS ESPECIAL",
-    duration: 180,
-  },
-  { id: "8", name: "RECTIFICADO", duration: 0 },
-  {
-    id: "9",
-    name: "M.O CAMBIO DE CHICOTE DE FRENO EXTERNO",
-    duration: 120,
-  },
-  {
-    id: "10",
-    name: "SERVICIO DE PURGADO(INCLUYE LIQUIDO DE FRENOS)",
-    duration: 60,
-  },
-  { id: "11", name: "SUSPENSION", duration: 0 },
-  { id: "12", name: "BUJE CON SOPORTE", duration: 0 },
-  { id: "13", name: "BUJE EJE TRASERO CON PURGADO", duration: 0 },
-  { id: "14", name: "HORQUILLA", duration: 0 },
-  { id: "15", name: "HORQUILLA CON BARRA", duration: 0 },
-  { id: "16", name: "HORQUILLA CON PUENTE", duration: 0 },
-  { id: "17", name: "CREMALLERA ", duration: 0 },
-  {
-    id: "18",
-    name: "JUNTA HOMOCINETICA O CUBRE POLVO X LADO",
-    duration: 180,
-  },
-  {
-    id: "19",
-    name: "JUNTA HOMOCINETICA O CUBRE POLVO X LADO 4X4",
-    duration: 240,
-  },
-  { id: "20", name: "BALERO CARDAN O CRUCETA", duration: 120 },
-  { id: "21", name: "BUJES DE MUELLE POR LADO", duration: 90 },
-  { id: "22", name: "HULES DE BARRA PAR", duration: 60 },
-  { id: "23", name: "HULES DE BARRA PAR CON PUENTE", duration: 120 },
-  {
-    id: "24",
-    name: "CAMBIO AMORTIGUADORES MACHPERSHON",
-    duration: 120,
-  },
-  {
-    id: "25",
-    name: "CAMBIO AMORTIGUADORES MACHPERSHON DE BASTAGO",
-    duration: 120,
-  },
-  { id: "26", name: "CAMBIO AMORTIGUADORES NORMAL", duration: 60 },
-  { id: "27", name: "DESARME DELANTERO O TRASERO", duration: 0 },
-  { id: "28", name: "ALINEACION ESCANTILLON", duration: 30 },
-  { id: "29", name: "ALINEACION ESCANTILLON CON CAIDA", duration: 60 },
-  { id: "30", name: "ALINEACION 3D", duration: 30 },
-  { id: "31", name: "ALINEACION 3D 2 EJES", duration: 60 },
-  {
-    id: "32",
-    name: "ALINEACION 3D  CON CAIDA DE AMORTIGUADOR",
-    duration: 30,
-  },
-  { id: "33", name: "UNIDADES DE MANO DE OBRA", duration: 0 },
-  {
-    id: "34",
-    name: "AFINACION MAYOR (CARBUCLEAN,BOYA, AFLOJATODO) 4CILINDROS",
-    duration: 120,
-  },
-  {
-    id: "35",
-    name: "AFINACION MAYOR (CARBUCLEAN,BOYA, AFLOJATODO) 6 U 8 CILINDROS",
-    duration: 240,
-  },
-  {
-    id: "36",
-    name: "AFINACION MENOR (CAMBIO DE FILTROS Y ACEITE)",
-    duration: 60,
-  },
-  { id: "37", name: "CAMBIO DE ACEITE MOTOR", duration: 60 },
-  {
-    id: "38",
-    name: "CAMBIO DE ACIETE MOTOR CON TOLVA O SKIDPLATE",
-    duration: 90,
-  },
-  {
-    id: "39",
-    name: "CAMBIO DE ACEITE TRANSMISION ESTANDAR",
-    duration: 90,
-  },
-  { id: "40", name: "CAMBIO DE ACEITE DIFERENCIAL", duration: 90 },
-  { id: "41", name: "MANO DE OBRA ANTICONGELANTE", duration: 0 },
-  { id: "42", name: "SOPORTES MOTOR", duration: 0 },
-  { id: "43", name: "BALERO DOBLE, MAZA BALERO", duration: 120 },
-  { id: "44", name: "CAMBIO EMPAQUE PUNTERIAS", duration: 0 },
-  { id: "45", name: "CAMBIO DE BOMBA DE AGUA", duration: 0 },
-  { id: "46", name: "CAMBIIO BANDAS DE ACCESORIOS", duration: 90 },
-  { id: "47", name: "CAMBIO DE POLEAS O TENSOR", duration: 90 },
-  { id: "48", name: "TRABAJOS ESPECIALES ES POR HORA", duration: 0 },
-  {
-    id: "49",
-    name: "MONTAJE, BALANCEO, VALVULA Y NITROGENO (13-18) PASAJERO",
-    duration: 60,
-  },
-  {
-    id: "50",
-    name: "MONTAJE, BALANCEO, VALVULA Y NITROGENO (19-22) PASAJERO",
-    duration: 90,
-  },
-  {
-    id: "51",
-    name: "MONTAJE, BALANCEO, VALVULA Y NITROGENO PERFIL BAJO",
-    duration: 0,
-  },
-  {
-    id: "52",
-    name: "MONTAJE, BALANCEO, VALVULA Y NITROGENO AT ",
-    duration: 120,
-  },
-  {
-    id: "53",
-    name: "MONTAJE, BALANCEO, VALVULA Y NITROGENO MUD",
-    duration: 120,
-  },
-  { id: "54", name: "BALANCEO RIN ACERO ", duration: 0 },
-  { id: "55", name: "BALANCEO RIN OFF ROAD", duration: 0 },
-  { id: "56", name: "BALANCEO RIN DEPORTIVO", duration: 0 },
-  { id: "57", name: "ROTACION", duration: 0 },
-  { id: "58", name: "REVISION DE VEHICULO", duration: 0 },
-  { id: "59", name: "NITROGENO X LLANTA", duration: 0 },
-  { id: "60", name: "PARCHE NORMAL", duration: 0 },
-  {
-    id: "61",
-    name: "CAMBIO DE BIRLO POR RUEDA SIN DESARMAR",
-    duration: 0,
-  },
-  {
-    id: "62",
-    name: "CAMBIO DE BIRLO POR RUEDA DESARMANDO",
-    duration: 0,
-  },
-  {
-    id: "63",
-    name: "PAQUETE 1 (REVISION,ROTACION Y NITROGENO)",
-    duration: 0,
-  },
-  {
-    id: "64",
-    name: "PAQUETE 2 (REVISION,ROTACION, NITROGENO Y BALANCEO)",
-    duration: 0,
-  },
-  {
-    id: "65",
     name: "PAQUETE 3 (REVISION,ROTACION, NITROGENO Y BALANCEO, ALINEACION)",
-    duration: 0,
+    duration: 60,
   },
-  { id: "66", name: "BALATA DELATNERA", duration: 180 },
-  { id: "67", name: "BALATA TRASERA", duration: 180 },
+  { id: "5", name: "FRENOS", duration: 120 },
 ];
 
 export function AgendarCita({
@@ -259,9 +115,11 @@ function AppointmentModal({
   const [servicesError, setServicesError] = useState<string | null>(null);
 
   const [selectedBranchId, setSelectedBranchId] = useState("");
-  const [selectedServiceId, setSelectedServiceId] = useState("");
+  const [selectedServiceId, setSelectedServiceId] = useState("1");
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedTime, setSelectedTime] = useState("");
+  const [customerName, setCustomerName] = useState("");
+  const [customerPhone, setCustomerPhone] = useState("");
 
   const [availableDates, setAvailableDates] = useState<string[]>([]);
   const [datesLoading, setDatesLoading] = useState(false);
@@ -279,14 +137,16 @@ function AppointmentModal({
   );
 
   const todayISO = useMemo(() => formatISODate(new Date()), []);
-  const availableDateSet = useMemo(
-    () => new Set(availableDates),
-    [availableDates]
-  );
   const calendarDays = useMemo(
     () => buildCalendarDays(currentMonth),
     [currentMonth]
   );
+
+  const handleNumericPhone = (event: ChangeEvent<HTMLInputElement>) => {
+    let value = event.target.value.replace(/[^0-9]/g, "");
+    value = value.slice(0, 10);
+    setCustomerPhone(value);
+  };
 
   // Reset form state when the modal closes.
   useEffect(() => {
@@ -295,6 +155,8 @@ function AppointmentModal({
       setSelectedServiceId("");
       setSelectedDate("");
       setSelectedTime("");
+       setCustomerName("");
+       setCustomerPhone("");
       setAvailableDates([]);
       setAvailableTimes([]);
       setDatesError(null);
@@ -406,10 +268,16 @@ function AppointmentModal({
   };
 
   const handleConfirm = async () => {
-    if (!selectedBranchId || !selectedDate || !selectedTime) {
+    if (
+      !selectedBranchId ||
+      !selectedDate ||
+      !selectedTime ||
+      !customerName.trim() ||
+      customerPhone.trim().length !== 10
+    ) {
       setSubmitStatus("error");
       setSubmitMessage(
-        "Selecciona una sucursal, una fecha y un horario disponibles antes de confirmar."
+        "Ingresa tu nombre, teléfono de 10 dígitos y selecciona sucursal, fecha y horario antes de confirmar."
       );
       return;
     }
@@ -417,10 +285,26 @@ function AppointmentModal({
     setSubmitStatus("loading");
     setSubmitMessage("Confirmando cita...");
 
+    const branchName =
+      sucursales.find((branch) => branch.id === selectedBranchId)?.name ?? "";
+    const durationMinutes =
+      services.find((service) => service.id === selectedServiceId)?.duration ||
+      60;
+
+    if (!branchName) {
+      setSubmitStatus("error");
+      setSubmitMessage("No se pudo resolver la sucursal seleccionada.");
+      return;
+    }
+
     const payload: CreateAppointmentPayload = {
       branchId: selectedBranchId,
+      branchName,
       date: selectedDate,
       time: selectedTime,
+      customerName: customerName.trim(),
+      customerPhone: customerPhone.trim(),
+      durationMinutes,
     };
 
     if (selectedServiceId) {
@@ -428,9 +312,17 @@ function AppointmentModal({
     }
 
     try {
-      await createAppointment(payload);
+      const result = await createAppointment(payload);
       setSubmitStatus("success");
-      setSubmitMessage("¡Tu cita ha sido confirmada con éxito!");
+      const folio =
+        result?.appointment?.id ||
+        result?.appointment?.quote_id ||
+        result?.quote?.id;
+      setSubmitMessage(
+        folio
+          ? `¡Tu cita ha sido confirmada con éxito! Folio ${folio}.`
+          : "¡Tu cita ha sido confirmada con éxito!"
+      );
     } catch (error) {
       setSubmitStatus("error");
       setSubmitMessage(
@@ -566,6 +458,36 @@ function AppointmentModal({
                         </div>
                       </section>
                     ) : null}
+
+                    <section>
+                      <header className="mb-2">
+                        <h3 className="text-sm font-semibold uppercase tracking-[0.3em] text-yellow-400">
+                          Datos de contacto
+                        </h3>
+                      </header>
+                      <div className="space-y-3">
+                        <input
+                          type="text"
+                          value={customerName}
+                          onChange={(event) => setCustomerName(event.target.value)}
+                          className="w-full rounded-xl border border-neutral-700 bg-neutral-900/80 px-4 py-3 text-sm text-white shadow-[0_10px_30px_rgba(0,0,0,0.35)] focus:border-yellow-400 focus:outline-none"
+                          placeholder="Nombre y apellido"
+                        />
+                        <input
+                          type="tel"
+                          value={customerPhone}
+                          onChange={handleNumericPhone}
+                          className={clsx(
+                            "w-full rounded-xl border bg-neutral-900/80 px-4 py-3 text-sm text-white shadow-[0_10px_30px_rgba(0,0,0,0.35)] focus:outline-none",
+                            customerPhone.trim().length === 0 ||
+                              customerPhone.trim().length === 10
+                              ? "border-neutral-700 focus:border-yellow-400"
+                              : "border-red-500 focus:border-red-500"
+                          )}
+                          placeholder="Teléfono"
+                        />
+                      </div>
+                    </section>
 
                     <section className="rounded-2xl border border-yellow-500/30 bg-yellow-500/5 p-4 text-xs text-neutral-200">
                       <p className="font-semibold uppercase tracking-[0.25em] text-yellow-300">
@@ -806,9 +728,11 @@ export function AppointmentEmbedded({ onClose }: { onClose: () => void }) {
   const [servicesLoading, setServicesLoading] = useState(false);
   const [servicesError, setServicesError] = useState<string | null>(null);
   const [selectedBranchId, setSelectedBranchId] = useState("");
-  const [selectedServiceId, setSelectedServiceId] = useState("");
+  const [selectedServiceId, setSelectedServiceId] = useState("1");
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedTime, setSelectedTime] = useState("");
+  const [customerName, setCustomerName] = useState("");
+  const [customerPhone, setCustomerPhone] = useState("");
   const [availableDates, setAvailableDates] = useState<string[]>([]);
   const [datesLoading, setDatesLoading] = useState(false);
   const [datesError, setDatesError] = useState<string | null>(null);
@@ -821,23 +745,27 @@ export function AppointmentEmbedded({ onClose }: { onClose: () => void }) {
     startOfMonth(new Date())
   );
   const todayISO = useMemo(() => formatISODate(new Date()), []);
-  const availableDateSet = useMemo(
-    () => new Set(availableDates),
-    [availableDates]
-  );
   const calendarDays = useMemo(
     () => buildCalendarDays(currentMonth),
     [currentMonth]
   );
-  const { addCartItem } = useCart();
+  const { cart, addCartItem } = useCart();
   const [, formAction] = useActionState(addItem, null);
+
+  const handleNumericPhone = (event: ChangeEvent<HTMLInputElement>) => {
+    let value = event.target.value.replace(/[^0-9]/g, "");
+    value = value.slice(0, 10);
+    setCustomerPhone(value);
+  };
 
   // same useEffects for resetting (omit the isOpen guard), fetching availableTimes, etc.
   useEffect(() => {
     setSelectedBranchId("");
-    setSelectedServiceId("");
+    setSelectedServiceId("1");
     setSelectedDate("");
     setSelectedTime("");
+    setCustomerName("");
+    setCustomerPhone("");
     setAvailableDates([]);
     setAvailableTimes([]);
     setDatesError(null);
@@ -891,10 +819,16 @@ export function AppointmentEmbedded({ onClose }: { onClose: () => void }) {
     setSelectedTime("");
   };
   const handleConfirm = async () => {
-    if (!selectedBranchId || !selectedDate || !selectedTime) {
+    if (
+      !selectedBranchId ||
+      !selectedDate ||
+      !selectedTime ||
+      !customerName.trim() ||
+      customerPhone.trim().length !== 10
+    ) {
       setSubmitStatus("error");
       setSubmitMessage(
-        "Selecciona una sucursal, una fecha y un horario disponibles antes de confirmar."
+        "Ingresa tu nombre, teléfono de 10 dígitos y selecciona sucursal, fecha y horario antes de confirmar."
       );
       return;
     }
@@ -902,9 +836,33 @@ export function AppointmentEmbedded({ onClose }: { onClose: () => void }) {
     setSubmitMessage("Confirmando cita...");
     const payload: CreateAppointmentPayload = {
       branchId: selectedBranchId,
+      branchName:
+        sucursales.find((b) => b.id === selectedBranchId)?.name ?? "",
       date: selectedDate,
       time: selectedTime,
+      customerName: customerName.trim(),
+      customerPhone: customerPhone.trim(),
+      durationMinutes:
+        services.find((service) => service.id === selectedServiceId)
+          ?.duration || 60,
+      items:
+        cart?.lines?.map((line) => ({
+          title: line.merchandise?.title,
+          quantity: line.quantity,
+          merchandiseId: line.merchandise?.id,
+          productHandle: line.merchandise?.product?.handle,
+          productId: line.merchandise?.product?.id,
+          selectedOptions: line.merchandise?.selectedOptions,
+        })) || [],
+      additionalNotes: `Cita de instalación para compra online el ${selectedDate} ${selectedTime}`,
     };
+    if (!payload.branchName) {
+      setSubmitStatus("error");
+      setSubmitMessage(
+        "No se pudo resolver la sucursal seleccionada para la cita."
+      );
+      return;
+    }
     if (selectedServiceId) {
       payload.serviceId = selectedServiceId;
     }
@@ -968,10 +926,18 @@ export function AppointmentEmbedded({ onClose }: { onClose: () => void }) {
       quantity,
     }
     try {
-      // await createAppointment(payload);
+      const appointmentResult = await createAppointment(payload);
+      const folio =
+        appointmentResult?.appointment?.id ||
+        appointmentResult?.appointment?.quote_id ||
+        appointmentResult?.quote?.id;
       startTransition(() => {
         setSubmitStatus("success");
-        setSubmitMessage("¡Tu cita ha sido confirmada con éxito!");
+        setSubmitMessage(
+          folio
+            ? `¡Tu cita ha sido confirmada con éxito! Folio ${folio}.`
+            : "¡Tu cita ha sido confirmada con éxito!"
+        );
         console.debug("[agendar-cita] addCartItem:", finalVariant, product, quantity);
         console.debug("[agendar-cita] addItem:", selectedVariantId, quantity);
         addCartItem(finalVariant, product, quantity);
@@ -1073,6 +1039,35 @@ export function AppointmentEmbedded({ onClose }: { onClose: () => void }) {
               </div>
             </section>
           ) : null}
+          <section>
+            <header className="mb-2">
+              <h3 className="text-sm font-semibold uppercase tracking-[0.3em] text-yellow-400">
+                Datos de contacto
+              </h3>
+            </header>
+            <div className="space-y-3">
+              <input
+                type="text"
+                value={customerName}
+                onChange={(event) => setCustomerName(event.target.value)}
+                className="w-full rounded-xl border border-neutral-700 bg-neutral-900/80 px-4 py-3 text-sm text-white shadow-[0_10px_30px_rgba(0,0,0,0.35)] focus:border-yellow-400 focus:outline-none"
+                placeholder="Nombre y apellido"
+              />
+              <input
+                type="tel"
+                value={customerPhone}
+                onChange={handleNumericPhone}
+                className={clsx(
+                  "w-full rounded-xl border bg-neutral-900/80 px-4 py-3 text-sm text-white shadow-[0_10px_30px_rgba(0,0,0,0.35)] focus:outline-none",
+                  customerPhone.trim().length === 0 ||
+                    customerPhone.trim().length === 10
+                    ? "border-neutral-700 focus:border-yellow-400"
+                    : "border-red-500 focus:border-red-500"
+                )}
+                placeholder="Teléfono"
+              />
+            </div>
+          </section>
           <section className="rounded-2xl border border-yellow-500/30 bg-yellow-500/5 p-4 text-xs text-neutral-200">
             <p className="font-semibold uppercase tracking-[0.25em] text-yellow-300">
               Requisitos
@@ -1384,96 +1379,69 @@ function normalizeServices(data: unknown): Service[] {
 
 function normalizeStringArray(data: unknown): string[] {
   console.log("Raw data for normalization:", data);
-  // Disponibilidad del día: [
-  //   {
-  //     start: '2025-10-30T09:00:00.000Z',
-  //     end: '2025-10-30T10:00:00.000Z'
-  //   },
-  //   {
-  //     start: '2025-10-30T09:30:00.000Z',
-  //     end: '2025-10-30T10:30:00.000Z'
-  //   },
-  //   {
-  //     start: '2025-10-30T10:00:00.000Z',
-  //     end: '2025-10-30T11:00:00.000Z'
-  //   },
-  //   {
-  //     start: '2025-10-30T10:30:00.000Z',
-  //     end: '2025-10-30T11:30:00.000Z'
-  //   },
-  //   {
-  //     start: '2025-10-30T11:00:00.000Z',
-  //     end: '2025-10-30T12:00:00.000Z'
-  //   },
-  //   {
-  //     start: '2025-10-30T11:30:00.000Z',
-  //     end: '2025-10-30T12:30:00.000Z'
-  //   },
-  //   {
-  //     start: '2025-10-30T12:00:00.000Z',
-  //     end: '2025-10-30T13:00:00.000Z'
-  //   },
-  //   {
-  //     start: '2025-10-30T12:30:00.000Z',
-  //     end: '2025-10-30T13:30:00.000Z'
-  //   },
-  //   {
-  //     start: '2025-10-30T13:00:00.000Z',
-  //     end: '2025-10-30T14:00:00.000Z'
-  //   },
-  //   {
-  //     start: '2025-10-30T13:30:00.000Z',
-  //     end: '2025-10-30T14:30:00.000Z'
-  //   },
-  //   {
-  //     start: '2025-10-30T14:00:00.000Z',
-  //     end: '2025-10-30T15:00:00.000Z'
-  //   },
-  //   {
-  //     start: '2025-10-30T14:30:00.000Z',
-  //     end: '2025-10-30T15:30:00.000Z'
-  //   },
-  //   {
-  //     start: '2025-10-30T15:00:00.000Z',
-  //     end: '2025-10-30T16:00:00.000Z'
-  //   },
-  //   {
-  //     start: '2025-10-30T15:30:00.000Z',
-  //     end: '2025-10-30T16:30:00.000Z'
-  //   },
-  //   {
-  //     start: '2025-10-30T16:00:00.000Z',
-  //     end: '2025-10-30T17:00:00.000Z'
-  //   },
-  //   {
-  //     start: '2025-10-30T16:30:00.000Z',
-  //     end: '2025-10-30T17:30:00.000Z'
-  //   },
-  //   {
-  //     start: '2025-10-30T17:00:00.000Z',
-  //     end: '2025-10-30T18:00:00.000Z'
-  //   },
-  //   {
-  //     start: '2025-10-30T17:30:00.000Z',
-  //     end: '2025-10-30T18:30:00.000Z'
-  //   },
-  //   {
-  //     start: '2025-10-30T18:00:00.000Z',
-  //     end: '2025-10-30T19:00:00.000Z'
-  //   }
-  // ]
   if (Array.isArray(data)) {
-    return data.filter((item): item is string => typeof item === "string");
+    const stringItems = data.filter(
+      (item): item is string => typeof item === "string"
+    );
+
+    const slotItems = data
+      .map((item) => {
+        if (isRecord(item) && typeof item.start === "string") {
+          return formatTimeLabel(item.start);
+        }
+        return null;
+      })
+      .filter((time): time is string => Boolean(time));
+
+    return dedupeAndSortTimes([...stringItems, ...slotItems]);
   }
 
   if (isRecord(data)) {
     for (const key of ARRAY_KEYS) {
       const value = data[key];
       if (Array.isArray(value)) {
-        return value.filter((item): item is string => typeof item === "string");
+        const stringItems = value.filter(
+          (item): item is string => typeof item === "string"
+        );
+        const slotItems = value
+          .map((item) => {
+            if (isRecord(item) && typeof item.start === "string") {
+              return formatTimeLabel(item.start);
+            }
+            return null;
+          })
+          .filter((time): time is string => Boolean(time));
+        return dedupeAndSortTimes([...stringItems, ...slotItems]);
       }
     }
   }
 
   return [];
+}
+
+function formatTimeLabel(iso: string): string | null {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+  return date.toLocaleTimeString("es-MX", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+}
+
+function dedupeAndSortTimes(times: string[]): string[] {
+  const unique = Array.from(new Set(times.filter(Boolean)));
+  return unique.sort((a, b) => toMinutes(a) - toMinutes(b));
+}
+
+function toMinutes(time: string): number {
+  const [hoursStr, minutesStr] = time.split(":");
+  const hours = Number(hoursStr);
+  const minutes = Number(minutesStr);
+  if (Number.isNaN(hours) || Number.isNaN(minutes)) {
+    return Number.MAX_SAFE_INTEGER;
+  }
+  return hours * 60 + minutes;
 }

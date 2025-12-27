@@ -23,9 +23,9 @@ export default function ServiceModal() {
       <button
         aria-label="Programar Cita"
         onClick={openService}
-        className="block w-full mt-2 rounded-full bg-yellow-500 p-3 text-center text-sm font-medium text-white opacity-90 hover:opacity-100"
+        className="block w-full mt-2 rounded-full bg-yellow-700 p-3 text-center text-sm font-medium text-white opacity-90 hover:opacity-100"
       >
-        Programar
+        Agendar
       </button>
       <Transition show={isOpen}>
         <Dialog onClose={closeService} className="relative z-[200]">
