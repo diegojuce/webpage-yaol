@@ -53,7 +53,7 @@ export function VariantSelector({
                   }}
                   className={clsx(
                     "flex min-w-[48px] items-center justify-center rounded-full px-3 py-1 text-sm font-medium transition duration-200 ease-in-out",
-                    "bg-neutral-100 text-black hover:bg-neutral-200 dark:bg-neutral-100 dark:text-black dark:hover:bg-neutral-700",
+                    "bg-neutral-100 text-black hover:bg-neutral-200 dark:bg-neutral-900 dark:text-black dark:hover:bg-neutral-700",
                     {
                       "cursor-default bg-yellow-400 text-black dark:bg-yellow-500":
                         isActive,

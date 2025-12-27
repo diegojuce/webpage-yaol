@@ -1,6 +1,5 @@
 "use client";
 
-import { PlusIcon } from "@heroicons/react/24/outline";
 import { useProduct } from "components/product/product-context";
 import { Product, ProductVariant } from "lib/shopify/types";
 import { useMemo, useState } from "react";
@@ -21,12 +20,12 @@ const formatCurrency = (value: number, currencyCode: string) =>
 
 const findVariantFromState = (
   variants: ProductVariant[],
-  state: Record<string, string | undefined>,
+  state: Record<string, string | undefined>
 ) =>
   variants.find((variant) =>
     variant.selectedOptions.every(
-      (option) => option.value === state[option.name.toLowerCase()],
-    ),
+      (option) => option.value === state[option.name.toLowerCase()]
+    )
   );
 
 export function PaymentOptions({ product }: { product: Product }) {
@@ -36,12 +35,13 @@ export function PaymentOptions({ product }: { product: Product }) {
 
   const selectedVariant = useMemo(
     () => findVariantFromState(variants, state),
-    [variants, state],
+    [variants, state]
   );
-  const chosenVariantId = typeof state["variantId"] === "string" ? state["variantId"] : undefined;
+  const chosenVariantId =
+    typeof state["variantId"] === "string" ? state["variantId"] : undefined;
   const overrideVariant = useMemo(
     () => variants.find((v) => v.id === chosenVariantId),
-    [variants, chosenVariantId],
+    [variants, chosenVariantId]
   );
 
   const [isOpen, setIsOpen] = useState(true);
@@ -66,7 +66,7 @@ export function PaymentOptions({ product }: { product: Product }) {
 
   const unitPrice = parseFloat(
     (overrideVariant ?? selectedVariant ?? variants[0])?.price?.amount ??
-      priceRange.minVariantPrice.amount,
+      priceRange.minVariantPrice.amount
   );
   if (Number.isNaN(unitPrice)) {
     return null;
@@ -90,23 +90,16 @@ export function PaymentOptions({ product }: { product: Product }) {
   });
 
   return (
-    <section className="mt-6 rounded-2xl border border-neutral-200 bg-neutral-50 p-4 text-sm text-black">
-      <details
-        open={isOpen}
-        onToggle={(e) =>
-          setIsOpen((e.currentTarget as HTMLDetailsElement).open)
-        }
-      >
-        <summary className="flex cursor-pointer list-none items-center justify-between">
-          <h3 className="text-base font-semibold">Pago a meses disponibe</h3>
-          <PlusIcon className="h-5" />
-        </summary>
-        <div className="mt-3">
-          <p className="mt-2 text-xs text-neutral-500">
-            Los pagos hasta 12 meses con intereses estan disponibles en el checkout 
-          </p>
-        </div>
-      </details>
+    <section className="mt-6 rounded-2xl p-4 text-sm text-black ">
+      <summary className="flex cursor-pointer list-none items-center justify-between">
+        <h3 className="text-base font-semibold">Pago a meses disponibe</h3>
+      </summary>
+      <div className="mt-3">
+        <p className="mt-2 text-xs text-neutral-500">
+          Los pagos hasta 12 meses con intereses estan disponibles en el
+          checkout
+        </p>
+      </div>
     </section>
   );
 }
