@@ -53,9 +53,7 @@ export async function fetchAvailableTimes(
   });
 
   const res = await fetch(
-    buildUrl(
-      `/bypass/calendar/get/availability/day?${searchParams.toString()}`
-    ),
+    buildUrl(`/bypass/yaol/get/availability?${searchParams.toString()}`),
     { cache: "no-store" }
   );
   // console.log("Fetching times with params:", { mins, suc, date });
