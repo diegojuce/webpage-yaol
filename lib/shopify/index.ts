@@ -331,11 +331,24 @@ const reshapeProducts = (products: ShopifyProduct[]) => {
 };
 
 export async function createCart(): Promise<Cart> {
+  const { cart } = await createCartWithLines([]);
+  return cart;
+}
+
+export async function createCartWithLines(
+  lines: {
+    merchandiseId: string;
+    quantity: number;
+    sellingPlanId?: string;
+  }[],
+): Promise<{ cart: Cart; checkoutUrl: string }> {
   const res = await shopifyFetch<ShopifyCreateCartOperation>({
     query: createCartMutation,
+    variables: { lineItems: lines },
   });
 
-  return reshapeCart(res.body.data.cartCreate.cart);
+  const cart = reshapeCart(res.body.data.cartCreate.cart);
+  return { cart, checkoutUrl: cart.checkoutUrl };
 }
 
 export async function addToCart(
@@ -679,11 +692,11 @@ export async function revalidate(req: NextRequest): Promise<NextResponse> {
   }
 
   if (isCollectionUpdate) {
-    revalidateTag(TAGS.collections, { expire: 0 });
+    revalidateTag(TAGS.collections);
   }
 
   if (isProductUpdate) {
-    revalidateTag(TAGS.products, { expire: 0 });
+    revalidateTag(TAGS.products);
   }
 
   return NextResponse.json({ status: 200, revalidated: true, now: Date.now() });

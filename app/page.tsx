@@ -1,5 +1,6 @@
-import { ThreeItemGrid } from "components/grid/three-items";
+import { Relevantes } from "components/grid/relevantes";
 import Footer from "components/layout/footer";
+import Welcome from "components/mainslide/welcome";
 import { getProducts } from "lib/shopify";
 import Image from "next/image";
 
@@ -115,9 +116,11 @@ export default async function HomePage() {
 
   return (
     <>
-      <ThreeItemGrid />
+      <Welcome />
+      <Relevantes/>
+      {/* <ThreeItemGrid /> */}
       {/* <Carousel /> */}
-      <section
+      {/* <section
         id="servicios"
         aria-labelledby="services-heading"
         className="servicios"
@@ -135,7 +138,7 @@ export default async function HomePage() {
             </article>
           ))}
         </div>
-      </section>
+      </section> */}
       {/* <div className="mt-8">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {recentProducts.map((product) => (

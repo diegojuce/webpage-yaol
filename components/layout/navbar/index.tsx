@@ -1,3 +1,4 @@
+import { Header } from "app/header/header";
 import CartModal from "components/cart/modal";
 import LogoSquare from "components/logo-square";
 import { getMenu } from "lib/shopify";
@@ -11,7 +12,9 @@ export async function Navbar() {
   const menu = await getMenu("next-js-frontend-header-menu");
 
   return (
-    <nav className="top-0 bg-white flex flex-col gap-4 p-4 lg:px-6 pt-6">
+    <div className="fixed z-200 top-0 right-0 left-0">
+      <Header/>
+    <nav className="top-0 border-b z-150 bg-white flex flex-col gap-4 px-10 ">
       <div className="flex items-center justify-between md:hidden">
         <div className="flex items-center gap-0">
           <Suspense fallback={null}>
@@ -35,8 +38,8 @@ export async function Navbar() {
         </Suspense>
       </div> */}
 
-      <div className="hidden w-full items-center md:flex">
-        <div className="flex w-full ">
+      <div className="hidden w-full items-center justify-center md:flex ">
+        <div className="flex flex-1 ">
           <Link
             href="/"
             prefetch={true}
@@ -59,16 +62,38 @@ export async function Navbar() {
               ))}
             </ul>
           ) : null}
-          <div className="flex py-5 px-10 gap-5 flex-row text-black">
-            <h1 className="hover:text-blue-900 hover:underline">Inicio</h1>
-            <h1 className="hover:text-blue-900 hover:underline">Promociones</h1>
-            <h1 className="hover:text-blue-900 hover:underline">Servicios</h1>
-            <h1 className="hover:text-blue-900 hover:underline">Nosotros</h1>
+        </div>
+       <div className="flex flex-none justify-center gap-4">
+        <div className="relative group">
+        <Link href="" className="text-black text-s hover:underline">Llantas</Link>
+        <span className="absolute left-0 top-full h-10 w-full bg-transparent" aria-hidden="true" />
+        <span className="absolute left-0 -bottom-7.5 h-1 w-full bg-black scale-x-0 origin-middle transition-transform duration-300 ease-out group-hover:scale-x-100 z-100"/>
+        <div className="fixed left-0 right-0 top-[100px]  hidden group-hover:block  bg-white  p-8 z-50">
+          <div className="grid grid-cols-3 gap-8 w-1/3 mx-auto">
+            <div>
+              <h4 className="font-semibold text-black text-xs">Buscar por Vehiculo</h4>
+              <ul className="mt-5 space-y-2 text-sm text-black">
+                <li className="hover:text-blue-500 cursor-pointer">Vehículo electrico</li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-semibold text-black text-xs">Buscar por Vehiculo</h4>
+            </div>
+            <div>
+              <h4 className="font-semibold text-black text-xs">Buscar por Vehiculo</h4>
+            </div>
+
           </div>
         </div>
-       
+
+        </div>
+       <Link href="" className="text-black text-s hover:underline">Ubicaciones</Link>
+       <Link href="" className="text-black text-s hover:underline">Servicios</Link>
+       <Link href="" className="text-black text-s hover:underline">Asistencia</Link>
+       <Link href="" className="text-black text-s hover:underline">¿Por que Yantissimo?</Link>
+       </div>
         
-        <div className="flex w-1/3 justify-end ">
+        <div className="flex flex-1 justify-end ">
           <div className="flex  py-5 px-5 flex-row text-black">
             <Suspense fallback={<SearchSkeleton />}>
               <Search />
@@ -79,6 +104,7 @@ export async function Navbar() {
         </div>
       </div>
     </nav>
+    </div>
   );
 }
 

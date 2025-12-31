@@ -151,6 +151,13 @@ export type ShopifyCartOperation = {
 
 export type ShopifyCreateCartOperation = {
   data: { cartCreate: { cart: ShopifyCart } };
+  variables: {
+    lineItems?: {
+      merchandiseId: string;
+      quantity: number;
+      sellingPlanId?: string;
+    }[];
+  };
 };
 
 export type ShopifyAddToCartOperation = {
