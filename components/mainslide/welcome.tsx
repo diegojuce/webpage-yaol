@@ -158,14 +158,14 @@ export default function Welcome() {
         />
       </div>
 
-      <div className="pointer-events-none absolute inset-0 z-10 flex items-end justify-center px-6 pb-10">
+      <div className="pointer-events-none absolute inset-0 z-10 flex  items-end justify-center px-6 pb-10">
         <p className="sr-only" aria-live="polite">
           Reproduciendo video {activeIndex + 1} de {totalVideos}
         </p>
         <div
           role="tablist"
           aria-label="Selector de video"
-          className="pointer-events-auto flex w-full max-w-2xl items-center justify-center gap-4"
+          className="pointer-events-auto flex flex-row w-full max-w-2xl items-center justify-center gap-4"
         >
           {VIDEO_SOURCES.map((video, index) => {
             const isActive = index === activeIndex;

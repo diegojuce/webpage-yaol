@@ -6,7 +6,7 @@ export async function Header() {
 
     return(
 
-        <div className="top-0 bg-black flex flex-row gap-2 px-10 p-2 items-center "> 
+        <div className="top-0 bg-black flex flex-row gap-2 px-10 p-2 items-center"> 
         <div className="flex flex-row gap-3">
         <Link href="" className="text-white text-xs hover:underline">Auto</Link>
         <Link href="" className="text-white text-xs hover:underline">Camion</Link>
