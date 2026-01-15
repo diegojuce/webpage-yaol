@@ -114,7 +114,7 @@ export async function addItem(
       });
     }
 
-    revalidateTag(TAGS.cart);
+    revalidateTag(TAGS.cart, { expire: 0 });
   } catch (e) {
     return "Error al agregar el producto al carrito";
   }
@@ -134,7 +134,7 @@ export async function removeItem(prevState: any, merchandiseId: string) {
 
     if (lineItem && lineItem.id) {
       await removeFromCart([lineItem.id]);
-      revalidateTag(TAGS.cart);
+      revalidateTag(TAGS.cart, { expire: 0 });
     } else {
       return "Producto no encontrado en el carrito";
     }
@@ -219,7 +219,7 @@ export async function updateItemQuantity(
       await addToCart([{ merchandiseId, quantity }]);
     }
 
-    revalidateTag(TAGS.cart);
+    revalidateTag(TAGS.cart, { expire: 0 });
   } catch (e) {
     console.error(e);
     return "Error al actualizar la cantidad del producto";
@@ -252,7 +252,7 @@ export async function updateItemVariant(
       },
     ]);
 
-    revalidateTag(TAGS.cart);
+    revalidateTag(TAGS.cart, { expire: 0 });
   } catch (e) {
     console.error(e);
     return "Error al actualizar la variante del producto";

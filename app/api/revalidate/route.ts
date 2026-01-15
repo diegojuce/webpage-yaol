@@ -43,9 +43,9 @@ export async function POST(req: NextRequest) {
   }
 
   // Invalidate caches tagged for Shopify data
-  // On-demand invalidation takes effect immediately.
-  revalidateTag("products");
-  revalidateTag("collections");
+  // Immediate expiration for on-demand invalidation
+  revalidateTag("products", { expire: 0 });
+  revalidateTag("collections", { expire: 0 });
 
   // Optionally invalidate specific paths if needed (uncomment if you don't use tags everywhere)
   // revalidatePath("/");
