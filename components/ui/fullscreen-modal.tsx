@@ -1,7 +1,7 @@
 "use client";
 
 import clsx from "clsx";
-import { ReactNode, useEffect } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 
 type FullscreenModalProps = {
@@ -14,6 +14,12 @@ type FullscreenModalProps = {
 const ANIMATION_MS = 300;
 
 export function FullscreenModal({ open, onClose, children, className }: FullscreenModalProps) {
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
   useEffect(() => {
     if (!open) return;
 
@@ -33,7 +39,7 @@ export function FullscreenModal({ open, onClose, children, className }: Fullscre
     };
   }, [onClose, open]);
 
-  if (typeof document === "undefined") return null;
+  if (!isMounted || typeof document === "undefined") return null;
 
   return createPortal(
     <div

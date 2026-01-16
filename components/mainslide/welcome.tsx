@@ -225,14 +225,14 @@ export default function Welcome() {
                 )}
               </button>
             </div>
-            <div className="pointer-events-auto flex w-full justify-center px-6 pt-2 md:px-40 lg:px-60">
-              <div className="flex h-15 md:h-20 w-full items-center justify-center rounded-full border border-white/25 bg-white/95">
+            <div className="pointer-events-auto flex w-full px-6 pt-2 md:px-40 lg:px-60">
+              <div className="flex h-15 p-2 md:h-20 w-full items-center  justify-start rounded-full border border-white/25 bg-white/95">
                 <button
                   type="button"
                   onClick={openModal}
-                  className="rounded-full border border-black bg-white px-6 py-2 text-sm font-semibold text-black transition hover:bg-black hover:text-white focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2"
+                  className="flex items-center justify-center h-full rounded-full border border-black bg-black p-5 text-sm font-semibold text-white transition hover:bg-white hover:text-black focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2"
                 >
-                  Abrir modal
+                  Buscar llantas
                 </button>
               </div>
             </div>
