@@ -16,7 +16,7 @@ export default function LogoSquare({ size }: { size?: "sm" | undefined }) {
       <img
         src={LOGO_SRC}
         alt={`${storeName} logotipo`}
-        className="hidden md:flex md:h-full md:w-auto object-contain"
+        className="flex h-full w-auto object-contain"
         loading="eager"
       />
     </div>

@@ -64,7 +64,7 @@ export default function Search({ className }: SearchProps) {
     >
       <div
         className={clsx(
-          "relative ml-auto flex h-10 items-center overflow-hidden rounded-lg border-2 bg-white transition-[width] duration-200 dark:border-neutral-800 dark:bg-transparent",
+          "hidden md:flex relative ml-auto  h-10 items-center overflow-hidden rounded-lg border-2 bg-white transition-[width] duration-200 dark:border-neutral-800 dark:bg-transparent",
           expanded ? "w-full" : "w-10",
         )}
       >

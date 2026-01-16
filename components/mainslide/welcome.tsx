@@ -2,6 +2,9 @@
 
 import clsx from "clsx";
 import { useEffect, useRef, useState } from "react";
+import { useModal } from "../hooks/use-modal";
+import { FullscreenModal } from "../ui/fullscreen-modal";
+import { WelcomeModalContent } from "./welcome-modal-content";
 
 // Coloca aquí las rutas de tus videos
 const VIDEO_SOURCES = [
@@ -21,6 +24,7 @@ export default function Welcome() {
   const [progress, setProgress] = useState(0);
   const [videoDurations, setVideoDurations] = useState<number[]>([]);
   const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
+  const { isOpen: isModalOpen, open: openModal, close: closeModal } = useModal();
 
   const totalVideos = VIDEO_SOURCES.length;
   const activeDurationMs = Math.max(
@@ -113,60 +117,17 @@ export default function Welcome() {
   }
 
   return (
-    <section
-      aria-label="Carrusel de videos"
-      className="relative isolate w-full overflow-hidden bg-black"
-      style={{
-        marginTop: `var(--masthead-offset, ${MASTHEAD_OFFSET})`,
-        height: `calc(100dvh - var(--masthead-offset, ${MASTHEAD_OFFSET}))`,
-        maxHeight: `calc(100dvh - var(--masthead-offset, ${MASTHEAD_OFFSET}))`,
-      }}
-    >
-      <div className="absolute inset-0">
-        {VIDEO_SOURCES.map((video, index) => {
-          const isActive = index === activeIndex;
-          const durationMs = Math.max(
-            MIN_DURATION_MS,
-            Math.round(videoDurations[index] ?? FALLBACK_DURATION_MS)
-          );
-
-          return (
-            <video
-              key={`${index}-${video.src || "video"}`}
-              className={clsx(
-                "absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ease-in-out",
-                isActive ? "opacity-100" : "opacity-0"
-              )}
-              ref={(el) => {
-                videoRefs.current[index] = el;
-              }}
-              src={video.src || undefined}
-              autoPlay
-              muted
-              playsInline
-              aria-hidden={!isActive}
-              onLoadedMetadata={() => handleLoadedMetadata(index)}
-              onEnded={() => {
-                setActiveIndex((prev) => (prev + 1) % totalVideos);
-              }}
-            />
-          );
-        })}
-        <div
-          aria-hidden="true"
-          className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/10 to-black/50"
-        />
-      </div>
-
-      <div className="pointer-events-none absolute inset-0 z-10 flex  items-end justify-center px-6 pb-10">
-        <p className="sr-only" aria-live="polite">
-          Reproduciendo video {activeIndex + 1} de {totalVideos}
-        </p>
-        <div
-          role="tablist"
-          aria-label="Selector de video"
-          className="pointer-events-auto flex flex-row w-full max-w-2xl items-center justify-center gap-4"
-        >
+    <>
+      <section
+        aria-label="Carrusel de videos"
+        className="relative isolate w-full overflow-hidden bg-black"
+        style={{
+          marginTop: `var(--masthead-offset, ${MASTHEAD_OFFSET})`,
+          height: `calc(100dvh - var(--masthead-offset, ${MASTHEAD_OFFSET}))`,
+          maxHeight: `calc(100dvh - var(--masthead-offset, ${MASTHEAD_OFFSET}))`,
+        }}
+      >
+        <div className="absolute inset-0">
           {VIDEO_SOURCES.map((video, index) => {
             const isActive = index === activeIndex;
             const durationMs = Math.max(
@@ -175,51 +136,112 @@ export default function Welcome() {
             );
 
             return (
-              <button
-                key={`indicator-${index}-${video.src || "video"}`}
-                type="button"
-                aria-label={`Ver video ${index + 1}`}
-                aria-current={isActive ? "true" : undefined}
-                onClick={() => setActiveIndex(index)}
+              <video
+                key={`${index}-${video.src || "video"}`}
                 className={clsx(
-                  "flex items-center justify-center transition focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-yellow-300 focus-visible:ring-offset-2 focus-visible:ring-offset-black",
-                  isActive
-                    ? "relative h-3 w-16 overflow-hidden rounded-full bg-white/20"
-                    : "h-3 w-3 rounded-full bg-white/60 hover:bg-white/80"
+                  "absolute inset-0 h-full w-full object-cover transition-opacity duration-700 ease-in-out",
+                  isActive ? "opacity-100" : "opacity-0"
                 )}
-              >
-                {isActive ? (
-                  <span
-                    className="absolute left-0 top-0 h-full bg-white transition-[width] duration-150 ease-linear"
-                    style={{
-                      width: mounted ? `${progress}%` : "0%",
-                    }}
-                  />
-                ) : null}
-              </button>
+                ref={(el) => {
+                  videoRefs.current[index] = el;
+                }}
+                src={video.src || undefined}
+                autoPlay
+                muted
+                playsInline
+                aria-hidden={!isActive}
+                onLoadedMetadata={() => handleLoadedMetadata(index)}
+                onEnded={() => {
+                  setActiveIndex((prev) => (prev + 1) % totalVideos);
+                }}
+              />
             );
           })}
-          <button
-            type="button"
-            aria-pressed={isPaused}
-            aria-label={isPaused ? "Reanudar video" : "Pausar video"}
-            onClick={() => setIsPaused((prev) => !prev)}
-            className="ml-2 flex h-0 w-0 items-center justify-center rounded-full bg-white/15 text-white transition hover:bg-white/25 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-yellow-300 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
-          >
-            {isPaused ? (
-              <span
-                aria-hidden="true"
-                className="block h-0 w-0 border-y-[5px] border-y-transparent border-l-[8px] border-l-white"
-              />
-            ) : (
-              <span aria-hidden="true" className="flex items-center gap-[4px]">
-                <span className="block h-2 w-[2px] bg-white" />
-                <span className="block h-2 w-[2px] bg-white" />
-              </span>
-            )}
-          </button>
+          <div
+            aria-hidden="true"
+            className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/10 to-black/50"
+          />
         </div>
-      </div>
-    </section>
+
+        <div className="pointer-events-none absolute inset-0 z-10 flex items-end justify-center pb-10">
+          <p className="sr-only" aria-live="polite">
+            Reproduciendo video {activeIndex + 1} de {totalVideos}
+          </p>
+          <div className="flex w-full flex-col items-center gap-4">
+            <div
+              role="tablist"
+              aria-label="Selector de video"
+              className="pointer-events-auto flex flex-row w-full items-center justify-center gap-4"
+            >
+              {VIDEO_SOURCES.map((video, index) => {
+                const isActive = index === activeIndex;
+                const durationMs = Math.max(
+                  MIN_DURATION_MS,
+                  Math.round(videoDurations[index] ?? FALLBACK_DURATION_MS)
+                );
+
+                return (
+                  <button
+                    key={`indicator-${index}-${video.src || "video"}`}
+                    type="button"
+                    aria-label={`Ver video ${index + 1}`}
+                    aria-current={isActive ? "true" : undefined}
+                    onClick={() => setActiveIndex(index)}
+                    className={clsx(
+                      "flex items-center justify-center transition focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-yellow-300 focus-visible:ring-offset-2 focus-visible:ring-offset-black",
+                      isActive
+                        ? "relative h-3 w-16 overflow-hidden rounded-full bg-white/20"
+                        : "h-3 w-3 rounded-full bg-white/60 hover:bg-white/80"
+                    )}
+                  >
+                    {isActive ? (
+                      <span
+                        className="absolute left-0 top-0 h-full bg-white transition-[width] duration-150 ease-linear"
+                        style={{
+                          width: mounted ? `${progress}%` : "0%",
+                        }}
+                      />
+                    ) : null}
+                  </button>
+                );
+              })}
+              <button
+                type="button"
+                aria-pressed={isPaused}
+                aria-label={isPaused ? "Reanudar video" : "Pausar video"}
+                onClick={() => setIsPaused((prev) => !prev)}
+                className="ml-2 flex h-0 w-0 items-center justify-center rounded-full bg-white/15 text-white transition hover:bg-white/25 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-yellow-300 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+              >
+                {isPaused ? (
+                  <span
+                    aria-hidden="true"
+                    className="block h-0 w-0 border-y-[5px] border-y-transparent border-l-[8px] border-l-white"
+                  />
+                ) : (
+                  <span aria-hidden="true" className="flex items-center gap-[4px]">
+                    <span className="block h-2 w-[2px] bg-white" />
+                    <span className="block h-2 w-[2px] bg-white" />
+                  </span>
+                )}
+              </button>
+            </div>
+            <div className="pointer-events-auto flex w-full justify-center px-6 pt-2 md:px-40 lg:px-60">
+              <div className="flex h-15 md:h-20 w-full items-center justify-center rounded-full border border-white/25 bg-white/95">
+                <button
+                  type="button"
+                  onClick={openModal}
+                  className="rounded-full border border-black bg-white px-6 py-2 text-sm font-semibold text-black transition hover:bg-black hover:text-white focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2"
+                >
+                  Abrir modal
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      <FullscreenModal open={isModalOpen} onClose={closeModal}>
+        <WelcomeModalContent />
+      </FullscreenModal>
+    </>
   );
 }
