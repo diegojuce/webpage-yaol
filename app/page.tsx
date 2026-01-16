@@ -7,7 +7,7 @@ import Image from "next/image";
 export const dynamic = "force-dynamic";
 export const metadata = {
   description:
-    "Tienda en línea de alto rendimiento construida con Next.js, Vercel y Shopify.",
+    "Compra llanras y agenda servicios en linea con Yantissimo, tu mejor opción",
   openGraph: {
     type: "website",
   },

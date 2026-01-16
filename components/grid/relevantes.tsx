@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 export async function Relevantes(){
 
     return(
@@ -7,7 +9,13 @@ export async function Relevantes(){
                 
                 <div>
                 <div className="group h-50 md:h-70 w-full bg-black overflow-hidden relative">
-                    <img src="/fotos/IMG_0105.jpg" alt="Tecnico Yantissimo" className="h-full w-full object-cover transition-transform duration-500 ease-in-out group-hover:scale-110" />
+                    <Image
+                        src="/fotos/IMG_0105.jpg"
+                        alt="Tecnico Yantissimo"
+                        fill
+                        sizes="(min-width: 768px) 25vw, 50vw"
+                        className="object-cover transition-transform duration-500 ease-in-out group-hover:scale-110"
+                    />
                     <div className="absolute inset-0 bg-black/20"></div>
                     <div className="absolute inset-0 flex flex-col justify-end p-6 text-white">
                         <h2 className="text-xl md:text-2xl font-bold italic">Compra en línea</h2>
@@ -22,7 +30,13 @@ export async function Relevantes(){
 
                 <div>
                 <div className="group h-50 md:h-70 w-full bg-black overflow-hidden relative">
-                <img src="/fotos/IMG_0123.jpg" alt="Tecnico Yantissimo" className="h-full w-full object-cover transition-transform duration-500 ease-in-out group-hover:scale-110" />
+                <Image
+                    src="/fotos/IMG_0123.jpg"
+                    alt="Tecnico Yantissimo"
+                    fill
+                    sizes="(min-width: 768px) 25vw, 50vw"
+                    className="object-cover transition-transform duration-500 ease-in-out group-hover:scale-110"
+                />
                 <div className="absolute inset-0 bg-black/40"></div>
                     <div className="absolute inset-0 flex flex-col justify-end p-6 text-white">
                         <h2 className="text-xl md:text-2xl font-bold italic">Cerca de ti</h2>
@@ -36,8 +50,14 @@ export async function Relevantes(){
                 </div>
 
                 <div className="col-span-2 row-span-2 overflow-hidden relative">
-                <div className="group h-full w-full bg-black">
-                <img src="/fotos/IMG_0138.jpg" alt="Tecnico Yantissimo" className="h-full w-full object-cover transition-transform duration-500 ease-in-out group-hover:scale-110" />
+                <div className="group relative h-full w-full bg-black">
+                <Image
+                    src="/fotos/IMG_0138.jpg"
+                    alt="Tecnico Yantissimo"
+                    fill
+                    sizes="(min-width: 768px) 50vw, 100vw"
+                    className="object-cover transition-transform duration-500 ease-in-out group-hover:scale-110"
+                />
                 <div className="absolute inset-0 bg-black/40"></div>
                     <div className="absolute inset-0 flex flex-col justify-end p-6 text-white">
                         <h2 className="text-xl md:text-2xl font-bold italic">Atención Profesional</h2>
@@ -51,7 +71,13 @@ export async function Relevantes(){
                 </div>
                 <div className="col-span-2">
                 <div className="group h-50 md:h-70 w-full bg-black overflow-hidden relative">
-                <img src="/fotos/IMG_0144.jpg" alt="Tecnico Yantissimo" className="h-full w-full object-cover transition-transform duration-500 ease-in-out group-hover:scale-110" />
+                <Image
+                    src="/fotos/IMG_0144.jpg"
+                    alt="Tecnico Yantissimo"
+                    fill
+                    sizes="(min-width: 768px) 50vw, 100vw"
+                    className="object-cover transition-transform duration-500 ease-in-out group-hover:scale-110"
+                />
                 <div className="absolute inset-0 bg-black/40"></div>
                     <div className="absolute inset-0 flex flex-col justify-end p-6 text-white">
                         <h2 className="text-xl md:text-2xl font-bold italic">Amplia gama de llantas</h2>
@@ -65,7 +91,13 @@ export async function Relevantes(){
                 </div>
                 <div className="col-span-1">
                 <div className="group h-50 md:h-70 w-full bg-black overflow-hidden relative">
-                <img src="/fotos/IMG_0276.jpg" alt="Tecnico Yantissimo" className="h-full w-full object-cover transition-transform duration-500 ease-in-out group-hover:scale-110" />
+                <Image
+                    src="/fotos/IMG_0276.jpg"
+                    alt="Tecnico Yantissimo"
+                    fill
+                    sizes="(min-width: 768px) 25vw, 50vw"
+                    className="object-cover transition-transform duration-500 ease-in-out group-hover:scale-110"
+                />
                 <div className="absolute inset-0 bg-black/40"></div>
                     <div className="absolute inset-0 flex flex-col justify-end p-6 text-white">
                         <h2 className="text-xl md:text-2xl font-bold italic">Tecnologia de primera</h2>
@@ -79,7 +111,13 @@ export async function Relevantes(){
                 </div>
                 <div className="col-span-1">
                 <div className="group h-50 md:h-70 w-full bg-black overflow-hidden relative">
-                <img src="/fotos/IMG_0299.jpg" alt="Tecnico Yantissimo" className="h-full w-full object-cover transition-transform duration-500 ease-in-out group-hover:scale-110" />
+                <Image
+                    src="/fotos/IMG_0299.jpg"
+                    alt="Tecnico Yantissimo"
+                    fill
+                    sizes="(min-width: 768px) 25vw, 50vw"
+                    className="object-cover transition-transform duration-500 ease-in-out group-hover:scale-110"
+                />
                 <div className="absolute inset-0 bg-black/40"></div>
                     <div className="absolute inset-0 flex flex-col justify-end p-6 text-white">
                         <h2 className="text-xl md:text-2xl font-bold italic">Productos</h2>
@@ -93,7 +131,13 @@ export async function Relevantes(){
                 </div>
                 <div className="col-span-1">
                 <div className="group h-50 md:h-70 w-full bg-black overflow-hidden relative">
-                <img src="/fotos/IMG_6295.jpg" alt="Tecnico Yantissimo" className="h-full w-full object-cover transition-transform duration-500 ease-in-out group-hover:scale-110" />
+                <Image
+                    src="/fotos/IMG_6295.jpg"
+                    alt="Tecnico Yantissimo"
+                    fill
+                    sizes="(min-width: 768px) 25vw, 50vw"
+                    className="object-cover transition-transform duration-500 ease-in-out group-hover:scale-110"
+                />
                 <div className="absolute inset-0 bg-black/40"></div>
                     <div className="absolute inset-0 flex flex-col justify-end p-6 text-white">
                         <h2 className="text-xl md:text-2xl font-bold italic">Sobre Nosotros</h2>
@@ -107,7 +151,13 @@ export async function Relevantes(){
                 </div>
                 <div className="col-span-1">
                 <div className="group h-50 md:h-70 w-full bg-black overflow-hidden relative">
-                <img src="/fotos/IMG_0350.jpg" alt="Tecnico Yantissimo" className="h-full w-full object-cover transition-transform duration-500 ease-in-out group-hover:scale-110" />
+                <Image
+                    src="/fotos/IMG_0350.jpg"
+                    alt="Tecnico Yantissimo"
+                    fill
+                    sizes="(min-width: 768px) 25vw, 50vw"
+                    className="object-cover transition-transform duration-500 ease-in-out group-hover:scale-110"
+                />
                 <div className="absolute inset-0 bg-black/40"></div>
                     <div className="absolute inset-0 flex flex-col justify-end p-6 text-white">
                         <h2 className="text-xl md:text-2xl font-bold italic">Guia de ayuda</h2>
