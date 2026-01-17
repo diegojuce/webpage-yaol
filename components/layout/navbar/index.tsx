@@ -14,7 +14,7 @@ export async function Navbar() {
   return (
     <div className="fixed z-50 top-0 right-0 left-0">
       <Header/>
-    <nav className="fixed left-0 right-0 shadow-md border-b-1  bg-white flex flex-col gap-4 p-5fixed left-0 right-0 shadow-md border-b-1  bg-white flex flex-col gap-4 p-5 md:p-0 md:px-10">
+    <nav className="fixed left-0 right-0 shadow-md border-b-1  bg-white flex flex-col gap-4 p-3 md:p-0 md:px-10">
       <div className="flex items-center justify-between md:hidden">
         <div className="flex items-center gap-0">
           <Suspense fallback={null}>

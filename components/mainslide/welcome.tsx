@@ -15,7 +15,7 @@ const VIDEO_SOURCES = [
 
 const FALLBACK_DURATION_MS = 9000;
 const MIN_DURATION_MS = 3000;
-const MASTHEAD_OFFSET = "7rem";
+const MASTHEAD_OFFSET = "6rem";
 
 export default function Welcome() {
   const [activeIndex, setActiveIndex] = useState(0);

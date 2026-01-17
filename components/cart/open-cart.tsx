@@ -4,16 +4,29 @@ import clsx from "clsx";
 export default function OpenCart({
   className,
   quantity,
+  isWhite = false,
 }: {
   className?: string;
   quantity?: number;
+  isWhite?: boolean;
 }) {
+  const baseClasses =
+    "relative flex h-11 w-11 items-center justify-center rounded-md border-2 transition-colors";
+  const iconClasses =
+    "h-6 transition-all ease-in-out hover:scale-110";
+
   return (
-    <div className="relative flex h-11 w-11 items-center justify-center rounded-md border-2 border-black transition-colors text-white">
+    <div
+      className={clsx(
+        baseClasses,
+        isWhite ? "border-white text-black" : "border-black text-white"
+      )}
+    >
       <ShoppingCartIcon
         className={clsx(
-          "h-6 text-black transition-all ease-in-out hover:scale-110",
-          className,
+          iconClasses,
+          isWhite ? "text-white" : "text-black",
+          className
         )}
       />
 

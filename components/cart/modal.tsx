@@ -88,7 +88,7 @@ type MerchandiseSearchParams = {
   [key: string]: string;
 };
 
-export default function CartModal() {
+export default function CartModal({isWhite=false}) {
   const { cart, updateCartItem, updateCartItemVariant } = useCart();
   const [isOpen, setIsOpen] = useState(false);
   const quantityRef = useRef(cart?.totalQuantity);
@@ -118,7 +118,7 @@ export default function CartModal() {
   return (
     <>
       <button aria-label="Abrir carrito" onClick={openCart}>
-        <OpenCart quantity={cart?.totalQuantity} />
+        <OpenCart quantity={cart?.totalQuantity} isWhite={isWhite} />
       </button>
       <Transition show={isOpen}>
         <Dialog onClose={closeCart} className="relative z-[200]">
