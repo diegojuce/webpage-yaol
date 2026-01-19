@@ -8,9 +8,9 @@ import { WelcomeModalContent } from "./welcome-modal-content";
 
 // Coloca aquí las rutas de tus videos
 const VIDEO_SOURCES = [
-  { src: "/videos/background_1.webm", label: "Video 1" },
+  { src: "/videos/background_3.webm", label: "Video 1" },
   { src: "/videos/background_2.webm", label: "Video 2" },
-  { src: "/videos/background_3.webm", label: "Video 3" },
+  { src: "/videos/background_1.webm", label: "Video 3" },
 ];
 
 const FALLBACK_DURATION_MS = 9000;

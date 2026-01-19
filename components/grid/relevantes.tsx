@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 
 export async function Relevantes(){
 
@@ -29,6 +30,7 @@ export async function Relevantes(){
                 </div>
 
                 <div>
+                <Link href="/ubicaciones">
                 <div className="group h-50 md:h-70 w-full bg-black overflow-hidden relative">
                 <Image
                     src="/fotos/IMG_0123.jpg"
@@ -47,9 +49,10 @@ export async function Relevantes(){
                         </button>
                     </div>
                 </div>
+                </Link>
                 </div>
-
                 <div className="col-span-2 row-span-2 overflow-hidden relative">
+                <Link href="/contacto">   
                 <div className="group relative h-full w-full bg-black">
                 <Image
                     src="/fotos/IMG_0138.jpg"
@@ -68,6 +71,7 @@ export async function Relevantes(){
                         </button>
                     </div>
                 </div>
+                </Link> 
                 </div>
                 <div className="col-span-2">
                 <div className="group h-50 md:h-70 w-full bg-black overflow-hidden relative">
@@ -129,6 +133,7 @@ export async function Relevantes(){
                     </div>
                 </div>
                 </div>
+                <Link href="/nosotros">
                 <div className="col-span-1">
                 <div className="group h-50 md:h-70 w-full bg-black overflow-hidden relative">
                 <Image
@@ -149,6 +154,7 @@ export async function Relevantes(){
                     </div>
                 </div>
                 </div>
+                </Link>
                 <div className="col-span-1">
                 <div className="group h-50 md:h-70 w-full bg-black overflow-hidden relative">
                 <Image

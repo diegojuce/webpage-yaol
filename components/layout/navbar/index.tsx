@@ -102,7 +102,7 @@ export async function Navbar() {
 
         </div>
         <div className="relative group">
-        <Link href="" className="text-black text-s">Ubicaciones</Link>
+        <Link href="/ubicaciones" className="text-black text-s">Ubicaciones</Link>
         <span className="absolute left-0 -bottom-7 h-1 w-full bg-yellow-500 scale-x-0 origin-middle transition-transform duration-300 ease-out group-hover:scale-x-100 z-100"/>
         </div>
 
@@ -112,11 +112,11 @@ export async function Navbar() {
        </div>
        
        <div className="relative group">
-       <Link href="" className="text-black text-s ">Asistencia</Link>
+       <Link href="/contacto" className="text-black text-s ">Asistencia</Link>
        <span className="absolute left-0 -bottom-7 h-1 w-full bg-yellow-500 scale-x-0 origin-middle transition-transform duration-300 ease-out group-hover:scale-x-100 z-100"/>
        </div>
        <div className="relative group">
-       <Link href="" className="text-black text-s ">¿Por que Yantissimo?</Link>
+       <Link href="/nosotros" className="text-black text-s ">¿Por que Yantissimo?</Link>
        <span className="absolute left-0 -bottom-7 h-1 w-full bg-yellow-500 scale-x-0 origin-middle transition-transform duration-300 ease-out group-hover:scale-x-100 z-100"/>
        </div>
        </div>

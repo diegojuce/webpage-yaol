@@ -7,7 +7,7 @@ import Image from "next/image";
 export const dynamic = "force-dynamic";
 export const metadata = {
   description:
-    "Compra llanras y agenda servicios en linea con Yantissimo, tu mejor opción",
+    "Compra llantas y agenda servicios en linea con Yantissimo, tu mejor opción",
   openGraph: {
     type: "website",
   },

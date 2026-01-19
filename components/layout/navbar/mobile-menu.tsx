@@ -80,13 +80,13 @@ export default function MobileMenu({ menu }: { menu: Menu[] }) {
                 <div className="flex flex-col gap-4 mt-10 w-full">
                   <h1 className="mx-5">Llantas</h1>
                   <div className="w-full border-b-2 border-white"></div>
-                  <h1 className="mx-5">Ubicaciones</h1>
+                  <Link href="/ubicaciones"> <h1 className="mx-5">Ubicaciones</h1> </Link>
                   <div className="w-full border-b-2 border-white"></div>
                   <h1 className="mx-5">Servicios</h1>
                   <div className="w-full border-b-2 border-white"></div>
-                  <h1 className="mx-5">Asistencia</h1>
+                  <Link href="/contacto"></Link><h1 className="mx-5">Asistencia</h1>
                   <div className="w-full border-b-2 border-white"></div>
-                  <h1 className="mx-5">¿Por qué Yantissimo?</h1>
+                  <Link href="/nosotros"><h1 className="mx-5">¿Por qué Yantissimo?</h1></Link>
                   <div className="w-full border-b-2 border-white"></div>
                 </div> 
 

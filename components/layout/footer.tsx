@@ -23,7 +23,7 @@ export default async function Footer() {
             className="flex items-center text-black md:pt-1 dark:text-white"
             href="/"
           >
-            <LogoSquare size="sm" />
+            <LogoSquare variant="white" size="sm" />
           </Link>
         </div>
         <Suspense
