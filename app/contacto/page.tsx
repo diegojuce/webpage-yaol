@@ -8,22 +8,22 @@ export const metadata = {
 
 const CONTACT_METHODS = [
   {
-    title: "Llamada inmediata",
-    value: "(000) 123 4567",
-    href: "tel:0001234567",
-    note: "Lun - Sáb · 8:00 a 20:00",
+    title: "Llamada en horarios laborales",
+    value: "(312) 222 0099",
+    href: "tel:3122220099",
+    note: "Lun - Vie · 9:00 a 19:00, Sab · 9:00 a 14:00",
   },
   {
     title: "Correo",
-    value: "contacto@tuempresa.com",
-    href: "mailto:contacto@tuempresa.com",
+    value: "marketing@yantissimo.com",
+    href: "mailto:marketing@yantissimo.com",
     note: "Respondemos en menos de 24 h",
   },
   {
-    title: "WhatsApp",
-    value: "+52 00 0000 0000",
-    href: "https://wa.me/520000000000",
-    note: "Soporte rápido y cotizaciones",
+    title: "WhatsApp y Chatbot",
+    value: "+52 312 222 0099",
+    href: "https://wa.me/523122220099",
+    note: "Contesta al instante las 24 horas del dia",
   },
 ];
 
@@ -57,9 +57,7 @@ export default function ContactoPage() {
               Estamos listos para ayudarte
             </h1>
             <p className="max-w-2xl text-lg text-neutral-300">
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam
-              sit amet sapien sit amet justo fringilla suscipit. Integer
-              facilisis neque vitae justo tincidunt, in tempus sapien egestas.
+            Nuestros expertos te atenderan con gusto, dentro de nuestros horarios. Lunes a Viernes de 9am-7pm y Sábados de 9am-2pm.
             </p>
             <div className="flex flex-wrap gap-3">
               <a
@@ -103,9 +101,7 @@ export default function ContactoPage() {
             </p>
             <h2 className="text-3xl font-bold md:text-4xl">Escríbenos o llama</h2>
             <p className="mt-2 max-w-2xl text-neutral-300">
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed
-              pharetra, arcu quis consequat luctus, mi libero aliquet felis,
-              vitae luctus arcu lorem a mi.
+              Habla con uno de nosotros, o cotiza y resuelve tus dudas en segundos con nuestro chatbot de WhatsApp inteligente
             </p>
           </div>
         </div>

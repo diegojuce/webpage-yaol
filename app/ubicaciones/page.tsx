@@ -8,21 +8,49 @@ export const metadata = {
 
 const LOCATIONS = [
   {
-    name: "Sucursal Centro",
+    name: "Sucursal Tecnologico",
     address: "Av. Lorem Ipsum 123, Col. Dolor Sit, Ciudad",
     schedule: "Lun - Sáb: 8:00 - 20:00",
     phone: "(000) 123 4567",
     image: "/images/ubicaciones/sucursal-centro.jpg", // cámbiala por tu foto
   },
   {
-    name: "Sucursal Norte",
+    name: "Sucursal Benito Juarez",
     address: "Calle Amet 456, Parque Consectetur, Ciudad",
     schedule: "Lun - Vie: 9:00 - 19:00 | Sáb: 9:00 - 15:00",
     phone: "(000) 987 6543",
     image: "/images/ubicaciones/sucursal-norte.jpg", // cámbiala por tu foto
   },
   {
-    name: "Sucursal Express",
+    name: "Sucursal Constitución",
+    address: "Blvd. Adipiscing 789, Plaza Elit, Ciudad",
+    schedule: "Lun - Dom: 7:00 - 22:00",
+    phone: "(000) 555 0000",
+    image: "/images/ubicaciones/sucursal-express.jpg", // cámbiala por tu foto
+  },
+  {
+    name: "Sucursal Niños Heroes",
+    address: "Blvd. Adipiscing 789, Plaza Elit, Ciudad",
+    schedule: "Lun - Dom: 7:00 - 22:00",
+    phone: "(000) 555 0000",
+    image: "/images/ubicaciones/sucursal-express.jpg", // cámbiala por tu foto
+  },
+  {
+    name: "Sucursal Comala",
+    address: "Blvd. Adipiscing 789, Plaza Elit, Ciudad",
+    schedule: "Lun - Dom: 7:00 - 22:00",
+    phone: "(000) 555 0000",
+    image: "/images/ubicaciones/sucursal-express.jpg", // cámbiala por tu foto
+  },
+  {
+    name: "Sucursal Manzanillo BLVD",
+    address: "Blvd. Adipiscing 789, Plaza Elit, Ciudad",
+    schedule: "Lun - Dom: 7:00 - 22:00",
+    phone: "(000) 555 0000",
+    image: "/images/ubicaciones/sucursal-express.jpg", // cámbiala por tu foto
+  },
+  {
+    name: "Sucursal Manzanillo Tapeixtles",
     address: "Blvd. Adipiscing 789, Plaza Elit, Ciudad",
     schedule: "Lun - Dom: 7:00 - 22:00",
     phone: "(000) 555 0000",
@@ -44,10 +72,7 @@ export default function UbicacionesPage() {
               Ubicaciones y centros de servicio
             </h1>
             <p className="max-w-2xl text-lg text-neutral-300">
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam
-              sit amet sapien sit amet justo fringilla suscipit. Integer
-              facilisis neque vitae justo tincidunt, in tempus sapien egestas.
-              Nullam rhoncus lacinia turpis, at congue ligula tempus a.
+              Conoce nuestras sucursales, Hablanos o agenda una cita en linea en cuestión de segundos.
             </p>
             <div className="flex flex-wrap gap-3">
               <a
@@ -87,7 +112,7 @@ export default function UbicacionesPage() {
         <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.2em] text-yellow-400">
-              Sucursales
+              Todas nuestras sucursales
             </p>
             <h2 className="text-3xl font-bold md:text-4xl">
               Elige la más conveniente
@@ -152,14 +177,12 @@ export default function UbicacionesPage() {
               Mapa y rutas sugeridas
             </h2>
             <p className="text-neutral-300">
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer
-              commodo sapien non libero fermentum, vitae auctor urna sodales.
-              Phasellus vitae suscipit elit.
+              Elige o compara las mejores rutas para llegar a nuestras sucursales
             </p>
             <ul className="space-y-2 text-neutral-300">
               <li>• Estacionamiento gratis en todas las sucursales.</li>
-              <li>• Transporte público a menos de 5 minutos caminando.</li>
-              <li>• Áreas de espera con Wi-Fi y café.</li>
+              <li>• Ubicación ideal.</li>
+              <li>• Áreas de espera con Aire acondicionado, Wi-Fi y café.</li>
             </ul>
           </div>
           <div className="relative h-[320px] w-full flex-1 overflow-hidden rounded-2xl border border-white/10 bg-black/40 shadow-lg">

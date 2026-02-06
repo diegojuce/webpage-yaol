@@ -75,15 +75,13 @@ export default function NosotrosPage() {
         <div className="mx-auto flex max-w-6xl flex-col gap-10 md:flex-row md:items-center">
           <div className="flex-1 space-y-4">
             <p className="text-sm font-semibold uppercase tracking-[0.2em] text-yellow-400">
-              Nuestro origen
+              TU MEJOR OPCIÓN
             </p>
             <h1 className="text-4xl font-bold leading-tight md:text-5xl">
-              Más de una década cuidando tu camino
+              MÁS DE 10 AÑOS DE EXPERIENCIA
             </h1>
             <p className="max-w-2xl text-lg text-neutral-300">
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aliquam
-              sit amet sapien sit amet justo fringilla suscipit. Integer
-              facilisis neque vitae justo tincidunt, in tempus sapien egestas.
+            Ofrecemos servicios de calidad y tenemos más de 10 años de experiencia en el sector automotriz. Tu auto está en las mejores manos con los mejores técnicos capacitados. Conoce nuestra historia! , te esperamos en una de nuestras 7 sucursales.
             </p>
             <div className="flex flex-wrap gap-3">
               <a
@@ -126,19 +124,13 @@ export default function NosotrosPage() {
               Quiénes somos
             </p>
             <h2 className="text-3xl font-bold md:text-4xl">
-              Nuestra historia en movimiento
+              Nuestra historia
             </h2>
             <p className="text-neutral-300">
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed
-              pharetra, arcu quis consequat luctus, mi libero aliquet felis,
-              vitae luctus arcu lorem a mi. Integer eget metus vitae orci
-              tristique efficitur id sit amet metus.
+            Yantissimo nace en Octubre del 2016, con nuestra primer sucursal ubicada en Villa de Alvarez, Colima. Desde entonces nos hemos enfocado en brindar servicio automotriz de calidad a Colima, y ofreciendo las mejores marcas de llantas con los mejores precios. Más tarde nos convertimos en el distribuidor estrella de la mejor marca de neumáticos del mundo, Michelin.
             </p>
             <p className="text-neutral-300">
-              Vivamus feugiat, tellus non scelerisque dictum, odio justo
-              ullamcorper metus, ut condimentum felis justo eu libero. Etiam
-              dapibus, leo sed cursus pulvinar, purus lorem lacinia lacus, a
-              volutpat sem sapien sed turpis.
+            Desde entonces nos hemos expandido cada vez más cerca de ti, ahora con 7 sucursales ubicadas en 4 municipios, Colima, Villa de Alvarez, Comala y Manzanillo. 
             </p>
           </div>
           <div className="relative h-72 overflow-hidden rounded-2xl border border-white/10 bg-white/5 shadow-lg">
