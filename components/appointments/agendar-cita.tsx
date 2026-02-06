@@ -22,7 +22,7 @@ import {
   useMemo,
   useState,
 } from "react";
-import { addItem } from "../cart/actions";
+import { addItem, setCartAttributes } from "../cart/actions";
 import { useCart } from "../cart/cart-context";
 
 type CalendarDay = {
@@ -36,6 +36,21 @@ type SubmitStatus = "idle" | "loading" | "success" | "error";
 const WEEK_DAYS = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"] as const;
 const CALENDAR_SLOTS = 42; // 6 semanas visibles
 const ARRAY_KEYS = ["data", "dates", "fechas", "items", "horarios"] as const;
+
+function extractQuoteId(raw: unknown): string | null {
+  if (!raw || typeof raw !== "object") {
+    return null;
+  }
+  const data = raw as Record<string, any>;
+  const direct = data.quote_id ?? data.quoteId;
+  if (direct) {
+    return String(direct);
+  }
+  const quote =
+    data.quote ?? data.data?.quote ?? data.result?.quote ?? data.response?.quote;
+  const nested = quote?.quote_id ?? quote?.quoteId ?? quote?.id;
+  return nested ? String(nested) : null;
+}
 
 // same hardcoded sucursales and services arrays as in AppointmentModal (copy as-is)
 const sucursales: Branch[] = [
@@ -288,7 +303,18 @@ function AppointmentModal({
     };
 
     try {
-      await saveAndSchedule(payload);
+      const response = await saveAndSchedule(payload);
+      const quoteId = extractQuoteId(response);
+      if (quoteId || branchName) {
+        try {
+          await setCartAttributes({ quoteId, sucursal: branchName });
+        } catch (error) {
+          console.warn(
+            "[appointments] Failed to sync cart attributes",
+            error
+          );
+        }
+      }
       setSubmitStatus("success");
       setSubmitMessage("¡Tu cita ha sido confirmada con éxito!");
     } catch (error) {
@@ -893,7 +919,7 @@ export function AppointmentEmbedded({ onClose }: { onClose: () => void }) {
           ),
         };
       });
-      await saveAndSchedule({
+      const response = await saveAndSchedule({
         client_name: clientName,
         phone,
         sucursal: sucursalName || "",
@@ -902,6 +928,17 @@ export function AppointmentEmbedded({ onClose }: { onClose: () => void }) {
         start_at: startAt,
         duration_minutes: duration,
       });
+      const quoteId = extractQuoteId(response);
+      if (quoteId || sucursalName) {
+        try {
+          await setCartAttributes({ quoteId, sucursal: sucursalName });
+        } catch (error) {
+          console.warn(
+            "[appointments] Failed to sync cart attributes",
+            error
+          );
+        }
+      }
       startTransition(() => {
         setSubmitStatus("success");
         setSubmitMessage("¡Tu cita ha sido confirmada con éxito!");

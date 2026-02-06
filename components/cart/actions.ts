@@ -7,11 +7,50 @@ import {
   getCart,
   removeFromCart,
   updateCart,
+  updateCartAttributes,
 } from "lib/shopify";
 import { getRawProduct } from "lib/shopify/noCacheGetProduct";
 import { revalidateTag } from "next/cache";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+
+const isValidCartId = (id?: string) =>
+  !!id && id.startsWith("gid://shopify/Cart/") && id.includes("?key=");
+
+export async function setCartAttributes(payload: {
+  quoteId?: string | number | null;
+  sucursal?: string | null;
+}) {
+  const quoteId =
+    payload.quoteId !== undefined && payload.quoteId !== null
+      ? String(payload.quoteId).trim()
+      : "";
+  const sucursal =
+    payload.sucursal !== undefined && payload.sucursal !== null
+      ? String(payload.sucursal).trim()
+      : "";
+
+  const attributes = [
+    ...(quoteId ? [{ key: "quote_id", value: quoteId }] : []),
+    ...(sucursal ? [{ key: "sucursal", value: sucursal }] : []),
+  ];
+
+  if (!attributes.length) {
+    return;
+  }
+
+  let cartId = (await cookies()).get("cartId")?.value;
+
+  if (!isValidCartId(cartId)) {
+    const newCart = await createCart(attributes);
+    cartId = newCart.id!;
+    (await cookies()).set("cartId", cartId);
+  } else {
+    await updateCartAttributes(attributes, cartId);
+  }
+
+  revalidateTag(TAGS.cart, { expire: 0 });
+}
 
 export async function addItem(
   prevState: any,
@@ -32,9 +71,6 @@ export async function addItem(
 
   try {
     // Validate cartId from cookie; create one if missing/invalid.
-    const isValidCartId = (id?: string) =>
-      !!id && id.startsWith("gid://shopify/Cart/") && id.includes("?key=");
-
     let cartId = (await cookies()).get("cartId")?.value;
     let cart: import("lib/shopify/types").Cart | undefined;
 

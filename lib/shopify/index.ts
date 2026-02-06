@@ -17,6 +17,7 @@ import {
   createCartMutation,
   editCartItemsMutation,
   removeFromCartMutation,
+  updateCartAttributesMutation,
 } from "./mutations/cart";
 import { getCartQuery } from "./queries/cart";
 import { getCollectionQuery, getCollectionsQuery } from "./queries/collection";
@@ -29,6 +30,7 @@ import {
 import {
   BackendImageOperation,
   Cart,
+  CartAttribute,
   Collection,
   Connection,
   Image,
@@ -37,6 +39,7 @@ import {
   Product,
   ShopifyAddToCartOperation,
   ShopifyCart,
+  ShopifyCartAttributesUpdateOperation,
   ShopifyCartOperation,
   ShopifyCollection,
   ShopifyCollectionOperation,
@@ -201,7 +204,8 @@ const reshapeCart = (cart: ShopifyCart): Cart => {
     let amountNum = parseFloat(lineCost);
 
     // Establish currency preference order
-    const productMinPrice = node?.merchandise?.product?.priceRange?.minVariantPrice;
+    const productMinPrice =
+      node?.merchandise?.product?.priceRange?.minVariantPrice;
     const fallbackAmountStr = productMinPrice?.amount;
     const fallbackCurrency = productMinPrice?.currencyCode || lineCurrency;
 
@@ -228,7 +232,7 @@ const reshapeCart = (cart: ShopifyCart): Cart => {
     // Ensure featured image exists: fallback to first product image
     const product = node?.merchandise?.product;
     if (product && !product?.featuredImage) {
-      const firstImg = (product?.images?.edges?.[0]?.node) || null;
+      const firstImg = product?.images?.edges?.[0]?.node || null;
       if (firstImg) {
         product.featuredImage = firstImg;
       }
@@ -330,8 +334,10 @@ const reshapeProducts = (products: ShopifyProduct[]) => {
   return reshapedProducts;
 };
 
-export async function createCart(): Promise<Cart> {
-  const { cart } = await createCartWithLines([]);
+export async function createCart(
+  attributes?: CartAttribute[]
+): Promise<Cart> {
+  const { cart } = await createCartWithLines([], attributes);
   return cart;
 }
 
@@ -341,10 +347,17 @@ export async function createCartWithLines(
     quantity: number;
     sellingPlanId?: string;
   }[],
+  attributes?: CartAttribute[]
 ): Promise<{ cart: Cart; checkoutUrl: string }> {
+  const variables: ShopifyCreateCartOperation["variables"] = {
+    lineItems: lines,
+  };
+  if (attributes && attributes.length > 0) {
+    variables.attributes = attributes;
+  }
   const res = await shopifyFetch<ShopifyCreateCartOperation>({
     query: createCartMutation,
-    variables: { lineItems: lines },
+    variables,
   });
 
   const cart = reshapeCart(res.body.data.cartCreate.cart);
@@ -401,6 +414,27 @@ export async function updateCart(
   });
 
   return reshapeCart(res.body.data.cartLinesUpdate.cart);
+}
+
+export async function updateCartAttributes(
+  attributes: CartAttribute[],
+  cartIdOverride?: string
+): Promise<Cart> {
+  const cartId = cartIdOverride ?? (await cookies()).get("cartId")?.value;
+
+  if (!cartId) {
+    throw new Error("Missing cartId for cart attribute update");
+  }
+
+  const res = await shopifyFetch<ShopifyCartAttributesUpdateOperation>({
+    query: updateCartAttributesMutation,
+    variables: {
+      cartId,
+      attributes,
+    },
+  });
+
+  return reshapeCart(res.body.data.cartAttributesUpdate.cart);
 }
 
 export async function getCart(): Promise<Cart | undefined> {

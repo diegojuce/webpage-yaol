@@ -12,8 +12,11 @@ export const addToCartMutation = /* GraphQL */ `
 `;
 
 export const createCartMutation = /* GraphQL */ `
-  mutation createCart($lineItems: [CartLineInput!]) {
-    cartCreate(input: { lines: $lineItems }) {
+  mutation createCart(
+    $lineItems: [CartLineInput!]
+    $attributes: [AttributeInput!]
+  ) {
+    cartCreate(input: { lines: $lineItems, attributes: $attributes }) {
       cart {
         ...cart
       }
@@ -36,6 +39,20 @@ export const editCartItemsMutation = /* GraphQL */ `
 export const removeFromCartMutation = /* GraphQL */ `
   mutation removeFromCart($cartId: ID!, $lineIds: [ID!]!) {
     cartLinesRemove(cartId: $cartId, lineIds: $lineIds) {
+      cart {
+        ...cart
+      }
+    }
+  }
+  ${cartFragment}
+`;
+
+export const updateCartAttributesMutation = /* GraphQL */ `
+  mutation updateCartAttributes(
+    $cartId: ID!
+    $attributes: [AttributeInput!]!
+  ) {
+    cartAttributesUpdate(cartId: $cartId, attributes: $attributes) {
       cart {
         ...cart
       }

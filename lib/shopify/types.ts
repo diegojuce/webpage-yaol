@@ -12,6 +12,11 @@ export type Cart = Omit<ShopifyCart, "lines"> & {
   lines: CartItem[];
 };
 
+export type CartAttribute = {
+  key: string;
+  value: string;
+};
+
 export type CartProduct = {
   id: string;
   handle: string;
@@ -157,6 +162,7 @@ export type ShopifyCreateCartOperation = {
       quantity: number;
       sellingPlanId?: string;
     }[];
+    attributes?: CartAttribute[];
   };
 };
 
@@ -200,6 +206,18 @@ export type ShopifyUpdateCartOperation = {
       merchandiseId: string;
       quantity: number;
     }[];
+  };
+};
+
+export type ShopifyCartAttributesUpdateOperation = {
+  data: {
+    cartAttributesUpdate: {
+      cart: ShopifyCart;
+    };
+  };
+  variables: {
+    cartId: string;
+    attributes: CartAttribute[];
   };
 };
 
