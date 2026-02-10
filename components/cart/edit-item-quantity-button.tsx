@@ -66,19 +66,20 @@ export function EditItemQuantityButton({
   }
 
   const payload = {
+    lineId: item.id,
     merchandiseId: item.merchandise.id,
-    quantity: nextQuantity,
+    updateType: type,
   };
   const updateItemQuantityAction = formAction.bind(null, payload);
 
   return (
     <form
       action={async () => {
-        if (payload.quantity === item.quantity) {
+        if (nextQuantity === item.quantity) {
           return;
         }
 
-        optimisticUpdate(payload.merchandiseId, type);
+        optimisticUpdate(item.merchandise.id, type);
         updateItemQuantityAction();
       }}
     >

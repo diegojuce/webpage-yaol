@@ -9,7 +9,6 @@ import {
   updateCart,
   updateCartAttributes,
 } from "lib/shopify";
-import { getRawProduct } from "lib/shopify/noCacheGetProduct";
 import { revalidateTag } from "next/cache";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
@@ -91,32 +90,17 @@ export async function addItem(
     );
 
     if (existingLine) {
-      const handle = (existingLine.merchandise as any)?.product?.handle;
       let maxAvailable: number | undefined;
 
-      // Preferir stock desde el backend propio
-      if (handle) {
-        const backendProduct = await getRawProduct(handle);
-        const backendVariant = backendProduct?.variants.find(
-          (variant) => variant.id === selectedVariantId
-        );
-
-        if (typeof backendVariant?.quantityAvailable === "number") {
-          maxAvailable = backendVariant.quantityAvailable;
-        }
-      }
-
-      // Si el backend no devolvió stock, usar el de Shopify como respaldo
-      if (typeof maxAvailable !== "number") {
-        const productAny = (existingLine.merchandise?.product ?? {}) as any;
-        const edges = productAny?.variants?.edges ?? [];
-        const variants = edges.map((e: any) => e.node);
-        const currentVariant = variants.find(
-          (variant: any) => variant.id === existingLine.merchandise.id
-        );
-        if (typeof currentVariant?.quantityAvailable === "number") {
-          maxAvailable = currentVariant.quantityAvailable;
-        }
+      // Usar stock de Shopify desde el producto en el carrito
+      const productAny = (existingLine.merchandise?.product ?? {}) as any;
+      const edges = productAny?.variants?.edges ?? [];
+      const variants = edges.map((e: any) => e.node);
+      const currentVariant = variants.find(
+        (variant: any) => variant.id === existingLine.merchandise.id
+      );
+      if (typeof currentVariant?.quantityAvailable === "number") {
+        maxAvailable = currentVariant.quantityAvailable;
       }
 
       let newQuantity = existingLine.quantity + quantity;
@@ -182,12 +166,12 @@ export async function removeItem(prevState: any, merchandiseId: string) {
 export async function updateItemQuantity(
   prevState: any,
   payload: {
-    merchandiseId: string;
-    quantity: number;
+    lineId?: string;
+    merchandiseId?: string;
+    updateType: "plus" | "minus";
   }
 ) {
-  const { merchandiseId } = payload;
-  let { quantity } = payload;
+  const { lineId, merchandiseId, updateType } = payload;
 
   try {
     const cart = await getCart();
@@ -196,63 +180,49 @@ export async function updateItemQuantity(
       return "Error al obtener el carrito";
     }
 
-    const lineItem = cart.lines.find(
-      (line) => line.merchandise.id === merchandiseId
+    const lineItem = lineId
+      ? cart.lines.find((line) => line.id === lineId)
+      : merchandiseId
+        ? cart.lines.find((line) => line.merchandise.id === merchandiseId)
+        : undefined;
+    if (!lineItem) {
+      return "Producto no encontrado en el carrito";
+    }
+
+    const productAny = (lineItem.merchandise?.product ?? {}) as any;
+    const edges = productAny?.variants?.edges ?? [];
+    const variants = edges.map((e: any) => e.node);
+    const currentVariant = variants.find(
+      (variant: any) => variant.id === lineItem.merchandise.id
     );
+    const maxAvailable =
+      typeof currentVariant?.quantityAvailable === "number"
+        ? currentVariant.quantityAvailable
+        : undefined;
 
-    if (lineItem) {
-      const handle = (lineItem.merchandise as any)?.product?.handle;
-      let maxAvailable: number | undefined;
+    let quantity =
+      updateType === "plus"
+        ? lineItem.quantity + 1
+        : lineItem.quantity - 1;
 
-      // Preferir stock desde el backend propio
-      if (handle) {
-        const backendProduct = await getRawProduct(handle);
-        const backendVariant = backendProduct?.variants.find(
-          (variant) => variant.id === merchandiseId
-        );
-
-        if (typeof backendVariant?.quantityAvailable === "number") {
-          maxAvailable = backendVariant.quantityAvailable;
-        }
-      }
-
-      // Si el backend no devolvió stock, usar el de Shopify como respaldo
-      if (typeof maxAvailable !== "number") {
-        const productAny = (lineItem.merchandise?.product ?? {}) as any;
-        const edges = productAny?.variants?.edges ?? [];
-        const variants = edges.map((e: any) => e.node);
-        const currentVariant = variants.find(
-          (variant: any) => variant.id === lineItem.merchandise.id
-        );
-        if (typeof currentVariant?.quantityAvailable === "number") {
-          maxAvailable = currentVariant.quantityAvailable;
-        }
-      }
-
-      if (typeof maxAvailable === "number") {
-        if (maxAvailable <= 0) {
-          quantity = 0;
-        } else if (quantity > maxAvailable) {
-          quantity = maxAvailable;
-        }
+    if (updateType === "plus" && typeof maxAvailable === "number") {
+      if (maxAvailable <= 0) {
+        quantity = 0;
+      } else if (quantity > maxAvailable) {
+        quantity = maxAvailable;
       }
     }
 
-    if (lineItem && lineItem.id) {
-      if (quantity === 0) {
-        await removeFromCart([lineItem.id]);
-      } else {
-        await updateCart([
-          {
-            id: lineItem.id,
-            merchandiseId,
-            quantity,
-          },
-        ]);
-      }
-    } else if (quantity > 0) {
-      // If the item doesn't exist in the cart and quantity > 0, add it
-      await addToCart([{ merchandiseId, quantity }]);
+    if (quantity <= 0) {
+      await removeFromCart([lineItem.id]);
+    } else {
+      await updateCart([
+        {
+          id: lineItem.id,
+          merchandiseId: lineItem.merchandise.id,
+          quantity,
+        },
+      ]);
     }
 
     revalidateTag(TAGS.cart, { expire: 0 });
