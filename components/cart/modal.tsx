@@ -10,7 +10,7 @@ import { DEFAULT_OPTION } from "lib/constants";
 import { createUrl } from "lib/utils";
 import Image from "next/image";
 import Link from "next/link";
-import { Fragment, useEffect, useRef, useState } from "react";
+import { Fragment, useEffect, useId, useRef, useState, useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { createCartAndSetCookie, redirectToCheckout, updateItemVariant } from "./actions";
 import { useCart } from "./cart-context";
@@ -19,7 +19,14 @@ import { EditItemQuantityButton } from "./edit-item-quantity-button";
 import OpenCart from "./open-cart";
 // Removed unused static ShippingType in favor of per-line selector
 import type { CartItem, Product, ProductVariant } from "lib/shopify/types";
-import { useActionState } from "react";
+
+let activeCartModalId: string | null = null;
+const activeCartModalListeners = new Set<(id: string | null) => void>();
+
+const setActiveCartModalId = (nextId: string | null) => {
+  activeCartModalId = nextId;
+  activeCartModalListeners.forEach((listener) => listener(activeCartModalId));
+};
 
 function LineShippingSelector({
   item,
@@ -93,8 +100,38 @@ export default function CartModal({isWhite=false}) {
   const [isOpen, setIsOpen] = useState(false);
   const quantityRef = useRef(cart?.totalQuantity);
   const [shippingType, setShippingType] = useState<string>("store");
-  const openCart = () => setIsOpen(true);
-  const closeCart = () => setIsOpen(false);
+  const modalId = useId();
+  const [activeId, setActiveId] = useState<string | null>(activeCartModalId);
+  const isActive = activeId === modalId;
+
+  useEffect(() => {
+    const listener = (id: string | null) => setActiveId(id);
+    activeCartModalListeners.add(listener);
+    return () => {
+      activeCartModalListeners.delete(listener);
+      if (activeCartModalId === modalId) {
+        setActiveCartModalId(null);
+      }
+    };
+  }, [modalId]);
+
+  useEffect(() => {
+    if (activeId === null) {
+      setActiveCartModalId(modalId);
+    }
+  }, [activeId, modalId]);
+
+  const openCart = () => {
+    if (!isActive) {
+      setActiveCartModalId(modalId);
+    }
+    setIsOpen(true);
+  };
+  const closeCart = () => {
+    if (isActive) {
+      setIsOpen(false);
+    }
+  };
 
   useEffect(() => {
     if (!cart) {
@@ -103,6 +140,10 @@ export default function CartModal({isWhite=false}) {
   }, [cart]);
 
   useEffect(() => {
+    if (!isActive) {
+      return;
+    }
+
     if (
       cart?.totalQuantity &&
       cart?.totalQuantity !== quantityRef.current &&
@@ -113,14 +154,20 @@ export default function CartModal({isWhite=false}) {
       }
       quantityRef.current = cart?.totalQuantity;
     }
-  }, [isOpen, cart?.totalQuantity, quantityRef]);
+  }, [isOpen, cart?.totalQuantity, quantityRef, isActive]);
+
+  useEffect(() => {
+    if (!isActive && isOpen) {
+      setIsOpen(false);
+    }
+  }, [isActive, isOpen]);
 
   return (
     <>
       <button aria-label="Abrir carrito" onClick={openCart}>
         <OpenCart quantity={cart?.totalQuantity} isWhite={isWhite} />
       </button>
-      <Transition show={isOpen}>
+      <Transition show={isOpen && isActive}>
         <Dialog onClose={closeCart} className="relative z-[200]">
           <Transition.Child
             as={Fragment}
