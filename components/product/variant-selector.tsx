@@ -34,6 +34,7 @@ export function VariantSelector({
       { id: first.id, label: "Recoger en sucursal" },
       { id: second.id, label: "Envío a domicilio" },
     ];
+    console.log("Using two variant toggle with choices:", choices);
 
     return (
       <form>
@@ -52,13 +53,30 @@ export function VariantSelector({
                     updateURL(newState);
                   }}
                   className={clsx(
-                    "flex min-w-[48px] items-center justify-center rounded-full px-3 py-1 text-sm font-medium transition duration-200 ease-in-out",
-                    "bg-neutral-100 text-black hover:bg-neutral-200 dark:bg-neutral-900 dark:text-black dark:hover:bg-neutral-700",
-                    {
-                      "cursor-default bg-yellow-400 text-black dark:bg-yellow-500":
-                        isActive,
-                      "cursor-pointer": !isActive,
-                    }
+                    // Base
+                    "inline-flex items-center justify-center",
+                    "rounded-full px-4 py-2",
+                    "text-sm font-semibold",
+                    "transition-all duration-200",
+                    "select-none",
+                    "focus:outline-none focus-visible:ring-2 focus-visible:ring-yellow-500 focus-visible:ring-offset-2",
+                    "ring-offset-white dark:ring-offset-black",
+
+                    // Inactive
+                    !isActive && "bg-neutral-100 text-neutral-900 shadow-sm",
+                    !isActive && "hover:bg-neutral-200 hover:shadow",
+                    !isActive && "active:scale-[0.98]",
+                    !isActive &&
+                      "dark:bg-neutral-900 dark:text-neutral-100 dark:hover:bg-neutral-800",
+
+                    // Active
+                    isActive && "bg-yellow-400 text-black shadow",
+                    isActive && "hover:bg-yellow-300",
+                    isActive && "active:scale-[0.98]",
+                    isActive && "dark:bg-yellow-500 dark:hover:bg-yellow-400",
+
+                    // Cursor
+                    isActive ? "cursor-default" : "cursor-pointer"
                   )}
                 >
                   {c.label}
