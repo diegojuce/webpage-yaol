@@ -4,6 +4,7 @@ import { MinusIcon, PlusIcon } from "@heroicons/react/24/outline";
 import clsx from "clsx";
 import { addItem } from "components/cart/actions";
 import { useProduct } from "components/product/product-context";
+import { normalizeVariantId } from "lib/shopify/variant-utils";
 import { Product, ProductVariant } from "lib/shopify/types";
 import { useActionState, useEffect } from "react";
 import { useCart } from "./cart-context";
@@ -71,13 +72,15 @@ export function AddToCart({ product }: { product: Product }) {
     )
   );
   // If a variantId is explicitly chosen via the two-variant toggle, prefer it.
-  const chosenVariantIdFromState =
-    typeof state["variantId"] === "string" ? state["variantId"] : undefined;
-  const defaultVariantId = variants[0]?.id;
+  const chosenVariantIdFromState = normalizeVariantId(state["variantId"]);
+  const defaultVariantId = normalizeVariantId(variants[0]?.id);
+  const variantIdFromOptions = variant
+    ? normalizeVariantId(variant.id)
+    : undefined;
   const selectedVariantId =
-    chosenVariantIdFromState || variant?.id || defaultVariantId;
+    chosenVariantIdFromState || variantIdFromOptions || defaultVariantId;
   const finalVariant = variants.find(
-    (variant) => variant.id === selectedVariantId
+    (variant) => normalizeVariantId(variant.id) === selectedVariantId
   );
   const availableQuantity =
     typeof finalVariant?.quantityAvailable === "number"

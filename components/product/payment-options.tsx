@@ -1,6 +1,7 @@
 "use client";
 
 import { useProduct } from "components/product/product-context";
+import { normalizeVariantId } from "lib/shopify/variant-utils";
 import { Product, ProductVariant } from "lib/shopify/types";
 import { useMemo, useState } from "react";
 
@@ -37,10 +38,9 @@ export function PaymentOptions({ product }: { product: Product }) {
     () => findVariantFromState(variants, state),
     [variants, state]
   );
-  const chosenVariantId =
-    typeof state["variantId"] === "string" ? state["variantId"] : undefined;
+  const chosenVariantId = normalizeVariantId(state["variantId"]);
   const overrideVariant = useMemo(
-    () => variants.find((v) => v.id === chosenVariantId),
+    () => variants.find((v) => normalizeVariantId(v.id) === chosenVariantId),
     [variants, chosenVariantId]
   );
 

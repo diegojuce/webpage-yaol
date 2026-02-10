@@ -2,6 +2,7 @@
 
 import clsx from "clsx";
 import { useProduct, useUpdateURL } from "components/product/product-context";
+import { normalizeVariantId } from "lib/shopify/variant-utils";
 import { ProductOption, ProductVariant } from "lib/shopify/types";
 
 type Combination = {
@@ -28,12 +29,18 @@ export function VariantSelector({
 
   if (useTwoVariantToggle) {
     const [first, second] = variants as [ProductVariant, ProductVariant];
-    const selectedId = (state["variantId"] as string | undefined) ?? first.id;
+    const firstId = normalizeVariantId(first.id);
+    const secondId = normalizeVariantId(second.id);
+    const selectedId =
+      normalizeVariantId(state["variantId"]) ?? firstId ?? undefined;
 
     const choices = [
-      { id: first.id, label: "Recoger en sucursal" },
-      { id: second.id, label: "Envío a domicilio" },
-    ];
+      firstId ? { id: firstId, label: "Recoger en sucursal" } : null,
+      secondId ? { id: secondId, label: "Envío a domicilio" } : null,
+    ].filter(
+      (choice): choice is { id: string; label: string } => Boolean(choice)
+    );
+    console.debug("Using two-variant toggle with choices:", choices, "and selectedId:", selectedId, options, variants);
 
     return (
       <form>
@@ -47,13 +54,14 @@ export function VariantSelector({
               return (
                 <button
                   key={c.id}
-                  formAction={() => {
+                  type="button"
+                  onClick={() => {
                     const newState = updateOption("variantId", c.id);
                     updateURL(newState);
                   }}
                   className={clsx(
                     "flex min-w-[48px] items-center justify-center rounded-full px-3 py-1 text-sm font-medium transition duration-200 ease-in-out",
-                    "bg-neutral-100 text-black hover:bg-neutral-200 dark:bg-neutral-900 dark:text-black dark:hover:bg-neutral-700",
+                    "bg-neutral-100 text-black hover:bg-neutral-100 dark:bg-neutral-100 dark:text-black dark:hover:bg-neutral-400",
                     {
                       "cursor-default bg-yellow-400 text-black dark:bg-yellow-500":
                         isActive,
@@ -128,8 +136,10 @@ export function VariantSelector({
 
             return (
               <button
-                formAction={() => {
+                type="button"
+                onClick={() => {
                   const newState = updateOption(optionNameLowerCase, value);
+                  console.log("Updated state:", newState);
                   updateURL(newState);
                 }}
                 key={value}
