@@ -1,7 +1,9 @@
 "use client";
+import { Listbox } from "@headlessui/react";
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
+  ChevronUpDownIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
 import clsx from "clsx";
@@ -226,6 +228,12 @@ export function AppointmentEmbedded({ onClose }: { onClose: () => void }) {
   const availableDateSet = useMemo(
     () => new Set(availableDates),
     [availableDates]
+  );
+  const selectedService = services.find(
+    (service) => service.id === selectedServiceId
+  );
+  const selectedBranch = sucursales.find(
+    (branch) => branch.id === selectedBranchId
   );
   const calendarDays = useMemo(
     () => buildCalendarDays(currentMonth),
@@ -489,18 +497,44 @@ export function AppointmentEmbedded({ onClose }: { onClose: () => void }) {
             ) : null}
             {services.length ? (
               <div className="space-y-3">
-                <select
-                  value={selectedServiceId}
-                  onChange={(event) => setSelectedServiceId(event.target.value)}
-                  className="w-full rounded-sm border border-neutral-700 bg-neutral-900/80 px-4 py-3 text-sm text-white hover:border-yellow-400 focus:outline-none"
-                >
-                  <option value="">Selecciona un servicio</option>
-                  {services.map((service) => (
-                    <option key={service.id} value={service.id}>
-                      {service.name} · {service.duration} min
-                    </option>
-                  ))}
-                </select>
+                <Listbox value={selectedServiceId} onChange={setSelectedServiceId}>
+                  <div className="relative">
+                    <Listbox.Button className="flex w-full items-center justify-between gap-3 rounded-sm border border-neutral-700 bg-neutral-900/80 px-4 py-3 text-left text-sm text-white hover:border-yellow-400 focus:outline-none">
+                      <span
+                        className={clsx(
+                          "truncate",
+                          selectedService
+                            ? "text-white"
+                            : "text-neutral-400"
+                        )}
+                      >
+                        {selectedService
+                          ? `${selectedService.name} · ${selectedService.duration} min`
+                          : "Selecciona un servicio"}
+                      </span>
+                      <ChevronUpDownIcon className="h-4 w-4 text-neutral-400" />
+                    </Listbox.Button>
+                    <Listbox.Options className="absolute left-0 top-full z-30 max-h-64 w-full overflow-auto rounded-b-sm rounded-t-none border border-neutral-700 border-t-0 bg-neutral-900/95 shadow-[0_18px_40px_rgba(0,0,0,0.45)]">
+                      {services.map((service) => (
+                        <Listbox.Option
+                          key={service.id}
+                          value={service.id}
+                          className={({ active, selected }) =>
+                            clsx(
+                              "cursor-pointer px-4 py-2 text-sm transition",
+                              active
+                                ? "bg-yellow-400 text-black"
+                                : "text-white",
+                              selected && "font-semibold"
+                            )
+                          }
+                        >
+                          {service.name} · {service.duration} min
+                        </Listbox.Option>
+                      ))}
+                    </Listbox.Options>
+                  </div>
+                </Listbox>
                 <p className="text-xs text-neutral-400">
                   El servicio seleccionado puede ajustar la disponibilidad de
                   horarios.
@@ -522,19 +556,45 @@ export function AppointmentEmbedded({ onClose }: { onClose: () => void }) {
               </h3>
             </header>
             <div className="space-y-3">
-              <select
-                value={selectedBranchId}
-                onChange={(event) => handleBranchChange(event.target.value)}
-                className="w-full rounded-sm border border-neutral-700 bg-neutral-900/80 px-4 py-3 text-sm text-white shadow-[0_10px_30px_rgba(0,0,0,0.35)] hover:border-yellow-400 focus:outline-none"
-              >
-                <option value="">Selecciona una sucursal</option>
-                {sucursales.map((branch) => (
-                  <option key={branch.id} value={branch.id}>
-                    {branch.name}
-                    {branch.address ? ` — ${branch.address}` : ""}
-                  </option>
-                ))}
-              </select>
+              <Listbox value={selectedBranchId} onChange={handleBranchChange}>
+                <div className="relative">
+                  <Listbox.Button className="flex w-full items-center justify-between gap-3 rounded-sm border border-neutral-700 bg-neutral-900/80 px-4 py-3 text-left text-sm text-white shadow-[0_10px_30px_rgba(0,0,0,0.35)] hover:border-yellow-400 focus:outline-none">
+                    <span
+                      className={clsx(
+                        "truncate",
+                        selectedBranch
+                          ? "text-white"
+                          : "text-neutral-400"
+                      )}
+                    >
+                      {selectedBranch
+                        ? `${selectedBranch.name}${selectedBranch.address ? ` — ${selectedBranch.address}` : ""}`
+                        : "Selecciona una sucursal"}
+                    </span>
+                    <ChevronUpDownIcon className="h-4 w-4 text-neutral-400" />
+                  </Listbox.Button>
+                  <Listbox.Options className="absolute left-0 top-full z-30 max-h-64 w-full overflow-auto rounded-b-sm rounded-t-none border border-neutral-700 border-t-0 bg-neutral-900/95 shadow-[0_18px_40px_rgba(0,0,0,0.45)]">
+                    {sucursales.map((branch) => (
+                      <Listbox.Option
+                        key={branch.id}
+                        value={branch.id}
+                        className={({ active, selected }) =>
+                          clsx(
+                            "cursor-pointer px-4 py-2 text-sm transition",
+                            active
+                              ? "bg-yellow-400 text-black"
+                              : "text-white",
+                            selected && "font-semibold"
+                          )
+                        }
+                      >
+                        {branch.name}
+                        {branch.address ? ` — ${branch.address}` : ""}
+                      </Listbox.Option>
+                    ))}
+                  </Listbox.Options>
+                </div>
+              </Listbox>
               {branchesLoading ? (
                 <p className="text-xs text-neutral-400">
                   Cargando sucursales...
@@ -586,7 +646,7 @@ export function AppointmentEmbedded({ onClose }: { onClose: () => void }) {
         {currentStep === 4 ? (
           <div className="space-y-6">
             <div className="grid gap-6 lg:grid-cols-2">
-              <section className="rounded-sm border border-neutral-800/80 bg-neutral-900/70 p-5">
+              <section className="rounded-xl border border-neutral-800/80 bg-neutral-900/70 p-5">
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="text-sm font-semibold uppercase tracking-[0.3em] text-yellow-400">
@@ -638,9 +698,9 @@ export function AppointmentEmbedded({ onClose }: { onClose: () => void }) {
                         onClick={() => handleDateSelection(day.iso)}
                         disabled={isDisabled}
                         className={clsx(
-                          "flex h-10 items-center justify-center rounded-full border text-sm transition",
+                          "flex h-10 items-center justify-center  text-sm transition",
                           isSelected
-                            ? "border-yellow-400 bg-yellow-400 text-black shadow-[0_12px_30px_rgba(250,204,21,0.35)]"
+                            ? "border-yellow-400 bg-yellow-400 text-black "
                             : isDisabled
                               ? "border-neutral-800 text-neutral-600"
                               : "border-yellow-500/60 bg-yellow-500/10 text-yellow-200 hover:bg-yellow-400/20",
@@ -661,7 +721,7 @@ export function AppointmentEmbedded({ onClose }: { onClose: () => void }) {
                   <p className="mt-3 text-xs text-red-400">{datesError}</p>
                 ) : null}
               </section>
-              <section className="rounded-sm border border-neutral-800/80 bg-neutral-900/70 p-5">
+              <section className="rounded-xl border border-neutral-800/80 bg-neutral-900/70 p-5">
                 <header className="mb-3">
                   <h3 className="text-sm font-semibold uppercase tracking-[0.3em] text-yellow-400">
                     Paso 4. Selecciona horario
@@ -701,7 +761,7 @@ export function AppointmentEmbedded({ onClose }: { onClose: () => void }) {
                         className={clsx(
                           "rounded-full border px-4 py-2 text-sm font-semibold uppercase tracking-[0.2em] transition",
                           isSelected
-                            ? "border-yellow-400 bg-yellow-400 text-black shadow-[0_12px_30px_rgba(250,204,21,0.35)]"
+                            ? "border-yellow-400 bg-yellow-400 text-black "
                             : "border-yellow-500/60 bg-yellow-500/10 text-yellow-200 hover:bg-yellow-400/20"
                         )}
                       >
@@ -712,7 +772,7 @@ export function AppointmentEmbedded({ onClose }: { onClose: () => void }) {
                 </div>
               </section>
             </div>
-            <section className="rounded-lg border border-yellow-500/30 bg-yellow-500/5 p-4 text-xs text-neutral-200">
+            {/* <section className="rounded-lg border border-yellow-500/30 bg-yellow-500/5 p-4 text-xs text-neutral-200">
               <p className="font-semibold uppercase tracking-[0.25em] text-yellow-300">
                 Requisitos
               </p>
@@ -724,7 +784,7 @@ export function AppointmentEmbedded({ onClose }: { onClose: () => void }) {
                   seleccionados.
                 </li>
               </ul>
-            </section>
+            </section> */}
             {submitMessage ? (
               <div
                 className={clsx(
@@ -787,7 +847,7 @@ export function AppointmentEmbedded({ onClose }: { onClose: () => void }) {
                   "rounded-lg px-6 py-3 text-sm font-semibold uppercase tracking-[0.25em] text-black transition focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-yellow-300 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-950",
                   isConfirmDisabled
                     ? "cursor-not-allowed bg-yellow-500/50 text-black/60"
-                    : "bg-yellow-500 shadow-[0_18px_40px_rgba(250,204,21,0.35)] hover:translate-y-[-2px]"
+                    : "bg-yellow-500  hover:translate-y-[-2px]"
                 )}
               >
                 {submitStatus === "loading"
