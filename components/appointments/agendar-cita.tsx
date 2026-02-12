@@ -802,7 +802,7 @@ export function AppointmentEmbedded({ onClose }: { onClose: () => void }) {
           </div>
         ) : null}
 
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-row gap-3  sm:items-center justify-between">
           <button
             type="button"
             onClick={handlePrevStep}
@@ -852,7 +852,7 @@ export function AppointmentEmbedded({ onClose }: { onClose: () => void }) {
               >
                 {submitStatus === "loading"
                   ? "Confirmando..."
-                  : "Confirmar cita"}
+                  : "Checkout"}
               </button>
             )}
           </div>
