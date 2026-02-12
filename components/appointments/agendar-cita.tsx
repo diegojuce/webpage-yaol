@@ -11,7 +11,7 @@ import {
   fetchAvailableTimes,
   saveAndSchedule,
   type Branch,
-  type Service
+  type Service,
 } from "lib/api/appointments";
 import { ProductVariant } from "lib/shopify/types";
 import {
@@ -54,7 +54,10 @@ function extractQuoteId(raw: unknown): string | null {
     return String(direct);
   }
   const quote =
-    data.quote ?? data.data?.quote ?? data.result?.quote ?? data.response?.quote;
+    data.quote ??
+    data.data?.quote ??
+    data.result?.quote ??
+    data.response?.quote;
   const nested = quote?.quote_id ?? quote?.quoteId ?? quote?.id;
   return nested ? String(nested) : null;
 }
@@ -97,9 +100,7 @@ const services: Service[] = [
 function StepProgress({ currentStep }: { currentStep: number }) {
   const totalSteps = APPOINTMENT_STEPS.length;
   const progress =
-    totalSteps > 1
-      ? ((currentStep - 1) / (totalSteps - 1)) * 100
-      : 0;
+    totalSteps > 1 ? ((currentStep - 1) / (totalSteps - 1)) * 100 : 0;
 
   return (
     <div className="mt-6 space-y-4">
@@ -178,7 +179,6 @@ function StepProgress({ currentStep }: { currentStep: number }) {
     </div>
   );
 }
-
 
 const instVarIDs = {
   tec: "gid://shopify/ProductVariant/45765059444935",
@@ -417,13 +417,17 @@ export function AppointmentEmbedded({ onClose }: { onClose: () => void }) {
       const quoteId = extractQuoteId(response);
       if (quoteId || sucursalName) {
         try {
+          console.debug("settingCartAttributes", { quoteId, sucursalName });
           await setCartAttributes({ quoteId, sucursal: sucursalName });
         } catch (error) {
-          console.warn(
-            "[appointments] Failed to sync cart attributes",
-            error
-          );
+          console.warn("[appointments] Failed to sync cart attributes", error);
         }
+      } else {
+        console.warn(
+          "[appointments] Missing quoteId or sucursalName, cannot sync cart attributes",
+          quoteId,
+          sucursalName
+        );
       }
       startTransition(() => {
         setSubmitStatus("success");
@@ -509,15 +513,16 @@ export function AppointmentEmbedded({ onClose }: { onClose: () => void }) {
             ) : null}
             {services.length ? (
               <div className="space-y-3">
-                <Listbox value={selectedServiceId} onChange={setSelectedServiceId}>
+                <Listbox
+                  value={selectedServiceId}
+                  onChange={setSelectedServiceId}
+                >
                   <div className="relative">
                     <Listbox.Button className="flex w-full items-center justify-between gap-3 rounded-sm border border-neutral-700 bg-neutral-900/80 px-4 py-3 text-left text-sm text-white hover:border-yellow-400 focus:outline-none">
                       <span
                         className={clsx(
                           "truncate",
-                          selectedService
-                            ? "text-white"
-                            : "text-neutral-400"
+                          selectedService ? "text-white" : "text-neutral-400"
                         )}
                       >
                         {selectedService
@@ -574,9 +579,7 @@ export function AppointmentEmbedded({ onClose }: { onClose: () => void }) {
                     <span
                       className={clsx(
                         "truncate",
-                        selectedBranch
-                          ? "text-white"
-                          : "text-neutral-400"
+                        selectedBranch ? "text-white" : "text-neutral-400"
                       )}
                     >
                       {selectedBranch
@@ -593,9 +596,7 @@ export function AppointmentEmbedded({ onClose }: { onClose: () => void }) {
                         className={({ active, selected }) =>
                           clsx(
                             "cursor-pointer px-4 py-2 text-sm transition",
-                            active
-                              ? "bg-yellow-400 text-black"
-                              : "text-white",
+                            active ? "bg-yellow-400 text-black" : "text-white",
                             selected && "font-semibold"
                           )
                         }
@@ -671,7 +672,9 @@ export function AppointmentEmbedded({ onClose }: { onClose: () => void }) {
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
-                      onClick={() => setCurrentMonth(addMonths(currentMonth, -1))}
+                      onClick={() =>
+                        setCurrentMonth(addMonths(currentMonth, -1))
+                      }
                       className="rounded-full border border-neutral-700 p-1 text-neutral-300 transition hover:border-yellow-400 hover:text-yellow-400 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-yellow-300 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-900"
                       aria-label="Mes anterior"
                     >
@@ -679,7 +682,9 @@ export function AppointmentEmbedded({ onClose }: { onClose: () => void }) {
                     </button>
                     <button
                       type="button"
-                      onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
+                      onClick={() =>
+                        setCurrentMonth(addMonths(currentMonth, 1))
+                      }
                       className="rounded-full border border-neutral-700 p-1 text-neutral-300 transition hover:border-yellow-400 hover:text-yellow-400 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-yellow-300 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-900"
                       aria-label="Mes siguiente"
                     >
@@ -701,7 +706,8 @@ export function AppointmentEmbedded({ onClose }: { onClose: () => void }) {
                       return <span key={day.key} className="h-10" />;
                     }
                     const isPast = day.iso < todayISO;
-                    const isDisabled = !selectedBranchId || isPast || datesLoading;
+                    const isDisabled =
+                      !selectedBranchId || isPast || datesLoading;
                     const isSelected = selectedDate === day.iso;
                     return (
                       <button

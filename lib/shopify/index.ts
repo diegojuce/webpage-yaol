@@ -334,9 +334,7 @@ const reshapeProducts = (products: ShopifyProduct[]) => {
   return reshapedProducts;
 };
 
-export async function createCart(
-  attributes?: CartAttribute[]
-): Promise<Cart> {
+export async function createCart(attributes?: CartAttribute[]): Promise<Cart> {
   const { cart } = await createCartWithLines([], attributes);
   return cart;
 }
@@ -425,6 +423,7 @@ export async function updateCartAttributes(
   if (!cartId) {
     throw new Error("Missing cartId for cart attribute update");
   }
+  console.debug("[lib][updateCartAttributes] Using cartId:", cartId);
 
   const res = await shopifyFetch<ShopifyCartAttributesUpdateOperation>({
     query: updateCartAttributesMutation,
@@ -454,6 +453,7 @@ export async function getCart(): Promise<Cart | undefined> {
     return undefined;
   }
 
+  console.debug("reshapeCart", reshapeCart(res.body.data.cart));
   return reshapeCart(res.body.data.cart);
 }
 

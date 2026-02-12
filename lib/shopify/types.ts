@@ -104,6 +104,7 @@ export type SEO = {
 export type ShopifyCart = {
   id: string | undefined;
   checkoutUrl: string;
+  attributes?: CartAttribute[];
   cost: {
     subtotalAmount: Money;
     totalAmount: Money;
