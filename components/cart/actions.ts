@@ -34,18 +34,35 @@ export async function setCartAttributes(payload: {
     ...(sucursal ? [{ key: "sucursal", value: sucursal }] : []),
   ];
 
+  console.debug("[actions][setCartAttributes] Setting attributes:", attributes);
   if (!attributes.length) {
+    console.warn(
+      "[actions][setCartAttributes] No valid attributes to set, skipping."
+    );
     return;
   }
 
   let cartId = (await cookies()).get("cartId")?.value;
 
   if (!isValidCartId(cartId)) {
+    console.debug(
+      "[actions][setCartAttributes] Missing/invalid cartId cookie (",
+      cartId,
+      "). Creating cart with attributes..."
+    );
     const newCart = await createCart(attributes);
     cartId = newCart.id!;
     (await cookies()).set("cartId", cartId);
   } else {
-    await updateCartAttributes(attributes, cartId);
+    console.debug(
+      "[actions][setCartAttributes] Updating cart attributes for cartId:",
+      cartId
+    );
+    const res = await updateCartAttributes(attributes, cartId);
+    console.debug(
+      "[actions][setCartAttributes] updateCartAttributes response:",
+      res
+    );
   }
 
   revalidateTag(TAGS.cart, { expire: 0 });
@@ -74,7 +91,11 @@ export async function addItem(
     let cart: import("lib/shopify/types").Cart | undefined;
 
     if (!isValidCartId(cartId)) {
-      console.debug("[actions][addItem] Missing/invalid cartId cookie (", cartId, "). Creating cart...");
+      console.debug(
+        "[actions][addItem] Missing/invalid cartId cookie (",
+        cartId,
+        "). Creating cart..."
+      );
       const newCart = await createCart();
       cartId = newCart.id!; // Keep full id with ?key
       (await cookies()).set("cartId", cartId);
@@ -204,9 +225,7 @@ export async function updateItemQuantity(
         : undefined;
 
     let quantity =
-      updateType === "plus"
-        ? lineItem.quantity + 1
-        : lineItem.quantity - 1;
+      updateType === "plus" ? lineItem.quantity + 1 : lineItem.quantity - 1;
 
     if (updateType === "plus" && typeof maxAvailable === "number") {
       if (maxAvailable <= 0) {
