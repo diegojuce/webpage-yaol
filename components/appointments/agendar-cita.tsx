@@ -19,9 +19,10 @@ import {
   useActionState,
   useEffect,
   useMemo,
+  useRef,
   useState
 } from "react";
-import { addItem, setCartAttributes } from "../cart/actions";
+import { addItem, redirectToCheckout, setCartAttributes } from "../cart/actions";
 import { useCart } from "../cart/cart-context";
 
 type CalendarDay = {
@@ -224,6 +225,7 @@ export function AppointmentEmbedded({ onClose }: { onClose: () => void }) {
     startOfMonth(new Date())
   );
   const [currentStep, setCurrentStep] = useState(1);
+  const checkoutFormRef = useRef<HTMLFormElement>(null);
   const todayISO = useMemo(() => formatISODate(new Date()), []);
   const availableDateSet = useMemo(
     () => new Set(availableDates),
@@ -430,6 +432,8 @@ export function AppointmentEmbedded({ onClose }: { onClose: () => void }) {
         // addCartItem(finalVariant, product, quantity);
         // formAction(addItemPayload);
       });
+      // Redirect to checkout after successful confirmation
+      checkoutFormRef.current?.requestSubmit();
     } catch (error) {
       setSubmitStatus("error");
       setSubmitMessage(
@@ -479,6 +483,14 @@ export function AppointmentEmbedded({ onClose }: { onClose: () => void }) {
       <StepProgress currentStep={currentStep} />
 
       <div className="mt-8 space-y-6">
+        <form
+          ref={checkoutFormRef}
+          action={redirectToCheckout}
+          className="hidden"
+          aria-hidden="true"
+        >
+          <button type="submit" tabIndex={-1} aria-hidden="true" />
+        </form>
         {currentStep === 1 ? (
           <section className="rounded-2xl border border-neutral-800/80 bg-neutral-900/70 p-5">
             <header className="mb-3">
@@ -744,31 +756,54 @@ export function AppointmentEmbedded({ onClose }: { onClose: () => void }) {
                     combinación.
                   </p>
                 ) : null}
-                <div className="mt-4 flex flex-wrap gap-2">
-                  {availableTimes.map((time) => {
-                    const isSelected = selectedTime === time;
-                    if (timesLoading) {
-                      return null;
-                    }
-                    return (
-                      <button
-                        key={time}
-                        type="button"
-                        onClick={() => {
-                          setSelectedTime(time);
-                          setSubmitStatus("idle");
-                        }}
+                <div className="mt-4">
+                  <Listbox
+                    value={selectedTime}
+                    onChange={(value) => {
+                      setSelectedTime(value);
+                      setSubmitStatus("idle");
+                    }}
+                    disabled={timesLoading || !availableTimes.length}
+                  >
+                    <div className="relative">
+                      <Listbox.Button
                         className={clsx(
-                          "rounded-full border px-4 py-2 text-sm font-semibold uppercase tracking-[0.2em] transition",
-                          isSelected
-                            ? "border-yellow-400 bg-yellow-400 text-black "
-                            : "border-yellow-500/60 bg-yellow-500/10 text-yellow-200 hover:bg-yellow-400/20"
+                          "flex w-full items-center justify-between gap-3 rounded-sm border border-neutral-700 bg-neutral-900/80 px-4 py-3 text-left text-sm text-white focus:outline-none",
+                          timesLoading || !availableTimes.length
+                            ? "cursor-not-allowed opacity-60"
+                            : "hover:border-yellow-400"
                         )}
                       >
-                        {formatTimeLabel(time)}
-                      </button>
-                    );
-                  })}
+                        <span
+                          className={clsx(
+                            "truncate",
+                            selectedTime ? "text-white" : "text-neutral-400"
+                          )}
+                        >
+                          {selectedTime
+                            ? formatTimeLabel(selectedTime)
+                            : "Selecciona un horario"}
+                        </span>
+                        <ChevronUpDownIcon className="h-4 w-4 text-neutral-400" />
+                      </Listbox.Button>
+                      <Listbox.Options className="absolute left-0 top-full z-30 max-h-64 w-full overflow-auto rounded-b-sm rounded-t-none border border-neutral-700 border-t-0 bg-neutral-900/95 shadow-[0_18px_40px_rgba(0,0,0,0.45)]">
+                        {availableTimes.map((time) => (
+                          <Listbox.Option
+                            key={time}
+                            value={time}
+                            className={({ active }) =>
+                              clsx(
+                                "cursor-pointer px-4 py-2 text-sm text-white",
+                                active ? "bg-yellow-500/20 text-yellow-200" : ""
+                              )
+                            }
+                          >
+                            {formatTimeLabel(time)}
+                          </Listbox.Option>
+                        ))}
+                      </Listbox.Options>
+                    </div>
+                  </Listbox>
                 </div>
               </section>
             </div>
