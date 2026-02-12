@@ -217,11 +217,11 @@ export async function updateItemQuantity(
     }
 
     if (quantity <= 0) {
-      await removeFromCart([lineItem.id]);
+      await removeFromCart([lineItem.id!]);
     } else {
       await updateCart([
         {
-          id: lineItem.id,
+          id: lineItem.id!,
           merchandiseId: lineItem.merchandise.id,
           quantity,
         },
