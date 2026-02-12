@@ -100,45 +100,77 @@ function StepProgress({ currentStep }: { currentStep: number }) {
 
   return (
     <div className="mt-6 space-y-4">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        {APPOINTMENT_STEPS.map((step) => {
-          const isActive = step.id === currentStep;
-          const isDone = step.id < currentStep;
-          return (
-            <div key={step.id} className="flex items-center gap-2">
-              <span
-                className={clsx(
-                  "flex h-7 w-7 items-center justify-center rounded-full border text-xs font-semibold transition",
-                  isDone
-                    ? "border-yellow-400 bg-yellow-400 text-black"
-                    : isActive
-                      ? "border-yellow-400 text-yellow-300"
-                      : "border-neutral-700 text-neutral-500"
-                )}
-              >
-                {step.id}
-              </span>
-              <span
-                className={clsx(
-                  "text-[10px] font-semibold uppercase tracking-[0.28em] transition",
-                  isActive
-                    ? "text-white"
-                    : isDone
-                      ? "text-yellow-300"
-                      : "text-neutral-500"
-                )}
-              >
-                {step.title}
-              </span>
-            </div>
-          );
-        })}
+      <div className="md:hidden">
+        <div className="relative h-8">
+          <div className="absolute left-0 top-1/2 h-2 w-full -translate-y-1/2 rounded-full bg-neutral-800" />
+          <div
+            className="absolute left-0 top-1/2 h-2 -translate-y-1/2 rounded-full bg-yellow-400 transition-all duration-300"
+            style={{ width: `${progress}%` }}
+          />
+          <div className="relative z-10 flex h-8 items-center justify-between">
+            {APPOINTMENT_STEPS.map((step) => {
+              const isActive = step.id === currentStep;
+              const isDone = step.id < currentStep;
+              return (
+                <span
+                  key={step.id}
+                  className={clsx(
+                    "flex h-7 w-7 items-center justify-center rounded-full border text-xs font-semibold transition",
+                    isDone
+                      ? "border-yellow-400 bg-yellow-400 text-black"
+                      : isActive
+                        ? "border-yellow-400 bg-neutral-900 text-yellow-300"
+                        : "border-neutral-700 bg-neutral-900 text-neutral-500"
+                  )}
+                >
+                  {step.id}
+                </span>
+              );
+            })}
+          </div>
+        </div>
       </div>
-      <div className="relative h-2 w-full rounded-full bg-neutral-800">
-        <div
-          className="absolute left-0 top-0 h-full rounded-full bg-yellow-400 transition-all duration-300"
-          style={{ width: `${progress}%` }}
-        />
+      <div className="hidden md:block">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          {APPOINTMENT_STEPS.map((step) => {
+            const isActive = step.id === currentStep;
+            const isDone = step.id < currentStep;
+            return (
+              <div key={step.id} className="flex items-center gap-2">
+                <span
+                  className={clsx(
+                    "flex h-7 w-7 items-center justify-center rounded-full border text-xs font-semibold transition",
+                    isDone
+                      ? "border-yellow-400 bg-yellow-400 text-black"
+                      : isActive
+                        ? "border-yellow-400 text-yellow-300"
+                        : "border-neutral-700 text-neutral-500"
+                  )}
+                >
+                  {step.id}
+                </span>
+                <span
+                  className={clsx(
+                    "text-[10px] font-semibold uppercase tracking-[0.28em] transition",
+                    isActive
+                      ? "text-white"
+                      : isDone
+                        ? "text-yellow-300"
+                        : "text-neutral-500"
+                  )}
+                >
+                  {step.title}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+        <div className="relative mt-3 h-2 w-full rounded-full bg-neutral-800">
+          <div
+            className="absolute left-0 top-0 h-full rounded-full bg-yellow-400 transition-all duration-300"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
       </div>
     </div>
   );
@@ -460,7 +492,7 @@ export function AppointmentEmbedded({ onClose }: { onClose: () => void }) {
                 <select
                   value={selectedServiceId}
                   onChange={(event) => setSelectedServiceId(event.target.value)}
-                  className="w-full rounded-sm border border-neutral-700 bg-neutral-900/80 px-4 py-3 text-sm text-white focus:border-yellow-400 focus:outline-none"
+                  className="w-full rounded-sm border border-neutral-700 bg-neutral-900/80 px-4 py-3 text-sm text-white hover:border-yellow-400 focus:outline-none"
                 >
                   <option value="">Selecciona un servicio</option>
                   {services.map((service) => (
@@ -493,7 +525,7 @@ export function AppointmentEmbedded({ onClose }: { onClose: () => void }) {
               <select
                 value={selectedBranchId}
                 onChange={(event) => handleBranchChange(event.target.value)}
-                className="w-full rounded-sm border border-neutral-700 bg-neutral-900/80 px-4 py-3 text-sm text-white shadow-[0_10px_30px_rgba(0,0,0,0.35)] focus:border-yellow-400 focus:outline-none"
+                className="w-full rounded-sm border border-neutral-700 bg-neutral-900/80 px-4 py-3 text-sm text-white shadow-[0_10px_30px_rgba(0,0,0,0.35)] hover:border-yellow-400 focus:outline-none"
               >
                 <option value="">Selecciona una sucursal</option>
                 {sucursales.map((branch) => (
@@ -531,21 +563,21 @@ export function AppointmentEmbedded({ onClose }: { onClose: () => void }) {
                 placeholder="Nombre completo"
                 value={clientName}
                 onChange={(e) => setClientName(e.target.value)}
-                className="w-full rounded-sm border border-neutral-700 bg-neutral-900/80 px-4 py-3 text-sm text-white shadow-[0_10px_30px_rgba(0,0,0,0.35)] focus:border-yellow-400 focus:outline-none"
+                className="w-full rounded-sm border border-neutral-700 bg-neutral-900/80 px-4 py-3 text-sm text-white shadow-[0_10px_30px_rgba(0,0,0,0.35)] hover:border-yellow-400 focus:outline-none"
               />
               <input
                 type="tel"
                 placeholder="Teléfono"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                className="w-full rounded-sm border border-neutral-700 bg-neutral-900/80 px-4 py-3 text-sm text-white shadow-[0_10px_30px_rgba(0,0,0,0.35)] focus:border-yellow-400 focus:outline-none"
+                className="w-full rounded-sm border border-neutral-700 bg-neutral-900/80 px-4 py-3 text-sm text-white shadow-[0_10px_30px_rgba(0,0,0,0.35)] hover:border-yellow-400 focus:outline-none"
               />
               <textarea
                 placeholder="Notas adicionales (opcional)"
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 rows={3}
-                className="w-full rounded-sm border border-neutral-700 bg-neutral-900/80 px-4 py-3 text-sm text-white shadow-[0_10px_30px_rgba(0,0,0,0.35)] focus:border-yellow-400 focus:outline-none"
+                className="w-full rounded-sm border border-neutral-700 bg-neutral-900/80 px-4 py-3 text-sm text-white shadow-[0_10px_30px_rgba(0,0,0,0.35)] hover:border-yellow-400 focus:outline-none"
               />
             </div>
           </section>
@@ -725,13 +757,13 @@ export function AppointmentEmbedded({ onClose }: { onClose: () => void }) {
             Regresar
           </button>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-            <button
+            {/* <button
               type="button"
               onClick={onClose}
               className="rounded-sm border border-neutral-700 px-6 py-3 text-sm font-semibold uppercase tracking-[0.25em] text-neutral-300 transition hover:border-neutral-500 hover:text-white focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-yellow-300 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-950"
             >
               Salir
-            </button>
+            </button> */}
             {currentStep < APPOINTMENT_STEPS.length ? (
               <button
                 type="button"
