@@ -188,6 +188,9 @@ export async function updateItemQuantity(
     if (!lineItem) {
       return "Producto no encontrado en el carrito";
     }
+    if (!lineItem.id) {
+      return "Producto no encontrado en el carrito";
+    }
 
     const productAny = (lineItem.merchandise?.product ?? {}) as any;
     const edges = productAny?.variants?.edges ?? [];
