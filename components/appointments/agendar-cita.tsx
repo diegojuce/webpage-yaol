@@ -20,9 +20,13 @@ import {
   useEffect,
   useMemo,
   useRef,
-  useState
+  useState,
 } from "react";
-import { addItem, redirectToCheckout, setCartAttributes } from "../cart/actions";
+import {
+  addItem,
+  redirectToCheckout,
+  setCartAttributes,
+} from "../cart/actions";
 import { useCart } from "../cart/cart-context";
 
 type CalendarDay = {
@@ -105,7 +109,7 @@ const BRANCH_MAPS: Record<string, { src: string; label: string }> = {
 
 const PLACEHOLDER_MAP = {
   label: "Yantissimo",
-  src: "https://www.google.com/maps/embed?pb=!1m16!1m12!1m3!1d62618.927164553796!2d-103.7531199509675!3d19.258346475459792!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!2m1!1syantissimo%20!5e1!3m2!1ses-419!2smx!4v1770940942301!5m2!1ses-419!2smx"
+  src: "https://www.google.com/maps/embed?pb=!1m16!1m12!1m3!1d62618.927164553796!2d-103.7531199509675!3d19.258346475459792!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!2m1!1syantissimo%20!5e1!3m2!1ses-419!2smx!4v1770940942301!5m2!1ses-419!2smx",
 };
 
 const services: Service[] = [
@@ -232,7 +236,11 @@ const instProdIDs = {
   tap: "gid://shopify/Product/8548553097415",
 };
 
-export function AppointmentEmbedded({ onClose }: { onClose: () => void }) {
+export function AppointmentEmbedded({
+  onCloseAction,
+}: {
+  onCloseAction: () => void;
+}) {
   // replicate the same local state as in AppointmentModal:
   const [branchesLoading, setBranchesLoading] = useState(false);
   const [branchesError, setBranchesError] = useState<string | null>(null);
@@ -513,7 +521,7 @@ export function AppointmentEmbedded({ onClose }: { onClose: () => void }) {
         </div>
         <button
           type="button"
-          onClick={onClose}
+          onClick={onCloseAction}
           className="rounded-full border border-white/20 p-1 md:p-2 text-white transition hover:border-yellow-400 hover:text-yellow-400 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-yellow-300 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-950"
           aria-label="Cerrar modal"
         >
@@ -943,9 +951,7 @@ export function AppointmentEmbedded({ onClose }: { onClose: () => void }) {
                     : "bg-yellow-500  hover:translate-y-[-2px]"
                 )}
               >
-                {submitStatus === "loading"
-                  ? "Confirmando..."
-                  : "Checkout"}
+                {submitStatus === "loading" ? "Confirmando..." : "Checkout"}
               </button>
             )}
           </div>
