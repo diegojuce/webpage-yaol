@@ -16,6 +16,21 @@ import { redirect } from "next/navigation";
 const isValidCartId = (id?: string) =>
   !!id && id.startsWith("gid://shopify/Cart/") && id.includes("?key=");
 
+export async function setCartIdFromParam(rawCartId?: string | null) {
+  const cartId =
+    rawCartId !== undefined && rawCartId !== null
+      ? String(rawCartId).trim()
+      : "";
+
+  if (!isValidCartId(cartId)) {
+    return { ok: false as const, error: "invalid_cart_id" as const };
+  }
+
+  (await cookies()).set("cartId", cartId);
+  revalidateTag(TAGS.cart, { expire: 0 });
+  return { ok: true as const };
+}
+
 export async function setCartAttributes(payload: {
   quoteId?: string | number | null;
   sucursal?: string | null;

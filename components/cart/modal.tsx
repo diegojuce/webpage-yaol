@@ -13,7 +13,7 @@ import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Fragment, useEffect, useId, useRef, useState, useActionState } from "react";
 import { useFormStatus } from "react-dom";
-import { createCartAndSetCookie, redirectToCheckout, updateItemVariant } from "./actions";
+import { createCartAndSetCookie, redirectToCheckout, setCartIdFromParam, updateItemVariant } from "./actions";
 import { useCart } from "./cart-context";
 import { DeleteItemButton } from "./delete-item-button";
 import { EditItemQuantityButton } from "./edit-item-quantity-button";
@@ -166,6 +166,41 @@ export default function CartModal({isWhite=false}) {
       setIsOpen(false);
     }
   }, [isActive, isOpen]);
+
+  useEffect(() => {
+    const cartParam = searchParams.get("cart");
+    if (!cartParam) {
+      return;
+    }
+
+    const nextParams = new URLSearchParams(searchParams.toString());
+    nextParams.delete("cart");
+    const nextQuery = nextParams.toString();
+
+    let isCancelled = false;
+
+    const syncCartFromUrl = async () => {
+      const result = await setCartIdFromParam(cartParam);
+
+      if (isCancelled) {
+        return;
+      }
+
+      router.replace(nextQuery ? `${pathname}?${nextQuery}` : pathname, {
+        scroll: false,
+      });
+
+      if (result.ok) {
+        router.refresh();
+      }
+    };
+
+    void syncCartFromUrl();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [pathname, router, searchParams]);
 
   useEffect(() => {
     const shouldOpenAppointment =
