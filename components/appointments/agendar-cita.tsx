@@ -109,7 +109,7 @@ const BRANCH_MAPS: Record<string, { src: string; label: string }> = {
 
 const PLACEHOLDER_MAP = {
   label: "Yantissimo",
-  src: "https://www.google.com/maps/embed?pb=!1m16!1m12!1m3!1d62618.927164553796!2d-103.7531199509675!3d19.258346475459792!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!2m1!1syantissimo%20!5e1!3m2!1ses-419!2smx!4v1770940942301!5m2!1ses-419!2smx",
+  src: "https://www.google.com/maps/d/embed?mid=1f9LqGz0AaVhc0Iqugrq4o6rXAvf9Rv0&ehbc=2E312F",
 };
 
 const services: Service[] = [

@@ -59,14 +59,14 @@ export default function ServiceModal({
             leaveFrom="translate-x-0"
             leaveTo="translate-x-full"
           >
-            <Dialog.Panel className="fixed bottom-0 right-0 top-0 z-[220] flex h-full w-full flex-col border-l border-neutral-200 bg-white/80 p-6 text-black backdrop-blur-xl md:w-[60vw] dark:border-neutral-700 dark:bg-black/80 dark:text-white">
+            <Dialog.Panel className="fixed bottom-0 right-0 top-0 z-[220] flex h-full w-full flex-col border-l border-neutral-700 bg-black/80 p-6 text-black backdrop-blur-xl md:w-[60vw] dark:border-neutral-700 dark:bg-black/80 dark:text-white">
               <div className="flex items-center justify-between">
                 {/* <p className="text-lg font-semibold">holahola</p> */}
                 {/* <button aria-label="Cerrar" onClick={closeService}>
                   <CloseCart />
                 </button> */}
               </div>
-              <div className="flex h-80 flex-col overflow-y-auto p-1">
+              <div className="flex h-full flex-col overflow-y-auto p-1">
                 <AppointmentEmbedded onCloseAction={closeService} />
               </div>
             </Dialog.Panel>
