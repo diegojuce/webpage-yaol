@@ -3,20 +3,27 @@
 import { Dialog, Transition } from "@headlessui/react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import clsx from "clsx";
-import { Fragment, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { AppointmentEmbedded } from "./agendar-cita";
-
 
 type MerchandiseSearchParams = {
   [key: string]: string;
 };
 
-export default function ServiceModal() {
+export default function ServiceModal({
+  autoOpen = false,
+}: {
+  autoOpen?: boolean;
+}) {
   const [isOpen, setIsOpen] = useState(false);
   const openService = () => setIsOpen(true);
   const closeService = () => setIsOpen(false);
 
-
+  useEffect(() => {
+    if (autoOpen) {
+      setIsOpen(true);
+    }
+  }, [autoOpen]);
 
   return (
     <>
@@ -59,7 +66,7 @@ export default function ServiceModal() {
                   <CloseCart />
                 </button> */}
               </div>
-              <div className="flex h-full flex-col overflow-y-auto p-1">
+              <div className="flex h-80 flex-col overflow-y-auto p-1">
                 <AppointmentEmbedded onClose={closeService} />
               </div>
             </Dialog.Panel>
@@ -76,7 +83,7 @@ function CloseCart({ className }: { className?: string }) {
       <XMarkIcon
         className={clsx(
           "h-6 transition-all ease-in-out hover:scale-110",
-          className,
+          className
         )}
       />
     </div>

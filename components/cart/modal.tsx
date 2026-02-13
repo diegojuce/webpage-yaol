@@ -10,6 +10,7 @@ import { DEFAULT_OPTION } from "lib/constants";
 import { createUrl } from "lib/utils";
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Fragment, useEffect, useId, useRef, useState, useActionState } from "react";
 import { useFormStatus } from "react-dom";
 import { createCartAndSetCookie, redirectToCheckout, updateItemVariant } from "./actions";
@@ -97,7 +98,11 @@ type MerchandiseSearchParams = {
 
 export default function CartModal({isWhite=false}) {
   const { cart, updateCartItem, updateCartItemVariant } = useCart();
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [isOpen, setIsOpen] = useState(false);
+  const [autoOpenService, setAutoOpenService] = useState(false);
   const quantityRef = useRef(cart?.totalQuantity);
   const [shippingType, setShippingType] = useState<string>("store");
   const modalId = useId();
@@ -161,6 +166,29 @@ export default function CartModal({isWhite=false}) {
       setIsOpen(false);
     }
   }, [isActive, isOpen]);
+
+  useEffect(() => {
+    const shouldOpenAppointment =
+      searchParams.get("agendar") === "1" ||
+      searchParams.get("agendar") === "true";
+
+    if (!shouldOpenAppointment) {
+      return;
+    }
+
+    if (!isActive) {
+      setActiveCartModalId(modalId);
+    }
+    setIsOpen(true);
+    setAutoOpenService(true);
+
+    const nextParams = new URLSearchParams(searchParams.toString());
+    nextParams.delete("agendar");
+    const nextQuery = nextParams.toString();
+    router.replace(nextQuery ? `${pathname}?${nextQuery}` : pathname, {
+      scroll: false,
+    });
+  }, [isActive, modalId, pathname, router, searchParams]);
 
   return (
     <>
@@ -348,7 +376,7 @@ export default function CartModal({isWhite=false}) {
                     <form action={redirectToCheckout}>
                       <CheckoutButton />
                     </form>
-                    <ServiceModal></ServiceModal>
+                    <ServiceModal autoOpen={autoOpenService}></ServiceModal>
                   </div>
       
                 </div>
