@@ -7,12 +7,14 @@ import {
   XMarkIcon,
 } from "@heroicons/react/24/outline";
 import clsx from "clsx";
+import Price from "components/price";
 import {
   fetchAvailableTimes,
   saveAndSchedule,
   type Branch,
   type Service,
 } from "lib/api/appointments";
+import { DEFAULT_OPTION } from "lib/constants";
 import { ProductVariant } from "lib/shopify/types";
 import {
   startTransition,
@@ -38,7 +40,7 @@ type CalendarDay = {
 type SubmitStatus = "idle" | "loading" | "success" | "error";
 
 const WEEK_DAYS = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"] as const;
-const CALENDAR_SLOTS = 42; // 6 semanas visibles
+const CALENDAR_SLOTS = 35; // mínimo 5 semanas visibles
 const ARRAY_KEYS = ["data", "dates", "fechas", "items", "horarios"] as const;
 const TIME_ZONE_CDMX = "America/Mexico_City";
 const APPOINTMENT_STEPS = [
@@ -287,6 +289,11 @@ export function AppointmentEmbedded({
   );
   // const { addCartItem } = useCart();
   const { cart } = useCart();
+  const cartLines = cart?.lines ?? [];
+  const cartSubtotal = cart?.cost?.subtotalAmount;
+  const cartTotal = cart?.cost?.totalAmount;
+  const cartCurrency =
+    cartTotal?.currencyCode ?? cartSubtotal?.currencyCode ?? "USD";
   const [, formAction] = useActionState(addItem, null);
 
   // same useEffects for resetting (omit the isOpen guard), fetching availableTimes, etc.
@@ -798,79 +805,161 @@ export function AppointmentEmbedded({
                 {datesError ? (
                   <p className="mt-3 text-xs text-red-400">{datesError}</p>
                 ) : null}
+                <div className="mt-3 border-t border-neutral-800/80 pt-3">
+                  <header className="mb-3">
+                    <h3 className="text-sm font-semibold uppercase tracking-[0.3em] text-yellow-400">
+                      Selecciona una hora disponible
+                    </h3>
+                    <p className="text-xs text-neutral-400">
+                      Solo verás horarios disponibles para la fecha elegida.
+                    </p>
+                  </header>
+                  {timesLoading ? (
+                    <p className="text-xs text-neutral-400">
+                      Cargando horarios disponibles...
+                    </p>
+                  ) : null}
+                  {timesError ? (
+                    <p className="text-xs text-red-400">{timesError}</p>
+                  ) : null}
+                  {!timesLoading && !availableTimes.length && selectedDate ? (
+                    <p className="text-xs text-neutral-400">
+                      No hay horarios disponibles para esta fecha. Prueba con
+                      otra combinación.
+                    </p>
+                  ) : null}
+                  <div className="mt-4">
+                    <Listbox
+                      value={selectedTime}
+                      onChange={(value) => {
+                        setSelectedTime(value);
+                        setSubmitStatus("idle");
+                      }}
+                      disabled={timesLoading || !availableTimes.length}
+                    >
+                      <div className="relative">
+                        <Listbox.Button
+                          className={clsx(
+                            "flex w-full items-center justify-between gap-3 rounded-sm border border-neutral-700 bg-neutral-900/80 px-4 py-3 text-left text-sm text-white focus:outline-none",
+                            timesLoading || !availableTimes.length
+                              ? "cursor-not-allowed opacity-60"
+                              : "hover:border-yellow-400"
+                          )}
+                        >
+                          <span
+                            className={clsx(
+                              "truncate",
+                              selectedTime ? "text-white" : "text-neutral-400"
+                            )}
+                          >
+                            {selectedTime
+                              ? formatTimeLabel(selectedTime)
+                              : "Selecciona un horario"}
+                          </span>
+                          <ChevronUpDownIcon className="h-4 w-4 text-neutral-400" />
+                        </Listbox.Button>
+                        <Listbox.Options className="absolute left-0 top-full z-30 max-h-64 w-full overflow-auto rounded-b-sm rounded-t-none border border-neutral-700 border-t-0 bg-neutral-900/95 shadow-[0_18px_40px_rgba(0,0,0,0.45)] lg:bottom-full lg:top-auto lg:mb-2 lg:rounded-t-sm lg:rounded-b-none lg:border-t lg:border-b-0">
+                          {availableTimes.map((time) => (
+                            <Listbox.Option
+                              key={time}
+                              value={time}
+                              className={({ active }) =>
+                                clsx(
+                                  "cursor-pointer px-4 py-2 text-sm text-white",
+                                  active
+                                    ? "bg-yellow-500/20 text-yellow-200"
+                                    : ""
+                                )
+                              }
+                            >
+                              {formatTimeLabel(time)}
+                            </Listbox.Option>
+                          ))}
+                        </Listbox.Options>
+                      </div>
+                    </Listbox>
+                  </div>
+                </div>
               </section>
               <section className="rounded-xl border border-neutral-800/80 bg-neutral-900/70 p-5">
                 <header className="mb-3">
                   <h3 className="text-sm font-semibold uppercase tracking-[0.3em] text-yellow-400">
-                    Paso 4. Selecciona horario
+                    Resumen del carrito
                   </h3>
                   <p className="text-xs text-neutral-400">
-                    Solo verás horarios disponibles para la fecha elegida.
+                    Revisa los productos y el total antes de confirmar.
                   </p>
                 </header>
-                {timesLoading ? (
-                  <p className="text-xs text-neutral-400">
-                    Cargando horarios disponibles...
-                  </p>
-                ) : null}
-                {timesError ? (
-                  <p className="text-xs text-red-400">{timesError}</p>
-                ) : null}
-                {!timesLoading && !availableTimes.length && selectedDate ? (
-                  <p className="text-xs text-neutral-400">
-                    No hay horarios disponibles para esta fecha. Prueba con otra
-                    combinación.
-                  </p>
-                ) : null}
-                <div className="mt-4">
-                  <Listbox
-                    value={selectedTime}
-                    onChange={(value) => {
-                      setSelectedTime(value);
-                      setSubmitStatus("idle");
-                    }}
-                    disabled={timesLoading || !availableTimes.length}
-                  >
-                    <div className="relative">
-                      <Listbox.Button
-                        className={clsx(
-                          "flex w-full items-center justify-between gap-3 rounded-sm border border-neutral-700 bg-neutral-900/80 px-4 py-3 text-left text-sm text-white focus:outline-none",
-                          timesLoading || !availableTimes.length
-                            ? "cursor-not-allowed opacity-60"
-                            : "hover:border-yellow-400"
-                        )}
-                      >
-                        <span
-                          className={clsx(
-                            "truncate",
-                            selectedTime ? "text-white" : "text-neutral-400"
-                          )}
-                        >
-                          {selectedTime
-                            ? formatTimeLabel(selectedTime)
-                            : "Selecciona un horario"}
-                        </span>
-                        <ChevronUpDownIcon className="h-4 w-4 text-neutral-400" />
-                      </Listbox.Button>
-                      <Listbox.Options className="absolute left-0 top-full z-30 max-h-64 w-full overflow-auto rounded-b-sm rounded-t-none border border-neutral-700 border-t-0 bg-neutral-900/95 shadow-[0_18px_40px_rgba(0,0,0,0.45)]">
-                        {availableTimes.map((time) => (
-                          <Listbox.Option
-                            key={time}
-                            value={time}
-                            className={({ active }) =>
-                              clsx(
-                                "cursor-pointer px-4 py-2 text-sm text-white",
-                                active ? "bg-yellow-500/20 text-yellow-200" : ""
-                              )
-                            }
+                {cartLines.length ? (
+                  <div className="space-y-4">
+                    <div className="space-y-3">
+                      {cartLines.map((line) => {
+                        const title =
+                          line.merchandise?.product?.title ??
+                          line.merchandise?.title ??
+                          "Producto";
+                        const variantTitle = line.merchandise?.title;
+                        const showVariant =
+                          variantTitle && variantTitle !== DEFAULT_OPTION;
+                        return (
+                          <div
+                            key={line.id ?? `${title}-${variantTitle ?? ""}`}
+                            className="flex items-start justify-between gap-4 border-b border-neutral-800/70 pb-3 last:border-b-0 last:pb-0"
                           >
-                            {formatTimeLabel(time)}
-                          </Listbox.Option>
-                        ))}
-                      </Listbox.Options>
+                            <div>
+                              <p className="text-sm font-semibold text-white">
+                                {title}
+                              </p>
+                              {showVariant ? (
+                                <p className="text-xs text-neutral-400">
+                                  {variantTitle}
+                                </p>
+                              ) : null}
+                              <p className="text-xs text-neutral-500">
+                                Cantidad: {line.quantity}
+                              </p>
+                            </div>
+                            <Price
+                              amount={line.cost.totalAmount.amount}
+                              currencyCode={line.cost.totalAmount.currencyCode}
+                              className="text-sm font-semibold text-white"
+                              currencyCodeClassName="text-neutral-500"
+                            />
+                          </div>
+                        );
+                      })}
                     </div>
-                  </Listbox>
-                </div>
+                    {cartSubtotal ? (
+                      <div className="space-y-2 border-t border-neutral-800/70 pt-3">
+                        <div className="flex items-center justify-between text-xs text-neutral-400">
+                          <span>Subtotal</span>
+                          <Price
+                            amount={cartSubtotal.amount}
+                            currencyCode={cartSubtotal.currencyCode}
+                            className="text-sm text-white"
+                            currencyCodeClassName="text-neutral-500"
+                          />
+                        </div>
+                        {cartTotal ? (
+                          <div className="flex items-center justify-between text-xs text-neutral-400">
+                            <span>Total</span>
+                            <Price
+                              amount={cartTotal.amount}
+                              currencyCode={cartCurrency}
+                              className="text-sm font-semibold text-yellow-300"
+                              currencyCodeClassName="text-neutral-500"
+                            />
+                          </div>
+                        ) : null}
+                      </div>
+                    ) : null}
+                  </div>
+                ) : (
+                  <p className="text-xs text-neutral-400">
+                    Tu carrito está vacío. Agrega productos para ver el
+                    resumen.
+                  </p>
+                )}
               </section>
             </div>
             {/* <section className="rounded-lg border border-yellow-500/30 bg-yellow-500/5 p-4 text-xs text-neutral-200">
@@ -909,7 +998,7 @@ export function AppointmentEmbedded({
             onClick={handlePrevStep}
             disabled={currentStep === 1}
             className={clsx(
-              "rounded-sm border px-6 py-3 text-sm font-semibold uppercase tracking-[0.25em] transition focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-yellow-300 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-950",
+              "rounded-lg border px-6 py-3 text-sm font-semibold uppercase tracking-[0.25em] transition focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-yellow-300 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-950",
               currentStep === 1
                 ? "cursor-not-allowed border-neutral-800 text-neutral-600"
                 : "border-neutral-700 text-neutral-300 hover:border-neutral-500 hover:text-white"
@@ -967,7 +1056,9 @@ function buildCalendarDays(currentMonth: Date): CalendarDay[] {
   const firstDayOfMonth = new Date(year, month, 1);
   const leadingSlots = firstDayOfMonth.getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const totalSlots = Math.max(CALENDAR_SLOTS, leadingSlots + daysInMonth);
+  const totalSlots = Math.ceil(
+    Math.max(CALENDAR_SLOTS, leadingSlots + daysInMonth) / 7
+  ) * 7;
   const days: CalendarDay[] = [];
 
   for (let slot = 0; slot < totalSlots; slot += 1) {
