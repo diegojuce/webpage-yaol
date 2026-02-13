@@ -101,8 +101,10 @@ export default function CartModal({isWhite=false}) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const cartButtonRef = useRef<HTMLButtonElement>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [autoOpenService, setAutoOpenService] = useState(false);
+  const [isTriggerVisible, setIsTriggerVisible] = useState(false);
   const quantityRef = useRef(cart?.totalQuantity);
   const [shippingType, setShippingType] = useState<string>("store");
   const modalId = useId();
@@ -121,10 +123,36 @@ export default function CartModal({isWhite=false}) {
   }, [modalId]);
 
   useEffect(() => {
-    if (activeId === null) {
+    const updateTriggerVisibility = () => {
+      const el = cartButtonRef.current;
+      if (!el) {
+        setIsTriggerVisible(false);
+        return;
+      }
+      const styles = window.getComputedStyle(el);
+      const isVisible =
+        styles.display !== "none" &&
+        styles.visibility !== "hidden" &&
+        el.getClientRects().length > 0;
+      setIsTriggerVisible(isVisible);
+    };
+
+    updateTriggerVisibility();
+    window.addEventListener("resize", updateTriggerVisibility);
+    return () => window.removeEventListener("resize", updateTriggerVisibility);
+  }, []);
+
+  useEffect(() => {
+    if (activeId === null && isTriggerVisible) {
       setActiveCartModalId(modalId);
     }
-  }, [activeId, modalId]);
+  }, [activeId, isTriggerVisible, modalId]);
+
+  useEffect(() => {
+    if (isActive && !isTriggerVisible) {
+      setActiveCartModalId(null);
+    }
+  }, [isActive, isTriggerVisible]);
 
   const openCart = () => {
     if (!isActive) {
@@ -168,6 +196,10 @@ export default function CartModal({isWhite=false}) {
   }, [isActive, isOpen]);
 
   useEffect(() => {
+    if (!isTriggerVisible) {
+      return;
+    }
+
     const cartParam = searchParams.get("cart");
     if (!cartParam) {
       return;
@@ -200,9 +232,18 @@ export default function CartModal({isWhite=false}) {
     return () => {
       isCancelled = true;
     };
-  }, [pathname, router, searchParams]);
+  }, [isTriggerVisible, pathname, router, searchParams]);
 
   useEffect(() => {
+    if (!isTriggerVisible) {
+      return;
+    }
+
+    const hasCartParam = !!searchParams.get("cart");
+    if (hasCartParam) {
+      return;
+    }
+
     const shouldOpenAppointment =
       searchParams.get("agendar") === "1" ||
       searchParams.get("agendar") === "true";
@@ -223,11 +264,11 @@ export default function CartModal({isWhite=false}) {
     router.replace(nextQuery ? `${pathname}?${nextQuery}` : pathname, {
       scroll: false,
     });
-  }, [isActive, modalId, pathname, router, searchParams]);
+  }, [isActive, isTriggerVisible, modalId, pathname, router, searchParams]);
 
   return (
     <>
-      <button aria-label="Abrir carrito" onClick={openCart}>
+      <button ref={cartButtonRef} aria-label="Abrir carrito" onClick={openCart}>
         <OpenCart quantity={cart?.totalQuantity} isWhite={isWhite} />
       </button>
       <Transition show={isOpen && isActive}>
