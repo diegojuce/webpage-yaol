@@ -76,6 +76,38 @@ const sucursales: Branch[] = [
   { id: "6", name: "MAN", address: "Boulevard Miguel de la Madrid #11386" },
 ];
 
+const BRANCH_MAPS: Record<string, { src: string; label: string }> = {
+  "1": {
+    label: "NHS - Niños Héroes",
+    src: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3767.049274574588!2d-103.71270472462695!3d19.236684182001287!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x842551d48de622ff%3A0x663797ddcb289406!2sYantissimo!5e0!3m2!1ses-419!2smx!4v1770940122036!5m2!1ses-419!2smx",
+  },
+  "2": {
+    label: "TEC - Tecnológico",
+    src: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3766.2766888777332!2d-103.7345059246261!3d19.270330181974686!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x84254532647d166b%3A0xd5546a56c7b3f697!2sYantissimo!5e0!3m2!1ses-419!2smx!4v1770940862634!5m2!1ses-419!2smx",
+  },
+  "3": {
+    label: "BJZ - Benito Juárez",
+    src: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3766.2766888777332!2d-103.7345059246261!3d19.270330181974686!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x842545eb9d7191ef%3A0x20364deaaf7c8995!2sYant%C3%ADssimo!5e0!3m2!1ses-419!2smx!4v1770940986123!5m2!1ses-419!2smx",
+  },
+  "4": {
+    label: "CON - Constitución",
+    src: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3766.454763248572!2d-103.71450212462628!3d19.262580081980772!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x84255b4f93077ccf%3A0x245a9c14e42d32fc!2sYantissimo!5e0!3m2!1ses-419!2smx!4v1770941019409!5m2!1ses-419!2smx",
+  },
+  "5": {
+    label: "REY - Colinas del Rey",
+    src: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3765.9187694566567!2d-103.74769212462571!3d19.285898381962344!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x8425457aaab153d5%3A0x7cd7337668f276a8!2sYantissimo%20Colinas%20del%20Rey!5e0!3m2!1ses-419!2smx!4v1770941043568!5m2!1ses-419!2smx",
+  },
+  "6": {
+    label: "MAN - Salagua",
+    src: "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3769.8574440975776!2d-104.34822191848261!3d19.113908835940666!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x8424d778d5fb9bd3%3A0x2c46d11d3237eefd!2sYANTISSIMO%20SALAGUA!5e0!3m2!1ses-419!2smx!4v1770941081421!5m2!1ses-419!2smx",
+  },
+};
+
+const PLACEHOLDER_MAP = {
+  label: "Yantissimo",
+  src: "https://www.google.com/maps/embed?pb=!1m16!1m12!1m3!1d62618.927164553796!2d-103.7531199509675!3d19.258346475459792!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!2m1!1syantissimo%20!5e1!3m2!1ses-419!2smx!4v1770940942301!5m2!1ses-419!2smx"
+};
+
 const services: Service[] = [
   { id: "1", name: "MONTAJE", duration: 60 },
   { id: "6", name: "ALINEACION 3D 2 EJES", duration: 60 },
@@ -237,6 +269,10 @@ export function AppointmentEmbedded({ onClose }: { onClose: () => void }) {
   const selectedBranch = sucursales.find(
     (branch) => branch.id === selectedBranchId
   );
+  const selectedBranchMap = selectedBranchId
+    ? BRANCH_MAPS[selectedBranchId]
+    : null;
+  const mapToShow = selectedBranchMap ?? PLACEHOLDER_MAP;
   const calendarDays = useMemo(
     () => buildCalendarDays(currentMonth),
     [currentMonth]
@@ -616,6 +652,22 @@ export function AppointmentEmbedded({ onClose }: { onClose: () => void }) {
               {branchesError ? (
                 <p className="text-xs text-red-400">{branchesError}</p>
               ) : null}
+              <div className="mt-4 md:h-95 overflow-hidden rounded-xl border border-neutral-800/80 bg-neutral-950/60">
+                <div className="flex items-center justify-between border-b border-neutral-800/80 px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.28em] text-neutral-400">
+                  <span>Mapa</span>
+                  <span className="text-neutral-500">{mapToShow.label}</span>
+                </div>
+                <div className="aspect-video w-full bg-neutral-900">
+                  <iframe
+                    title={`Mapa ${mapToShow.label}`}
+                    src={mapToShow.src}
+                    className="h-full w-full border-0"
+                    allowFullScreen
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                  />
+                </div>
+              </div>
             </div>
           </section>
         ) : null}
