@@ -101,6 +101,7 @@ export default function CartModal({isWhite=false}) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const quoteIdFromQuery = searchParams.get("quoteid") ?? undefined;
   const cartButtonRef = useRef<HTMLButtonElement>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [autoOpenService, setAutoOpenService] = useState(false);
@@ -452,7 +453,10 @@ export default function CartModal({isWhite=false}) {
                     <form action={redirectToCheckout}>
                       <CheckoutButton />
                     </form>
-                    <ServiceModal autoOpen={autoOpenService}></ServiceModal>
+                    <ServiceModal
+                      autoOpen={autoOpenService}
+                      quoteIdFromQuery={quoteIdFromQuery}
+                    ></ServiceModal>
                   </div>
       
                 </div>

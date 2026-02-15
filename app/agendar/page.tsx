@@ -48,7 +48,7 @@ export default function AgendarPage() {
       if (result.ok) {
         router.refresh();
       }
-// timeout de 2 segundos para mostrar el loading mientras se sincroniza el carrito
+      // timeout de 2 segundos para mostrar el loading mientras se sincroniza el carrito
       await new Promise((resolve) => setTimeout(resolve, 2000));
       setViewState("ready");
     };
@@ -74,7 +74,13 @@ export default function AgendarPage() {
         </div>
       ) : (
         <div className="flex flex-col items-center gap-5">
-          <Image src="/logo.svg" alt="Yantissimo" width={220} height={64} priority />
+          <Image
+            src="/logo.svg"
+            alt="Yantissimo"
+            width={220}
+            height={64}
+            priority
+          />
           <Link
             href="/"
             className="text-sm font-semibold tracking-[0.2em] underline-offset-4 hover:underline"

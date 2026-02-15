@@ -240,8 +240,10 @@ const instProdIDs = {
 
 export function AppointmentEmbedded({
   onCloseAction,
+  quoteIdFromQuery,
 }: {
   onCloseAction: () => void;
+  quoteIdFromQuery?: string;
 }) {
   // replicate the same local state as in AppointmentModal:
   const [branchesLoading, setBranchesLoading] = useState(false);
@@ -464,6 +466,7 @@ export function AppointmentEmbedded({
         items,
         start_at: startAt,
         duration_minutes: duration,
+        ...(quoteIdFromQuery ? { quote_id: quoteIdFromQuery } : {}),
       });
       const quoteId = extractQuoteId(response);
       if (quoteId || sucursalName) {
@@ -956,8 +959,7 @@ export function AppointmentEmbedded({
                   </div>
                 ) : (
                   <p className="text-xs text-neutral-400">
-                    Tu carrito está vacío. Agrega productos para ver el
-                    resumen.
+                    Tu carrito está vacío. Agrega productos para ver el resumen.
                   </p>
                 )}
               </section>
@@ -1056,9 +1058,8 @@ function buildCalendarDays(currentMonth: Date): CalendarDay[] {
   const firstDayOfMonth = new Date(year, month, 1);
   const leadingSlots = firstDayOfMonth.getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const totalSlots = Math.ceil(
-    Math.max(CALENDAR_SLOTS, leadingSlots + daysInMonth) / 7
-  ) * 7;
+  const totalSlots =
+    Math.ceil(Math.max(CALENDAR_SLOTS, leadingSlots + daysInMonth) / 7) * 7;
   const days: CalendarDay[] = [];
 
   for (let slot = 0; slot < totalSlots; slot += 1) {

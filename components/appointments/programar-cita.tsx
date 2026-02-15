@@ -12,8 +12,10 @@ type MerchandiseSearchParams = {
 
 export default function ServiceModal({
   autoOpen = false,
+  quoteIdFromQuery,
 }: {
   autoOpen?: boolean;
+  quoteIdFromQuery?: string;
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const openService = () => setIsOpen(true);
@@ -62,7 +64,10 @@ export default function ServiceModal({
             <Dialog.Panel className="fixed bottom-0 right-0 top-0 z-[220] flex h-full w-full flex-col border-l border-neutral-700 bg-black/80 text-black backdrop-blur-xl md:w-[60vw] dark:border-neutral-700 dark:bg-black/80 dark:text-white">
               <div className="flex h-full flex-col overflow-y-auto">
                 <div className="p-6">
-                  <AppointmentEmbedded onCloseAction={closeService} />
+                  <AppointmentEmbedded
+                    onCloseAction={closeService}
+                    quoteIdFromQuery={quoteIdFromQuery}
+                  />
                 </div>
               </div>
             </Dialog.Panel>
