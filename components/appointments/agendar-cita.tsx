@@ -667,7 +667,7 @@ export function AppointmentEmbedded({
               {branchesError ? (
                 <p className="text-xs text-red-400">{branchesError}</p>
               ) : null}
-              <div className="mt-4 h-110 md:h-95 overflow-hidden rounded-xl border border-neutral-800/80 bg-neutral-950/60">
+              <div className="mt-4 h-95 md:h-95 overflow-hidden rounded-xl border border-neutral-800/80 bg-neutral-950/60">
                 <div className="flex items-center justify-between border-b border-neutral-800/80 px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.28em] text-neutral-400">
                   <span>Mapa</span>
                   <span className="text-neutral-500">{mapToShow.label}</span>
