@@ -617,8 +617,8 @@ export function AppointmentEmbedded({
         ) : null}
 
         {currentStep === 2 ? (
-          <section className="rounded-2xl border border-neutral-800/80 bg-neutral-900/70 p-5">
-            <header className="mb-3">
+          <section className="rounded-2xl md:border md:border-neutral-800/80 md:bg-neutral-900/70 p-0 md:p-5">
+            <header className="mb-3 p-3 md:p-0">
               <h3 className="text-sm font-semibold uppercase tracking-[0.3em] text-yellow-400">
                 Paso 2. Selecciona la sucursal
               </h3>
@@ -667,12 +667,12 @@ export function AppointmentEmbedded({
               {branchesError ? (
                 <p className="text-xs text-red-400">{branchesError}</p>
               ) : null}
-              <div className="mt-4 md:h-95 overflow-hidden rounded-xl border border-neutral-800/80 bg-neutral-950/60">
+              <div className="mt-4 h-110 md:h-95 overflow-hidden rounded-xl border border-neutral-800/80 bg-neutral-950/60">
                 <div className="flex items-center justify-between border-b border-neutral-800/80 px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.28em] text-neutral-400">
                   <span>Mapa</span>
                   <span className="text-neutral-500">{mapToShow.label}</span>
                 </div>
-                <div className="aspect-video w-full bg-neutral-900">
+                <div className="aspect-video h-full w-full bg-neutral-900">
                   <iframe
                     title={`Mapa ${mapToShow.label}`}
                     src={mapToShow.src}
