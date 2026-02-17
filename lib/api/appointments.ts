@@ -204,6 +204,7 @@ export type SaveAndSchedulePayload = {
   client_name: string;
   phone: string;
   sucursal: string; // e.g., "NHS", "TEC"
+  quote_id?: string;
   additional_notes?: string;
   items: Array<{
     merchandise_id?: string;
