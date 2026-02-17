@@ -4,7 +4,7 @@ import { Combobox } from "@headlessui/react";
 import { ChevronUpDownIcon } from "@heroicons/react/24/outline";
 import clsx from "clsx";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState, type MouseEvent } from "react";
 
 type SearchTab = "measure" | "vehicle";
 
@@ -37,10 +37,39 @@ function SelectField({
   onChange,
 }: SelectFieldProps) {
   const [query, setQuery] = useState("");
+  const [isMobile, setIsMobile] = useState(false);
+  const inputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const mediaQuery = window.matchMedia("(max-width: 767px)");
+    const updateIsMobile = () => setIsMobile(mediaQuery.matches);
+
+    updateIsMobile();
+    mediaQuery.addEventListener("change", updateIsMobile);
+
+    return () => {
+      mediaQuery.removeEventListener("change", updateIsMobile);
+    };
+  }, []);
+
   const normalizedQuery = query.trim().toLowerCase();
   const filteredOptions = normalizedQuery
     ? options.filter((option) => option.toLowerCase().includes(normalizedQuery))
     : options;
+
+  const handleContainerClick = (event: MouseEvent<HTMLDivElement>) => {
+    const target = event.target as HTMLElement;
+
+    if (target.closest("[data-combobox-input='true']")) {
+      return;
+    }
+
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
+  };
 
   return (
     <div className="space-y-2">
@@ -53,48 +82,65 @@ function SelectField({
           onChange(selected);
           setQuery("");
         }}
+        onClose={() => setQuery("")}
         immediate
       >
-        <div className="relative">
-          <div className="group flex w-full items-center justify-between gap-3 rounded-2xl border  bg-neutral-200 px-4 py-3 text-left text-sm text-white hover:border-yellow-400">
-            <Combobox.Input
-              className={clsx(
-                "w-full appearance-none group-hover:placeholder:text-yellow-600 focus:placeholder:text-neutral-600 border-none bg-transparent text-sm outline-none ring-0 focus:!border-none focus:!outline-none focus:!ring-0 focus-visible:!outline-none focus-visible:!ring-0 focus-visible:!ring-offset-0",
-                value ? "text-black" : "text-black",
-              )}
-              displayValue={(selected: string) => selected || ""}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder={placeholder}
-              autoComplete="off"
-            />
-            <Combobox.Button className="flex items-center justify-center focus:!outline-none focus:!ring-0 focus-visible:!outline-none focus-visible:!ring-0 focus-visible:!ring-offset-0">
-              <ChevronUpDownIcon className="h-4 w-4 text-neutral-400" />
-            </Combobox.Button>
-          </div>
-          <Combobox.Options className="absolute  top-full mt-2  z-30 max-h-64 w-full overflow-auto rounded-xl  border border-neutral-700  bg-neutral-900/95 shadow-[0_18px_40px_rgba(0,0,0,0.45)]">
-            {filteredOptions.length > 0 ? (
-              filteredOptions.map((option) => (
-                <Combobox.Option
-                  key={`${label}-${option}`}
-                  value={option}
-                  className={({ active, selected }) =>
-                    clsx(
-                      "cursor-pointer px-4 py-2 text-sm transition",
-                      active ? "bg-yellow-400 text-black" : "text-white",
-                      selected && "font-semibold",
-                    )
+        {() => (
+          <div className="relative">
+            <div
+              className="group flex w-full items-center justify-between gap-3 rounded-2xl border bg-neutral-200 px-4 py-3 text-left text-sm text-white hover:border-yellow-400"
+              onClick={handleContainerClick}
+            >
+              <Combobox.Input
+                ref={inputRef}
+                data-combobox-input="true"
+                className={clsx(
+                  "w-full appearance-none border-none bg-transparent text-sm outline-none ring-0 group-hover:placeholder:text-yellow-600 focus:!border-none focus:!outline-none focus:!ring-0 focus:placeholder:text-neutral-600 focus-visible:!outline-none focus-visible:!ring-0 focus-visible:!ring-offset-0",
+                  value ? "text-black" : "text-black",
+                )}
+                displayValue={(selected: string) => selected || ""}
+                onChange={(event) => {
+                  if (!isMobile) {
+                    setQuery(event.target.value);
                   }
-                >
-                  {option}
-                </Combobox.Option>
-              ))
-            ) : (
-              <div className="px-4 py-2 text-sm text-neutral-400">
-                Sin coincidencias
-              </div>
-            )}
-          </Combobox.Options>
-        </div>
+                }}
+                placeholder={placeholder}
+                autoComplete="off"
+                readOnly={isMobile}
+                inputMode={isMobile ? "none" : undefined}
+              />
+              <Combobox.Button
+                data-combobox-toggle="true"
+                className="pointer-events-none flex items-center justify-center focus:!outline-none focus:!ring-0 focus-visible:!outline-none focus-visible:!ring-0 focus-visible:!ring-offset-0 md:pointer-events-auto"
+              >
+                <ChevronUpDownIcon className="h-4 w-4 text-neutral-400" />
+              </Combobox.Button>
+            </div>
+            <Combobox.Options className="absolute  top-full mt-2  z-30 max-h-64 w-full overflow-auto rounded-xl  border border-neutral-700  bg-neutral-900/95 shadow-[0_18px_40px_rgba(0,0,0,0.45)]">
+              {filteredOptions.length > 0 ? (
+                filteredOptions.map((option) => (
+                  <Combobox.Option
+                    key={`${label}-${option}`}
+                    value={option}
+                    className={({ active, selected }) =>
+                      clsx(
+                        "cursor-pointer px-4 py-2 text-sm transition",
+                        active ? "bg-yellow-400 text-black" : "text-white",
+                        selected && "font-semibold",
+                      )
+                    }
+                  >
+                    {option}
+                  </Combobox.Option>
+                ))
+              ) : (
+                <div className="px-4 py-2 text-sm text-neutral-400">
+                  Sin coincidencias
+                </div>
+              )}
+            </Combobox.Options>
+          </div>
+        )}
       </Combobox>
     </div>
   );
@@ -125,7 +171,7 @@ export function WelcomeModalContent() {
         <p className="text-sm font-semibold uppercase tracking-[0.08em] text-neutral-500">
           Busca tus llantas
         </p>
-        <h1 className="text-xl md:text-3xl font-bold leading-tight text-neutral-900 md:text-4xl">
+        <h1 className="text-3xl md:text-3xl font-bold leading-tight text-neutral-900 md:text-4xl">
           Encuentra rápido por medida o por modelo de auto
         </h1>
       </header>
@@ -163,7 +209,7 @@ export function WelcomeModalContent() {
           </div>
         </aside>
 
-        <article className="flex flex-col md:w-1/3 rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm">
+        <article className="flex flex-col md:w-1/3 rounded-2xl border border-neutral-200 bg-white p-5 pb-15 md:pb-5 shadow-sm">
           <div className="grid gap-4 md:grid-rows-3">
             {activeTab === "measure" ? (
               <>
@@ -216,7 +262,7 @@ export function WelcomeModalContent() {
             )}
           </div>
 
-          <div className="mt-auto pt-8">
+          <div className="mt-auto pt-40">
             {activeTab === "measure" ? (
               <button
                 type="button"
