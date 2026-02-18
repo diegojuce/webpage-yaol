@@ -550,9 +550,9 @@ export function AppointmentEmbedded({
           <button type="submit" tabIndex={-1} aria-hidden="true" />
         </form>
         {currentStep === 1 ? (
-          <section className="rounded-2xl border border-neutral-800/80 bg-neutral-900/70 p-5">
+          <section className="rounded-2xl md:border border-neutral-800/80 md:bg-neutral-900/70 md:p-5">
             <header className="mb-3">
-              <h3 className="text-sm font-semibold uppercase tracking-[0.3em] text-yellow-400">
+              <h3 className="text-sm mb-3 font-semibold uppercase tracking-[0.3em] text-yellow-400">
                 Paso 1. Elige el servicio
               </h3>
               <p className="text-xs text-neutral-400">
@@ -620,8 +620,8 @@ export function AppointmentEmbedded({
         ) : null}
 
         {currentStep === 2 ? (
-          <section className="rounded-2xl md:border md:border-neutral-800/80 md:bg-neutral-900/70 p-0 md:p-5">
-            <header className="mb-3 p-3 md:p-0">
+          <section className="rounded-2xl md:border md:border-neutral-800/80 md:bg-neutral-900/70 md:p-5">
+            <header className="mb-6 ">
               <h3 className="text-sm font-semibold uppercase tracking-[0.3em] text-yellow-400">
                 Paso 2. Selecciona la sucursal
               </h3>
@@ -691,9 +691,9 @@ export function AppointmentEmbedded({
         ) : null}
 
         {currentStep === 3 ? (
-          <section className="rounded-2xl border border-neutral-800/80 bg-neutral-900/70 p-5">
+          <section className="rounded-2xl md:border border-neutral-800/80 md:bg-neutral-900/70 md:p-5">
             <header className="mb-3">
-              <h3 className="text-sm font-semibold uppercase tracking-[0.3em] text-yellow-400">
+              <h3 className="text-sm mb-3 md:mb-0 font-semibold uppercase tracking-[0.3em] text-yellow-400">
                 Paso 3. Ingresa tus datos
               </h3>
               <p className="text-xs text-neutral-400">
@@ -729,13 +729,13 @@ export function AppointmentEmbedded({
         {currentStep === 4 ? (
           <div className="space-y-6">
             <div className="grid gap-6 lg:grid-cols-2">
-              <section className="rounded-xl border border-neutral-800/80 bg-neutral-900/70 p-5">
+              <section className="rounded-xl md:border border-neutral-800/80 md:bg-neutral-900/70 md:p-5">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-sm font-semibold uppercase tracking-[0.3em] text-yellow-400">
+                    <h3 className="text-sm mb-3 md:mb-0  font-semibold uppercase tracking-[0.3em] text-yellow-400">
                       Paso 4. Selecciona fecha
                     </h3>
-                    <p className="text-xs text-neutral-400">
+                    <p className="text-xs mb-3 text-neutral-400">
                       Los días disponibles se muestran en amarillo.
                     </p>
                   </div>
@@ -810,7 +810,7 @@ export function AppointmentEmbedded({
                 ) : null}
                 <div className="mt-3 border-t border-neutral-800/80 pt-3">
                   <header className="mb-3">
-                    <h3 className="text-sm font-semibold uppercase tracking-[0.3em] text-yellow-400">
+                    <h3 className="text-sm mb-3 mt-3 md:mb-0 md:mt-0 font-semibold uppercase tracking-[0.3em] text-yellow-400">
                       Selecciona una hora disponible
                     </h3>
                     <p className="text-xs text-neutral-400">
@@ -884,7 +884,7 @@ export function AppointmentEmbedded({
                   </div>
                 </div>
               </section>
-              <section className="rounded-xl border border-neutral-800/80 bg-neutral-900/70 p-5">
+              <section className="rounded-xl mt-6 md:mt-0 border border-neutral-800/80 bg-neutral-900/70 p-5">
                 <header className="mb-3">
                   <h3 className="text-sm font-semibold uppercase tracking-[0.3em] text-yellow-400">
                     Resumen del carrito
