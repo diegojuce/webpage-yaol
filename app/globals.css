@@ -3,6 +3,10 @@
 @plugin "@tailwindcss/container-queries";
 @plugin "@tailwindcss/typography";
 
+@theme {
+  --font-fjalla: var(--font-fjalla-one), sans-serif;
+  --font-staatliches: var(--font-staatliches-google), sans-serif;
+}
 
 @layer base {
   *,

@@ -21,7 +21,7 @@ export default function ProductCard({ product, className }: ProductCardProps) {
       href={`/product/${product.handle}`}
       prefetch
     >
-      <article className="flex h-full flex-col overflow-hidden rounded-3xl border border-neutral-800 bg-neutral-950/90 p-5 shadow-[0_25px_80px_rgba(10,10,15,0.45)] transition-colors duration-150 group-hover:border-yellow-500/60 group-hover:bg-neutral-950">
+      <article className="flex h-full flex-col overflow-hidden rounded-lg border border-neutral-800 bg-white p-5 shadow-[0_25px_80px_rgba(10,10,15,0.45)] transition-colors duration-150 group-hover:border-yellow-500/60 ">
         <div className="relative aspect-[4/3] bg-white w-full overflow-hidden rounded-2xl">
           {image?.url ? (
             <Image
@@ -34,16 +34,16 @@ export default function ProductCard({ product, className }: ProductCardProps) {
           ) : null}
         </div>
 
-        <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
-          <span className="max-w-[65%] flex-1 truncate rounded-full bg-neutral-800/90 px-3 py-1 text-xs font-semibold uppercase tracking-[0.25em] text-neutral-200">
-            {product.title}
-          </span>
-          <Price
+        <div className=" mt-1 flex flex-col items-center justify-between gap-3">
+        <Price
             amount={product.priceRange.minVariantPrice.amount}
             currencyCode={product.priceRange.minVariantPrice.currencyCode}
             className="flex-none rounded-full bg-yellow-500 px-3 py-1 text-sm font-bold text-black"
             currencyCodeClassName="text-[10px] font-semibold uppercase text-black/70"
           />
+          <span className="max-w-[100%] flex-1 text-center px-3 py-1 truncate text-xl font-staatliches tracking-wide uppercase tracking-[0.25em] text-neutral-900">
+            {product.title}
+          </span>
         </div>
       </article>
     </Link>

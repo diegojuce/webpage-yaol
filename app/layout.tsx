@@ -4,12 +4,25 @@ import { WelcomeToast } from "components/welcome-toast";
 import { GeistSans } from "geist/font/sans";
 import { getCart } from "lib/shopify";
 import { baseUrl } from "lib/utils";
+import { Fjalla_One, Staatliches } from "next/font/google";
 import { ReactNode } from "react";
 import { Toaster } from "sonner";
 import "./globals.css";
 
 
 const { SITE_NAME } = process.env;
+const fjallaOne = Fjalla_One({
+  subsets: ["latin"],
+  weight: "400",
+  display: "swap",
+  variable: "--font-fjalla-one",
+});
+const staatliches = Staatliches({
+  subsets: ["latin"],
+  weight: "400",
+  display: "swap",
+  variable: "--font-staatliches-google",
+});
 
 export const metadata = {
   metadataBase: new URL(baseUrl),
@@ -39,7 +52,10 @@ export default async function RootLayout({
   const cart = getCart();
 
   return (
-    <html lang="es" className={GeistSans.variable} >
+    <html
+      lang="es"
+      className={`${GeistSans.variable} ${fjallaOne.variable} ${staatliches.variable}`}
+    >
       <body className="bg-[#1D1D1D] text-white selection:bg-teal-300 dark:bg-[#1D1D1D] dark:text-white dark:selection:bg-pink-500 dark:selection:text-white">
         <CartProvider cartPromise={cart}>
           {/* <Header /> */}
