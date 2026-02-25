@@ -41,7 +41,7 @@ export default function ProductCard({ product, className }: ProductCardProps) {
             className="flex-none rounded-full bg-yellow-500 px-3 py-1 text-sm font-bold text-black"
             currencyCodeClassName="text-[10px] font-semibold uppercase text-black/70"
           />
-          <span className="max-w-[100%] flex-1 text-center px-3 py-1 truncate text-xl font-staatliches tracking-wide uppercase tracking-[0.25em] text-neutral-900">
+          <span className="max-w-[100%] flex-1 text-center px-3 py-1 truncate text-lg font-extrabold tracking-wide uppercase tracking-[0.25em] text-neutral-900">
             {product.title}
           </span>
         </div>
