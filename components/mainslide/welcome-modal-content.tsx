@@ -4,7 +4,13 @@ import { Combobox } from "@headlessui/react";
 import { ChevronUpDownIcon } from "@heroicons/react/24/outline";
 import clsx from "clsx";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState, type MouseEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type MouseEvent,
+} from "react";
 
 type SearchTab = "measure" | "vehicle";
 
@@ -20,6 +26,8 @@ const MEASURE_RIM_OPTIONS = createRange(13, 25, 1);
 const CAR_BRAND_OPTIONS = ["Toyota", "Nissan", "Honda", "Mazda"];
 const CAR_MODEL_OPTIONS = ["Corolla", "Sentra", "Civic", "Mazda 3"];
 const CAR_YEAR_OPTIONS = createRange(2015, 2026, 1);
+const COMBOBOX_DEFAULT_MAX_HEIGHT = 256;
+const VIEWPORT_EDGE_PADDING = 12;
 
 type SelectFieldProps = {
   label: string;
@@ -38,7 +46,31 @@ function SelectField({
 }: SelectFieldProps) {
   const [query, setQuery] = useState("");
   const [isMobile, setIsMobile] = useState(false);
+  const [openUpward, setOpenUpward] = useState(false);
+  const [optionsMaxHeight, setOptionsMaxHeight] = useState(
+    COMBOBOX_DEFAULT_MAX_HEIGHT,
+  );
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const fieldRef = useRef<HTMLDivElement | null>(null);
+
+  const updateDropdownPlacement = useCallback(() => {
+    if (typeof window === "undefined" || !fieldRef.current) return;
+
+    const rect = fieldRef.current.getBoundingClientRect();
+    const spaceBelow = Math.max(
+      0,
+      window.innerHeight - rect.bottom - VIEWPORT_EDGE_PADDING,
+    );
+    const spaceAbove = Math.max(0, rect.top - VIEWPORT_EDGE_PADDING);
+    const shouldOpenUpward =
+      spaceBelow < COMBOBOX_DEFAULT_MAX_HEIGHT && spaceAbove > spaceBelow;
+    const availableSpace = shouldOpenUpward ? spaceAbove : spaceBelow;
+
+    setOpenUpward(shouldOpenUpward);
+    setOptionsMaxHeight(
+      Math.min(COMBOBOX_DEFAULT_MAX_HEIGHT, Math.floor(availableSpace)),
+    );
+  }, []);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -53,6 +85,22 @@ function SelectField({
       mediaQuery.removeEventListener("change", updateIsMobile);
     };
   }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const handleViewportChange = () => {
+      updateDropdownPlacement();
+    };
+
+    window.addEventListener("resize", handleViewportChange);
+    window.addEventListener("scroll", handleViewportChange, true);
+
+    return () => {
+      window.removeEventListener("resize", handleViewportChange);
+      window.removeEventListener("scroll", handleViewportChange, true);
+    };
+  }, [updateDropdownPlacement]);
 
   const normalizedQuery = query.trim().toLowerCase();
   const filteredOptions = normalizedQuery
@@ -86,7 +134,11 @@ function SelectField({
         immediate
       >
         {() => (
-          <div className="relative">
+          <div
+            className="relative"
+            ref={fieldRef}
+            onMouseDownCapture={updateDropdownPlacement}
+          >
             <div
               className="group flex w-full items-center justify-between gap-3 rounded-2xl border bg-neutral-200 px-4 py-3 text-left text-sm text-white hover:border-yellow-400"
               onClick={handleContainerClick}
@@ -104,6 +156,13 @@ function SelectField({
                     setQuery(event.target.value);
                   }
                 }}
+                onFocus={updateDropdownPlacement}
+                onClick={updateDropdownPlacement}
+                onKeyDown={(event) => {
+                  if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+                    updateDropdownPlacement();
+                  }
+                }}
                 placeholder={placeholder}
                 autoComplete="off"
                 readOnly={isMobile}
@@ -116,7 +175,13 @@ function SelectField({
                 <ChevronUpDownIcon className="h-4 w-4 text-neutral-400" />
               </Combobox.Button>
             </div>
-            <Combobox.Options className="absolute  top-full mt-2  z-30 max-h-64 w-full overflow-auto rounded-xl  border border-neutral-700  bg-neutral-900/95 shadow-[0_18px_40px_rgba(0,0,0,0.45)]">
+            <Combobox.Options
+              className={clsx(
+                "absolute z-30 w-full overflow-auto rounded-xl border border-neutral-700 bg-neutral-900/95 shadow-[0_18px_40px_rgba(0,0,0,0.45)]",
+                openUpward ? "bottom-full mb-2" : "top-full mt-2",
+              )}
+              style={{ maxHeight: `${optionsMaxHeight}px` }}
+            >
               {filteredOptions.length > 0 ? (
                 filteredOptions.map((option) => (
                   <Combobox.Option
@@ -171,45 +236,45 @@ export function WelcomeModalContent() {
         <p className="text-sm font-semibold uppercase tracking-[0.08em] text-neutral-500">
           Busca tus llantas
         </p>
-        <h1 className="text-3xl md:text-3xl font-bold leading-tight text-neutral-900 md:text-4xl">
+        <h1 className="text-xl md:text-3xl font-bold leading-tight text-neutral-900 md:text-4xl">
           Encuentra rápido por medida o por modelo de auto
         </h1>
       </header>
 
-      <section className="grid flex-1 gap-6 lg:grid-cols-[280px_minmax(0,1fr)]">
+      <section className="grid flex lg:flex-1 gap-6 lg:grid-cols-[280px_minmax(0,1fr)]">
         <aside className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm">
           <p className="text-xs font-semibold uppercase tracking-[0.24em] text-neutral-500">
             Tipo de búsqueda
           </p>
-          <div className="mt-4 flex flex-col gap-2">
+          <div className="mt-4 flex flex-row lg:flex-col justify-between gap-2">
             <button
               type="button"
               onClick={() => setActiveTab("measure")}
               className={clsx(
-                "rounded-2xl border px-4 py-3 text-left text-sm font-semibold transition",
+                "rounded-2xl w-full border px-4 py-3 text-left text-sm font-semibold transition",
                 activeTab === "measure"
                   ? "border-yellow-500 bg-yellow-500 text-black"
                   : "border-neutral-300 bg-white text-neutral-700 hover:border-neutral-400",
               )}
             >
-              Buscar por medida
+              Medida
             </button>
             <button
               type="button"
               onClick={() => setActiveTab("vehicle")}
               className={clsx(
-                "rounded-2xl border px-4 py-3 text-left text-sm font-semibold transition",
+                "rounded-2xl w-full border px-4 py-3 text-left text-sm font-semibold transition",
                 activeTab === "vehicle"
                   ? "border-yellow-500 bg-yellow-500 text-black"
                   : "border-neutral-300 bg-white text-neutral-700 hover:border-neutral-400",
               )}
             >
-              Buscar por modelo de auto
+              Auto
             </button>
           </div>
         </aside>
 
-        <article className="flex flex-col md:w-1/3 rounded-2xl border border-neutral-200 bg-white p-5 pb-15 md:pb-5 shadow-sm">
+        <article className="flex flex-col md:w-1/3 rounded-2xl border border-neutral-200 bg-white p-5 pb-5 md:pb-5 shadow-sm">
           <div className="grid gap-4 md:grid-rows-3">
             {activeTab === "measure" ? (
               <>
@@ -262,7 +327,7 @@ export function WelcomeModalContent() {
             )}
           </div>
 
-          <div className="mt-auto pt-40">
+          <div className="mt-10">
             {activeTab === "measure" ? (
               <button
                 type="button"
