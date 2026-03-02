@@ -12,8 +12,97 @@ type FullscreenModalProps = {
 };
 
 const ANIMATION_MS = 300;
+let scrollLockCount = 0;
+let scrollLockState: {
+  scrollY: number;
+  bodyOverflow: string;
+  bodyPosition: string;
+  bodyTop: string;
+  bodyWidth: string;
+  bodyLeft: string;
+  bodyRight: string;
+  bodyOverscrollBehavior: string;
+  htmlOverflow: string;
+  htmlOverscrollBehavior: string;
+} | null = null;
 
-export function FullscreenModal({ open, onClose, children, className }: FullscreenModalProps) {
+function lockPageScroll() {
+  if (typeof document === "undefined" || typeof window === "undefined") return;
+
+  if (scrollLockCount === 0) {
+    const { body, documentElement } = document;
+    const scrollY = window.scrollY;
+
+    scrollLockState = {
+      scrollY,
+      bodyOverflow: body.style.overflow,
+      bodyPosition: body.style.position,
+      bodyTop: body.style.top,
+      bodyWidth: body.style.width,
+      bodyLeft: body.style.left,
+      bodyRight: body.style.right,
+      bodyOverscrollBehavior: body.style.overscrollBehavior,
+      htmlOverflow: documentElement.style.overflow,
+      htmlOverscrollBehavior: documentElement.style.overscrollBehavior,
+    };
+
+    documentElement.style.overflow = "hidden";
+    documentElement.style.overscrollBehavior = "none";
+
+    body.style.overflow = "hidden";
+    body.style.position = "fixed";
+    body.style.top = `-${scrollY}px`;
+    body.style.width = "100%";
+    body.style.left = "0";
+    body.style.right = "0";
+    body.style.overscrollBehavior = "none";
+  }
+
+  scrollLockCount += 1;
+}
+
+function unlockPageScroll() {
+  if (typeof document === "undefined" || typeof window === "undefined") return;
+  if (scrollLockCount === 0) return;
+
+  scrollLockCount -= 1;
+
+  if (scrollLockCount > 0 || !scrollLockState) return;
+
+  const { body, documentElement } = document;
+  const {
+    scrollY,
+    bodyOverflow,
+    bodyPosition,
+    bodyTop,
+    bodyWidth,
+    bodyLeft,
+    bodyRight,
+    bodyOverscrollBehavior,
+    htmlOverflow,
+    htmlOverscrollBehavior,
+  } = scrollLockState;
+
+  body.style.overflow = bodyOverflow;
+  body.style.position = bodyPosition;
+  body.style.top = bodyTop;
+  body.style.width = bodyWidth;
+  body.style.left = bodyLeft;
+  body.style.right = bodyRight;
+  body.style.overscrollBehavior = bodyOverscrollBehavior;
+  documentElement.style.overflow = htmlOverflow;
+  documentElement.style.overscrollBehavior = htmlOverscrollBehavior;
+
+  scrollLockState = null;
+  window.scrollTo(0, scrollY);
+}
+
+export function FullscreenModal({
+  open,
+  onClose,
+  children,
+  className,
+}: FullscreenModalProps) {
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
@@ -29,12 +118,11 @@ export function FullscreenModal({ open, onClose, children, className }: Fullscre
       }
     };
 
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    lockPageScroll();
     document.addEventListener("keydown", handleKeyDown);
 
     return () => {
-      document.body.style.overflow = previousOverflow;
+      unlockPageScroll();
       document.removeEventListener("keydown", handleKeyDown);
     };
   }, [onClose, open]);
@@ -48,7 +136,9 @@ export function FullscreenModal({ open, onClose, children, className }: Fullscre
       aria-hidden={!open}
       className={clsx(
         "fixed inset-0 z-[300] flex transition-[opacity,visibility] duration-[var(--modal-duration,400ms)] ease-out",
-        open ? "visible opacity-100 pointer-events-auto" : "invisible opacity-70 pointer-events-none"
+        open
+          ? "visible opacity-100 pointer-events-auto"
+          : "invisible opacity-70 pointer-events-none",
       )}
       style={{ ["--modal-duration" as string]: `${ANIMATION_MS}ms` }}
     >
@@ -56,14 +146,14 @@ export function FullscreenModal({ open, onClose, children, className }: Fullscre
         aria-hidden="true"
         className={clsx(
           "absolute inset-0 bg-black/40 transition-opacity duration-[var(--modal-duration,400ms)] ease-out",
-          open ? "opacity-100" : "opacity-0"
+          open ? "opacity-100" : "opacity-0",
         )}
         onClick={onClose}
       />
       <div
         className={clsx(
           "relative z-10 flex h-full w-full transition-transform duration-[var(--modal-duration,400ms)] ease-out",
-          open ? "translate-y-0" : "-translate-y-full"
+          open ? "translate-y-0" : "-translate-y-full",
         )}
       >
         <button
@@ -77,13 +167,13 @@ export function FullscreenModal({ open, onClose, children, className }: Fullscre
         <div
           className={clsx(
             "relative z-10 flex h-full w-full flex-col overflow-auto bg-white shadow-2xl",
-            className
+            className,
           )}
         >
           {children}
         </div>
       </div>
     </div>,
-    document.body
+    document.body,
   );
 }
