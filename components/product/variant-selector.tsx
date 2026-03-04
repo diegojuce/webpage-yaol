@@ -20,6 +20,10 @@ export function VariantSelector({
 }) {
   const { state, updateOption } = useProduct();
   const updateURL = useUpdateURL();
+  const segmentedControlClass =
+    "inline-flex flex-wrap items-center gap-1 rounded-full bg-gradient-to-r from-[#FFC600] to-[#8B6220] p-1";
+  const segmentedButtonBaseClass =
+    "flex min-w-[132px] items-center justify-center whitespace-nowrap rounded-full px-4 py-2 text-sm font-semibold transition duration-200 ease-in-out";
   // Special mode: If there are exactly two variants and no meaningful options,
   // show a simple toggle between those two variants (Pickup vs Recoger).
   const isTrivialOptions =
@@ -37,18 +41,17 @@ export function VariantSelector({
     const choices = [
       firstId ? { id: firstId, label: "Recoger en sucursal" } : null,
       secondId ? { id: secondId, label: "Envío a domicilio" } : null,
-    ].filter(
-      (choice): choice is { id: string; label: string } => Boolean(choice)
+    ].filter((choice): choice is { id: string; label: string } =>
+      Boolean(choice),
     );
-    console.debug("Using two-variant toggle with choices:", choices, "and selectedId:", selectedId, options, variants);
 
     return (
       <form>
         <dl className="mb-8">
-          <dt className="mb-4 text-sm uppercase tracking-wide">
+          {/* <dt className="mb-3 text-sm uppercase tracking-wide">
             Tipo de entrega
-          </dt>
-          <dd className="flex flex-wrap gap-3">
+          </dt> */}
+          <dd className={segmentedControlClass}>
             {choices.map((c) => {
               const isActive = selectedId === c.id;
               return (
@@ -59,15 +62,12 @@ export function VariantSelector({
                     const newState = updateOption("variantId", c.id);
                     updateURL(newState);
                   }}
-                  className={clsx(
-                    "flex min-w-[48px] items-center justify-center rounded-full px-3 py-1 text-sm font-medium transition duration-200 ease-in-out",
-                    "bg-neutral-100 text-black hover:bg-neutral-100 dark:bg-neutral-100 dark:text-black dark:hover:bg-neutral-400",
-                    {
-                      "cursor-default bg-yellow-400 text-black dark:bg-yellow-500":
-                        isActive,
-                      "cursor-pointer": !isActive,
-                    }
-                  )}
+                  className={clsx(segmentedButtonBaseClass, {
+                    "cursor-default bg-white text-[#8B6220] shadow-sm":
+                      isActive,
+                    "cursor-pointer bg-transparent text-white hover:bg-white/15":
+                      !isActive,
+                  })}
                 >
                   {c.label}
                 </button>
@@ -100,15 +100,15 @@ export function VariantSelector({
         ...accumulator,
         [option.name.toLowerCase()]: option.value,
       }),
-      {}
+      {},
     ),
   }));
 
   return computedOptions.map((option) => (
     <form key={option.id ?? `${option.name}-${option.values.join("|")}`}>
       <dl className="mb-8">
-        <dt className="mb-4 text-sm uppercase tracking-wide">{option.name}</dt>
-        <dd className="flex flex-wrap gap-3">
+        <dt className="mb-3 text-sm uppercase tracking-wide">{option.name}</dt>
+        <dd className={segmentedControlClass}>
           {option.values.map((value) => {
             const optionNameLowerCase = option.name.toLowerCase();
 
@@ -121,14 +121,14 @@ export function VariantSelector({
                 options.find(
                   (option) =>
                     option.name.toLowerCase() === key &&
-                    option.values.includes(value)
-                )
+                    option.values.includes(value),
+                ),
             );
             const isAvailableForSale = combinations.find((combination) =>
               filtered.every(
                 ([key, value]) =>
-                  combination[key] === value && combination.availableForSale
-              )
+                  combination[key] === value && combination.availableForSale,
+              ),
             );
 
             // The option is active if it's in the selected options.
@@ -139,24 +139,19 @@ export function VariantSelector({
                 type="button"
                 onClick={() => {
                   const newState = updateOption(optionNameLowerCase, value);
-                  console.log("Updated state:", newState);
                   updateURL(newState);
                 }}
                 key={value}
                 aria-disabled={!isAvailableForSale}
                 disabled={!isAvailableForSale}
                 title={`${option.name} ${value}${!isAvailableForSale ? " (Agotado)" : ""}`}
-                className={clsx(
-                  "flex min-w-[48px] items-center justify-center rounded-full px-3 py-1 text-sm font-medium transition duration-200 ease-in-out bg-transparent text-black hover:bg-neutral-200 dark:bg-neutral-800 dark:text-white dark:hover:bg-neutral-700",
-                  {
-                    "cursor-default bg-yellow-400 text-black dark:bg-yellow-500":
-                      isActive,
-                    "ring-1 ring-transparent transition duration-300 ease-in-out hover:ring-blue-600":
-                      !isActive && isAvailableForSale,
-                    "relative z-10 cursor-not-allowed overflow-hidden bg-neutral-100 text-neutral-500 ring-1 ring-neutral-300 before:absolute before:inset-x-0 before:-z-10 before:h-px before:-rotate-45 before:bg-neutral-300 before:transition-transform dark:bg-neutral-900 dark:text-neutral-400 dark:ring-neutral-700 dark:before:bg-neutral-700":
-                      !isAvailableForSale,
-                  }
-                )}
+                className={clsx(segmentedButtonBaseClass, {
+                  "cursor-default bg-white text-black shadow-sm": isActive,
+                  "cursor-pointer bg-transparent text-white hover:bg-white/15":
+                    !isActive && isAvailableForSale,
+                  "cursor-not-allowed bg-white/30 text-white/70 ring-1 ring-white/40":
+                    !isAvailableForSale,
+                })}
               >
                 {value}
               </button>

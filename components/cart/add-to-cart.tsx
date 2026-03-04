@@ -3,9 +3,10 @@
 import { MinusIcon, PlusIcon } from "@heroicons/react/24/outline";
 import clsx from "clsx";
 import { addItem } from "components/cart/actions";
+import { AvailabilityTemperatureBar } from "components/product/availability-temperature-bar";
 import { useProduct } from "components/product/product-context";
-import { normalizeVariantId } from "lib/shopify/variant-utils";
 import { Product, ProductVariant } from "lib/shopify/types";
+import { normalizeVariantId } from "lib/shopify/variant-utils";
 import { useActionState, useEffect } from "react";
 import { useCart } from "./cart-context";
 
@@ -191,9 +192,10 @@ export function AddToCart({ product }: { product: Product }) {
             </button>
           </div>
         </div>
-        <span className="text-xs font-normal text-neutral-600">
+        {/* <span className="text-xs font-normal text-neutral-600">
           Disponibilidad: {availabilityLabel}
-        </span>
+        </span> */}
+        <AvailabilityTemperatureBar product={product} />
       </div>
       <SubmitButton
         availableForSale={availableForSale}
