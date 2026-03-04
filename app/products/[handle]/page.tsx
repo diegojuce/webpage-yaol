@@ -101,7 +101,13 @@ export default async function ProductPage(props: {
 
           <div className="basis-full lg:basis-2/6">
             <Suspense fallback={null}>
-              <ProductDescription product={product} />
+              <ProductDescription
+                product={product}
+                descriptions={product.description
+                  .split(/\r?\n/)
+                  .map((description) => description.trim())
+                  .filter(Boolean)}
+              />
             </Suspense>
           </div>
         </div>
