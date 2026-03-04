@@ -11,6 +11,66 @@ type Combination = {
   [key: string]: string | boolean;
 };
 
+const findVariantFromState = (
+  variants: ProductVariant[],
+  state: Record<string, string | undefined>,
+) =>
+  variants.find((variant) =>
+    variant.selectedOptions.every(
+      (option) => option.value === state[option.name.toLowerCase()],
+    ),
+  );
+
+const getVariantInfoMessage = (
+  variant: ProductVariant,
+  labelOverride?: string,
+) => {
+  const normalizedTitle = (labelOverride ?? variant.title).toLowerCase();
+
+  if (
+    normalizedTitle.includes("recoger") ||
+    normalizedTitle.includes("pickup") ||
+    normalizedTitle.includes("sucursal")
+  ) {
+    return "Recoge tu producto en sucursal. Te avisaremos cuando esté listo para pasar por él.";
+  }
+
+  if (
+    normalizedTitle.includes("envío") ||
+    normalizedTitle.includes("envio") ||
+    normalizedTitle.includes("delivery") ||
+    normalizedTitle.includes("domicilio")
+  ) {
+    return "Recibe tu producto en la dirección que elijas. El costo y el tiempo de envío se calculan en checkout.";
+  }
+
+  const optionsSummary = variant.selectedOptions
+    .map((option) => `${option.name}: ${option.value}`)
+    .join(" · ");
+
+  return optionsSummary
+    ? `Seleccionaste la variante ${optionsSummary}.`
+    : `Seleccionaste la variante ${variant.title}.`;
+};
+
+const VariantInfoBox = ({
+  variant,
+  labelOverride,
+}: {
+  variant?: ProductVariant;
+  labelOverride?: string;
+}) => {
+  if (!variant) {
+    return null;
+  }
+
+  return (
+    <p className="mt-2 w-full rounded-2xl bg-white shadow-sm px-4 py-3 text-sm text-[#5D4418]">
+      {getVariantInfoMessage(variant, labelOverride)}
+    </p>
+  );
+};
+
 export function VariantSelector({
   options,
   variants,
@@ -21,9 +81,17 @@ export function VariantSelector({
   const { state, updateOption } = useProduct();
   const updateURL = useUpdateURL();
   const segmentedControlClass =
-    "inline-flex flex-wrap items-center gap-1 rounded-full bg-gradient-to-r from-[#FFC600] to-[#8B6220] p-1";
+    "grid w-full items-center truncate gap-1 rounded-full bg-gradient-to-r from-[#FFC600] to-[#8B6220] p-1";
   const segmentedButtonBaseClass =
-    "flex min-w-[132px] items-center justify-center whitespace-nowrap rounded-full px-4 py-2 text-sm font-semibold transition duration-200 ease-in-out";
+    "flex w-full min-w-0 items-center justify-center text-center rounded-full px-4 py-2 text-sm font-semibold transition duration-200 ease-in-out";
+  const chosenVariantId = normalizeVariantId(state["variantId"]);
+  const selectedVariantFromOptions = findVariantFromState(variants, state);
+  const selectedVariant =
+    variants.find(
+      (variant) => normalizeVariantId(variant.id) === chosenVariantId,
+    ) ??
+    selectedVariantFromOptions ??
+    variants[0];
   // Special mode: If there are exactly two variants and no meaningful options,
   // show a simple toggle between those two variants (Pickup vs Recoger).
   const isTrivialOptions =
@@ -35,8 +103,7 @@ export function VariantSelector({
     const [first, second] = variants as [ProductVariant, ProductVariant];
     const firstId = normalizeVariantId(first.id);
     const secondId = normalizeVariantId(second.id);
-    const selectedId =
-      normalizeVariantId(state["variantId"]) ?? firstId ?? undefined;
+    const selectedId = chosenVariantId ?? firstId ?? undefined;
 
     const choices = [
       firstId ? { id: firstId, label: "Recoger en sucursal" } : null,
@@ -44,14 +111,17 @@ export function VariantSelector({
     ].filter((choice): choice is { id: string; label: string } =>
       Boolean(choice),
     );
+    const activeChoice = choices.find((choice) => choice.id === selectedId);
 
     return (
-      <form>
-        <dl className="mb-8">
-          {/* <dt className="mb-3 text-sm uppercase tracking-wide">
-            Tipo de entrega
-          </dt> */}
-          <dd className={segmentedControlClass}>
+      <form className="w-full">
+        <dl className="mb-8 w-full rounded-2xl bg-neutral-50 p-4 shadow-lg">
+          <dd
+            className={segmentedControlClass}
+            style={{
+              gridTemplateColumns: `repeat(${Math.max(1, choices.length)}, minmax(0, 1fr))`,
+            }}
+          >
             {choices.map((c) => {
               const isActive = selectedId === c.id;
               return (
@@ -63,7 +133,7 @@ export function VariantSelector({
                     updateURL(newState);
                   }}
                   className={clsx(segmentedButtonBaseClass, {
-                    "cursor-default bg-white text-[#8B6220] shadow-sm":
+                    "cursor-default bg-white shadow-xl  border-[#8B6220] text-[#8B6220] shadow-sm":
                       isActive,
                     "cursor-pointer bg-transparent text-white hover:bg-white/15":
                       !isActive,
@@ -74,6 +144,10 @@ export function VariantSelector({
               );
             })}
           </dd>
+          <VariantInfoBox
+            variant={selectedVariant}
+            labelOverride={activeChoice?.label}
+          />
         </dl>
       </form>
     );
@@ -104,61 +178,77 @@ export function VariantSelector({
     ),
   }));
 
-  return computedOptions.map((option) => (
-    <form key={option.id ?? `${option.name}-${option.values.join("|")}`}>
-      <dl className="mb-8">
-        <dt className="mb-3 text-sm uppercase tracking-wide">{option.name}</dt>
-        <dd className={segmentedControlClass}>
-          {option.values.map((value) => {
-            const optionNameLowerCase = option.name.toLowerCase();
+  return (
+    <div className="w-full">
+      {computedOptions.map((option) => (
+        <form
+          className="w-full"
+          key={option.id ?? `${option.name}-${option.values.join("|")}`}
+        >
+          <dl className="mb-8 w-full">
+            <dt className="mb-3 text-sm uppercase tracking-wide">
+              {option.name}
+            </dt>
+            <dd
+              className={segmentedControlClass}
+              style={{
+                gridTemplateColumns: `repeat(${Math.max(1, option.values.length)}, minmax(0, 1fr))`,
+              }}
+            >
+              {option.values.map((value) => {
+                const optionNameLowerCase = option.name.toLowerCase();
 
-            // Base option params on current selectedOptions so we can preserve any other param state.
-            const optionParams = { ...state, [optionNameLowerCase]: value };
+                // Base option params on current selectedOptions so we can preserve any other param state.
+                const optionParams = { ...state, [optionNameLowerCase]: value };
 
-            // Filter out invalid options and check if the option combination is available for sale.
-            const filtered = Object.entries(optionParams).filter(
-              ([key, value]) =>
-                options.find(
-                  (option) =>
-                    option.name.toLowerCase() === key &&
-                    option.values.includes(value),
-                ),
-            );
-            const isAvailableForSale = combinations.find((combination) =>
-              filtered.every(
-                ([key, value]) =>
-                  combination[key] === value && combination.availableForSale,
-              ),
-            );
+                // Filter out invalid options and check if the option combination is available for sale.
+                const filtered = Object.entries(optionParams).filter(
+                  ([key, value]) =>
+                    options.find(
+                      (option) =>
+                        option.name.toLowerCase() === key &&
+                        option.values.includes(value),
+                    ),
+                );
+                const isAvailableForSale = combinations.find((combination) =>
+                  filtered.every(
+                    ([key, value]) =>
+                      combination[key] === value &&
+                      combination.availableForSale,
+                  ),
+                );
 
-            // The option is active if it's in the selected options.
-            const isActive = state[optionNameLowerCase] === value;
+                // The option is active if it's in the selected options.
+                const isActive = state[optionNameLowerCase] === value;
 
-            return (
-              <button
-                type="button"
-                onClick={() => {
-                  const newState = updateOption(optionNameLowerCase, value);
-                  updateURL(newState);
-                }}
-                key={value}
-                aria-disabled={!isAvailableForSale}
-                disabled={!isAvailableForSale}
-                title={`${option.name} ${value}${!isAvailableForSale ? " (Agotado)" : ""}`}
-                className={clsx(segmentedButtonBaseClass, {
-                  "cursor-default bg-white text-black shadow-sm": isActive,
-                  "cursor-pointer bg-transparent text-white hover:bg-white/15":
-                    !isActive && isAvailableForSale,
-                  "cursor-not-allowed bg-white/30 text-white/70 ring-1 ring-white/40":
-                    !isAvailableForSale,
-                })}
-              >
-                {value}
-              </button>
-            );
-          })}
-        </dd>
-      </dl>
-    </form>
-  ));
+                return (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const newState = updateOption(optionNameLowerCase, value);
+                      updateURL(newState);
+                    }}
+                    key={value}
+                    aria-disabled={!isAvailableForSale}
+                    disabled={!isAvailableForSale}
+                    title={`${option.name} ${value}${!isAvailableForSale ? " (Agotado)" : ""}`}
+                    className={clsx(segmentedButtonBaseClass, {
+                      "cursor-default bg-white text-black shadow-sm": isActive,
+                      "cursor-pointer bg-transparent text-white hover:bg-white/15":
+                        !isActive && isAvailableForSale,
+                      "cursor-not-allowed bg-white/30 text-white/70 ring-1 ring-white/40":
+                        !isAvailableForSale,
+                    })}
+                  >
+                    {value}
+                  </button>
+                );
+              })}
+            </dd>
+          </dl>
+        </form>
+      ))}
+      <VariantInfoBox variant={selectedVariant} />
+    </div>
+  );
 }

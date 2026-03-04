@@ -1,6 +1,10 @@
+"use client";
+
+import clsx from "clsx";
 import { AddToCart } from "components/cart/add-to-cart";
 import Price from "components/price";
 import { Product } from "lib/shopify/types";
+import { useState } from "react";
 import { PaymentOptions } from "./payment-options";
 import { VariantSelector } from "./variant-selector";
 
@@ -13,10 +17,11 @@ export function ProductDescription({
 }) {
   const productDescriptions =
     descriptions?.filter((description) => description.trim().length > 0) ?? [];
+  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
 
   return (
     <>
-      <div className="mb-6 flex flex-col border-b pb-6 dark:border-neutral-700">
+      <div className="flex flex-col pb-6 dark:border-neutral-700">
         <h1 className="mb-2 text-md sm:text-3xl md:text-4xl lg:text-2xl font-medium bg-[#E0E0E2] border border-b-10  border-b-neutral-800  rounded-tl-[48] rounded-br-[48] px-5 lg:px-12 py-2">
           {product.title}
         </h1>
@@ -33,21 +38,51 @@ export function ProductDescription({
         </div>
       </div>
       {productDescriptions.length > 0 ? (
-        <div className=" bg-neutral-100 p-5 rounded-2xl mb-6 space-y-2 text-sm leading-tight text-black">
-          {productDescriptions.map((description, index) => (
-            <p key={`${description}-${index}`}>{description}</p>
-          ))}
+        <div className="relative mb-6 rounded-sm bg-neutral-100 px-5 py-3 shadow-sm">
+          <div className="relative pr-10">
+            <div
+              className={clsx(
+                "space-y-2 overflow-hidden pr-1 text-md leading-tight text-black transition-all duration-300",
+                isDescriptionExpanded ? "max-h-[1200px]" : "max-h-12",
+              )}
+            >
+              {productDescriptions.map((description, index) => (
+                <p key={`${description}-${index}`}>{description}</p>
+              ))}
+            </div>
+            {!isDescriptionExpanded ? (
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-neutral-100 to-transparent" />
+            ) : null}
+          </div>
+          <button
+            type="button"
+            onClick={() => setIsDescriptionExpanded((prev) => !prev)}
+            aria-label={
+              isDescriptionExpanded
+                ? "Ocultar descripción completa"
+                : "Mostrar descripción completa"
+            }
+            className="absolute right-3 top-1/2 z-10 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-white/80 text-neutral-700 shadow-sm transition hover:bg-white"
+          >
+            <span
+              className={clsx(
+                "transition-transform duration-200",
+                isDescriptionExpanded && "rotate-180",
+              )}
+            >
+              ↓
+            </span>
+          </button>
         </div>
-       ) : null}
-       
-      <div className="flex lg:flex-row gap-2 mb-6">
+      ) : null}
+
+      <div className="flex lg:flex-row ">
         <VariantSelector
           options={product.options}
           variants={product.variants}
         />
       </div>
 
-      
       <AddToCart product={product} />
       <PaymentOptions product={product} />
     </>
