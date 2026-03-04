@@ -5,7 +5,6 @@ import { AddToCart } from "components/cart/add-to-cart";
 import Price from "components/price";
 import { Product } from "lib/shopify/types";
 import { useState } from "react";
-import { PaymentOptions } from "./payment-options";
 import { VariantSelector } from "./variant-selector";
 
 export function ProductDescription({
@@ -43,15 +42,26 @@ export function ProductDescription({
           </div>
         </div>
       </div>
+
+      <div className="flex lg:flex-row ">
+        <VariantSelector
+          options={product.options}
+          variants={product.variants}
+        />
+      </div>
+
+      <AddToCart product={product} />
+      {/* <PaymentOptions product={product} /> */}
       {productDescriptions.length > 0 ? (
-        <div className="relative mb-6 rounded-sm md:bg-neutral-100 px-5 py-3 md:shadow-sm">
+        <div className="relative my-6 rounded-sm bg-neutral-50 rounded-xl px-5 py-3 shadow-sm">
           <div className="relative pr-10">
             <div
               className={clsx(
                 "space-y-2 overflow-hidden pr-1 text-md leading-tight text-black transition-all duration-300",
-                isDescriptionExpanded ? "max-h-[1200px]" : "max-h-10",
+                isDescriptionExpanded ? "max-h-[1200px]" : "max-h-14",
               )}
             >
+              <h3 className="mb-3 text-base font-semibold">Descripción</h3>
               {productDescriptions.map((description, index) => (
                 <p key={`${description}-${index}`}>{description}</p>
               ))}
@@ -81,16 +91,6 @@ export function ProductDescription({
           </button>
         </div>
       ) : null}
-
-      <div className="flex lg:flex-row ">
-        <VariantSelector
-          options={product.options}
-          variants={product.variants}
-        />
-      </div>
-
-      <AddToCart product={product} />
-      <PaymentOptions product={product} />
     </>
   );
 }

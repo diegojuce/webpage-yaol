@@ -115,7 +115,7 @@ export function VariantSelector({
 
     return (
       <form className="w-full">
-        <dl className="mb-8 w-full rounded-2xl md:bg-neutral-50 md:p-4 md:shadow-lg">
+        <dl className="mb-4 w-full rounded-2xl md:bg-neutral-50 md:p-4 md:shadow-lg">
           <dd
             className={segmentedControlClass}
             style={{
