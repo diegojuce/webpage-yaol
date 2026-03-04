@@ -35,6 +35,12 @@ export function ProductDescription({
               currencyCode={product.priceRange.minVariantPrice.currencyCode}
             />
           </div>
+          <div className="flex px-2 lg:px-4 line-through text-center text-sm lg:text-xl items-center">
+            <Price
+              amount={product.priceRange.maxVariantPrice.amount}
+              currencyCode={product.priceRange.maxVariantPrice.currencyCode}
+            />
+          </div>
         </div>
       </div>
       {productDescriptions.length > 0 ? (
