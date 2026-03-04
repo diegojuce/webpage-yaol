@@ -135,6 +135,10 @@ export function AddToCart({ product }: { product: Product }) {
 
   const availabilityLabel =
     typeof availableQuantity === "number" ? availableQuantity : "--";
+  const isAtMaxQuantity =
+    typeof availableQuantity === "number" &&
+    availableQuantity > 0 &&
+    quantity >= availableQuantity;
 
   return (
     <form
@@ -170,26 +174,38 @@ export function AddToCart({ product }: { product: Product }) {
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3 text-sm font-medium text-black">
         <div className="flex items-center gap-3">
           <span>Cantidad</span>
-          <div className="flex items-center rounded-full border border-neutral-200 bg-white text-black">
-            <button
-              type="button"
-              aria-label="Disminuir cantidad"
-              onClick={handleDecrement}
-              className="flex h-10 w-10 items-center justify-center rounded-l-full transition hover:bg-neutral-100"
-            >
-              <MinusIcon className="h-4" />
-            </button>
-            <span className="w-10 text-center text-base font-semibold">
-              {quantity}
-            </span>
-            <button
-              type="button"
-              aria-label="Incrementar cantidad"
-              onClick={handleIncrement}
-              className="flex h-10 w-10 items-center justify-center rounded-r-full transition hover:bg-neutral-100"
-            >
-              <PlusIcon className="h-4" />
-            </button>
+          <div className="relative">
+            <div className="flex items-center rounded-full border border-neutral-200 bg-white text-black">
+              <button
+                type="button"
+                aria-label="Disminuir cantidad"
+                onClick={handleDecrement}
+                className="flex h-10 w-10 items-center justify-center rounded-l-full transition hover:bg-neutral-100"
+              >
+                <MinusIcon className="h-4" />
+              </button>
+              <span
+                className={clsx(
+                  "w-10 text-center text-base font-semibold",
+                  isAtMaxQuantity && "text-red-600"
+                )}
+              >
+                {quantity}
+              </span>
+              <button
+                type="button"
+                aria-label="Incrementar cantidad"
+                onClick={handleIncrement}
+                className="flex h-10 w-10 items-center justify-center rounded-r-full transition hover:bg-neutral-100"
+              >
+                <PlusIcon className="h-4" />
+              </button>
+            </div>
+            {isAtMaxQuantity ? (
+              <span className="pointer-events-none absolute left-1/2 top-full mt-1 -translate-x-1/2 whitespace-nowrap text-xs text-red-600">
+                unicas pzs
+              </span>
+            ) : null}
           </div>
         </div>
         {/* <span className="text-xs font-normal text-neutral-600">

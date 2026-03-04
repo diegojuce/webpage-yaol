@@ -21,8 +21,8 @@ export function ProductDescription({
 
   return (
     <>
-      <div className="flex flex-col pb-6 dark:border-neutral-700">
-        <h1 className="mb-2 text-md sm:text-3xl md:text-4xl lg:text-2xl font-medium bg-[#E0E0E2] border border-b-10  border-b-neutral-800  rounded-tl-[48] rounded-br-[48] px-5 lg:px-12 py-2">
+      <div className="flex flex-col  pb-6 dark:border-neutral-700">
+        <h1 className="mb-2 text-md sm:text-3xl md:text-4xl lg:text-2xl font-medium bg-[#E0E0E2] border border-b-10  border-b-neutral-800  rounded-tl-[48] rounded-br-[48] shadow-2xl px-5 lg:px-12 py-2">
           {product.title}
         </h1>
         <div className=" flex">
@@ -38,12 +38,12 @@ export function ProductDescription({
         </div>
       </div>
       {productDescriptions.length > 0 ? (
-        <div className="relative mb-6 rounded-sm bg-neutral-100 px-5 py-3 shadow-sm">
+        <div className="relative mb-6 rounded-sm md:bg-neutral-100 px-5 py-3 md:shadow-sm">
           <div className="relative pr-10">
             <div
               className={clsx(
                 "space-y-2 overflow-hidden pr-1 text-md leading-tight text-black transition-all duration-300",
-                isDescriptionExpanded ? "max-h-[1200px]" : "max-h-12",
+                isDescriptionExpanded ? "max-h-[1200px]" : "max-h-10",
               )}
             >
               {productDescriptions.map((description, index) => (
@@ -51,7 +51,7 @@ export function ProductDescription({
               ))}
             </div>
             {!isDescriptionExpanded ? (
-              <div className="pointer-events-none absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-neutral-100 to-transparent" />
+              <div className="hidden md:flex pointer-events-none absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-neutral-100 to-transparent" />
             ) : null}
           </div>
           <button
