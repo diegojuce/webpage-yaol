@@ -491,7 +491,7 @@ export function AppointmentEmbedded({
         // formAction(addItemPayload);
       });
       // Redirect to checkout after successful confirmation
-      checkoutFormRef.current?.requestSubmit();
+      // checkoutFormRef.current?.requestSubmit();
     } catch (error) {
       setSubmitStatus("error");
       setSubmitMessage(
@@ -1042,7 +1042,7 @@ export function AppointmentEmbedded({
                     : "bg-yellow-500  hover:translate-y-[-2px]"
                 )}
               >
-                {submitStatus === "loading" ? "Confirmando..." : "Checkout"}
+                {submitStatus === "loading" ? "Confirmando..." : "Guardar cita"}
               </button>
             )}
           </div>
