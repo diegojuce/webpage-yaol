@@ -126,7 +126,8 @@ function SelectField({
       </label>
       <Combobox
         value={value}
-        onChange={(selected: string) => {
+        onChange={(selected: string | null) => {
+          if (!selected) return;
           onChange(selected);
           setQuery("");
         }}

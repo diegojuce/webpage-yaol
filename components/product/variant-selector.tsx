@@ -1,5 +1,8 @@
 "use client";
-
+import { LocalShipping, TireRepair } from '@mui/icons-material';
+import AirIcon from '@mui/icons-material/Air';
+import BuildIcon from '@mui/icons-material/Build';
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import clsx from "clsx";
 import { useProduct, useUpdateURL } from "components/product/product-context";
 import { ProductOption, ProductVariant } from "lib/shopify/types";
@@ -32,7 +35,26 @@ const getVariantInfoMessage = (
     normalizedTitle.includes("pickup") ||
     normalizedTitle.includes("sucursal")
   ) {
-    return "Recoge tu producto en sucursal. Te avisaremos cuando esté listo para pasar por él.";
+    return (
+      <div className='flex items-center flex-col md:flex-row gap-1 md-gap-2'>
+      <div className='flex items-center flex-row gap-2'>
+        <BuildIcon fontSize="medium" />
+        <p className="">Instalacion GRATIS</p>
+     
+        <TireRepair fontSize="medium" />
+        <p className="">Balanceo GRATIS</p>
+      </div>
+      <div className='flex items-center flex-row gap-2'>
+        <AirIcon fontSize="medium" />
+        <p className="">Nitrogeno & valvula GRATIS</p>
+      </div>
+      <div className='flex items-center flex-row gap-2'>
+        <CalendarMonthIcon fontSize="medium" />
+        <p className="">Agenda tu cita ONLINE</p>
+      </div>
+      </div>
+
+      )
   }
 
   if (
@@ -41,7 +63,12 @@ const getVariantInfoMessage = (
     normalizedTitle.includes("delivery") ||
     normalizedTitle.includes("domicilio")
   ) {
-    return "Recibe tu producto en la dirección que elijas. El costo y el tiempo de envío se calculan en checkout.";
+    return (
+      <div className='flex items-center flex-row gap-2'>
+      <LocalShipping fontSize="medium" />
+      <p className="">Envio GRATIS: Entrega de 2-5 días</p>
+    </div>
+    )
   }
 
   const optionsSummary = variant.selectedOptions
