@@ -36,24 +36,27 @@ const getVariantInfoMessage = (
     normalizedTitle.includes("sucursal")
   ) {
     return (
-      <div className='flex items-center flex-col md:flex-row gap-1 md-gap-2'>
-      <div className='flex items-center flex-row gap-2'>
-        <BuildIcon fontSize="medium" />
-        <p className="">Instalacion GRATIS</p>
-     
-        <TireRepair fontSize="medium" />
-        <p className="">Balanceo GRATIS</p>
-      </div>
-      <div className='flex items-center flex-row gap-2'>
-        <AirIcon fontSize="medium" />
-        <p className="">Nitrogeno & valvula GRATIS</p>
-      </div>
-      <div className='flex items-center flex-row gap-2'>
-        <CalendarMonthIcon fontSize="medium" />
-        <p className="">Agenda tu cita ONLINE</p>
-      </div>
-      </div>
+      <div className="grid grid-cols-2 gap-2 lg:flex ">
+  <div className="flex items-center gap-2">
+    <BuildIcon fontSize="medium" />
+    <p>Instalacion GRATIS</p>
+  </div>
 
+  <div className="flex items-center gap-2">
+    <TireRepair fontSize="medium" />
+    <p>Balanceo GRATIS</p>
+  </div>
+
+  <div className="flex items-center gap-2">
+    <AirIcon fontSize="medium" />
+    <p>Nitrogeno & valvula GRATIS</p>
+  </div>
+
+  <div className="flex items-center gap-2">
+    <CalendarMonthIcon fontSize="medium" />
+    <p>Agenda tu cita ONLINE</p>
+  </div>
+</div>
       )
   }
 

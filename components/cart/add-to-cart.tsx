@@ -171,8 +171,8 @@ export function AddToCart({ product }: { product: Product }) {
         formAction({ selectedVariantId, quantity });
       }}
     >
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3 text-sm font-medium text-black">
-        <div className="flex items-center gap-3">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-0 text-sm font-medium text-black">
+        <div className="flex items-center gap-2">
           <span>Cantidad</span>
           <div className="relative">
             <div className="flex items-center rounded-full border border-neutral-200 bg-white text-black">
