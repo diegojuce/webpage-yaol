@@ -1,7 +1,7 @@
-import { ImageResponse } from "next/og";
-import { join } from "path";
 import { readFile } from "fs/promises";
 import { baseUrl } from "lib/utils";
+import { ImageResponse } from "next/og";
+import { join } from "path";
 
 export type Props = {
   title?: string;
@@ -23,12 +23,12 @@ export default async function OpengraphImage(
   return new ImageResponse(
     (
       <div tw="flex h-full w-full flex-col items-center justify-center bg-black">
-        <div tw="flex flex-none items-center justify-center border border-neutral-700 h-[160px] w-[160px] rounded-3xl">
+        <div tw="flex flex-none items-center justify-center h-[220px] w-[220px] ">
           <img
             src={`${baseUrl}/icon.svg`}
             alt={`${process.env.SITE_NAME} logotipo`}
-            width="64"
-            height="58"
+            width="78"
+            height="70"
           />
         </div>
         <p tw="mt-12 text-6xl font-bold text-white">{title}</p>
