@@ -639,6 +639,22 @@ export async function getProduct(handle: string): Promise<Product | undefined> {
   return reshaped;
 }
 
+// Uncached variant of getProduct: always hits the backend to get fresh
+// availability/stock data. Use for last-mile validation (e.g. at checkout).
+export async function getProductFresh(
+  handle: string
+): Promise<Product | undefined> {
+  const res = await backendFetch<ShopifyProductOperation>({
+    endpoint: "/get/product",
+    variables: {
+      handle,
+    },
+  });
+  const product = res.body?.data?.product;
+  if (!product) return undefined;
+  return reshapeProduct(product, false);
+}
+
 export async function getProductRecommendations(
   productId: string
 ): Promise<Product[]> {

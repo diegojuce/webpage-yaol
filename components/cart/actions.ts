@@ -5,6 +5,7 @@ import {
   addToCart,
   createCart,
   getCart,
+  getProductFresh,
   removeFromCart,
   updateCart,
   updateCartAttributes,
@@ -305,6 +306,94 @@ export async function updateItemVariant(
 export async function redirectToCheckout() {
   let cart = await getCart();
   redirect(cart!.checkoutUrl);
+}
+
+export type UnavailableCartItem = {
+  title: string;
+  requested: number;
+  available: number;
+};
+
+export type ValidateCartAvailabilityResult =
+  | { ok: true; checkoutUrl: string }
+  | { ok: false; error: "empty_cart" | "unavailable" | "error"; unavailableItems: UnavailableCartItem[] };
+
+// Last-mile validation before checkout: re-fetches each product in the cart
+// from the backend and verifies that the selected variant still has enough
+// stock to fulfill the requested quantity.
+export async function validateCartAvailability(): Promise<ValidateCartAvailabilityResult> {
+  try {
+    const cart = await getCart();
+
+    if (!cart || cart.lines.length === 0) {
+      return { ok: false, error: "empty_cart", unavailableItems: [] };
+    }
+
+    // Fetch fresh product data once per unique handle.
+    const handles = Array.from(
+      new Set(cart.lines.map((line) => line.merchandise.product.handle))
+    );
+    const freshEntries = await Promise.all(
+      handles.map(async (handle) => {
+        try {
+          const product = await getProductFresh(handle);
+          return [handle, product] as const;
+        } catch (e) {
+          console.error(
+            "[actions][validateCartAvailability] getProductFresh failed for",
+            handle,
+            e
+          );
+          return [handle, undefined] as const;
+        }
+      })
+    );
+    const freshByHandle = new Map(freshEntries);
+
+    const unavailableItems: UnavailableCartItem[] = [];
+
+    for (const line of cart.lines) {
+      const handle = line.merchandise.product.handle;
+      const fresh = freshByHandle.get(handle);
+      const productTitle = line.merchandise.product.title;
+      const variantLabel =
+        line.merchandise.title && line.merchandise.title !== "Default Title"
+          ? `${productTitle} (${line.merchandise.title})`
+          : productTitle;
+
+      if (!fresh) {
+        unavailableItems.push({
+          title: variantLabel,
+          requested: line.quantity,
+          available: 0,
+        });
+        continue;
+      }
+
+      const variant = fresh.variants.find((v) => v.id === line.merchandise.id);
+      const available =
+        typeof variant?.quantityAvailable === "number"
+          ? variant.quantityAvailable
+          : 0;
+
+      if (!variant || !variant.availableForSale || available < line.quantity) {
+        unavailableItems.push({
+          title: variantLabel,
+          requested: line.quantity,
+          available: Math.max(0, available),
+        });
+      }
+    }
+
+    if (unavailableItems.length > 0) {
+      return { ok: false, error: "unavailable", unavailableItems };
+    }
+
+    return { ok: true, checkoutUrl: cart.checkoutUrl };
+  } catch (e) {
+    console.error("[actions][validateCartAvailability] error:", e);
+    return { ok: false, error: "error", unavailableItems: [] };
+  }
 }
 
 export async function createCartAndSetCookie() {

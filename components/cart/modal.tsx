@@ -12,8 +12,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Fragment, useEffect, useId, useRef, useState, useActionState } from "react";
-import { useFormStatus } from "react-dom";
-import { createCartAndSetCookie, redirectToCheckout, setCartIdFromParam, updateItemVariant } from "./actions";
+import { toast } from "sonner";
+import { createCartAndSetCookie, setCartIdFromParam, updateItemVariant, validateCartAvailability } from "./actions";
 import { useCart } from "./cart-context";
 import { DeleteItemButton } from "./delete-item-button";
 import { EditItemQuantityButton } from "./edit-item-quantity-button";
@@ -450,9 +450,7 @@ export default function CartModal({isWhite=false}) {
                     </div>
                   </div>
                   <div className="py-4">
-                    <form action={redirectToCheckout}>
-                      <CheckoutButton />
-                    </form>
+                    <CheckoutButton />
                     <ServiceModal
                       autoOpen={autoOpenService}
                       quoteIdFromQuery={quoteIdFromQuery}
@@ -483,12 +481,49 @@ function CloseCart({ className }: { className?: string }) {
 }
 
 function CheckoutButton() {
-  const { pending } = useFormStatus();
+  const [pending, setPending] = useState(false);
+
+  const handleCheckout = async () => {
+    if (pending) return;
+    setPending(true);
+    try {
+      const result = await validateCartAvailability();
+
+      if (!result.ok) {
+        if (result.error === "unavailable") {
+          const details = result.unavailableItems
+            .map(
+              (it) =>
+                `${it.title}: solicitado ${it.requested}, disponible ${it.available}`
+            )
+            .join("\n");
+          toast.error("Algunos productos no están disponibles", {
+            description: details,
+          });
+        } else if (result.error === "empty_cart") {
+          toast.error("Tu carrito está vacío.");
+        } else {
+          toast.error(
+            "No se pudo validar la disponibilidad del carrito. Inténtalo de nuevo."
+          );
+        }
+        setPending(false);
+        return;
+      }
+
+      window.location.href = result.checkoutUrl;
+    } catch (e) {
+      console.error("[CheckoutButton] validation failed", e);
+      toast.error("Error al validar el carrito. Inténtalo de nuevo.");
+      setPending(false);
+    }
+  };
 
   return (
     <button
-      className="block w-full rounded-full bg-yellow-500 p-3 text-center text-sm font-medium text-white opacity-90 hover:opacity-100"
-      type="submit"
+      className="block w-full rounded-full bg-yellow-500 p-3 text-center text-sm font-medium text-white opacity-90 hover:opacity-100 disabled:cursor-not-allowed"
+      type="button"
+      onClick={handleCheckout}
       disabled={pending}
     >
       {pending ? <LoadingDots className="bg-white" /> : "Completar Pago"}
