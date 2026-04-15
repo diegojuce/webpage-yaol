@@ -1,9 +1,12 @@
 "use client";
 
-import { Dialog, Transition } from "@headlessui/react";
-import { ShoppingCartIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { Dialog, Listbox, Transition } from "@headlessui/react";
+import {
+  ChevronUpDownIcon,
+  ShoppingCartIcon,
+  XMarkIcon,
+} from "@heroicons/react/24/outline";
 import clsx from "clsx";
-import ServiceModal from "components/appointments/programar-cita";
 import LoadingDots from "components/loading-dots";
 import Price from "components/price";
 import { DEFAULT_OPTION } from "lib/constants";
@@ -11,9 +14,21 @@ import { createUrl } from "lib/utils";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Fragment, useEffect, useId, useRef, useState, useActionState } from "react";
+import {
+  Fragment,
+  useActionState,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+} from "react";
 import { useFormStatus } from "react-dom";
-import { createCartAndSetCookie, redirectToCheckout, setCartIdFromParam, updateItemVariant } from "./actions";
+import {
+  createCartAndSetCookie,
+  redirectToCheckout,
+  setCartIdFromParam,
+  updateItemVariant,
+} from "./actions";
 import { useCart } from "./cart-context";
 import { DeleteItemButton } from "./delete-item-button";
 import { EditItemQuantityButton } from "./edit-item-quantity-button";
@@ -34,7 +49,11 @@ function LineShippingSelector({
   optimisticUpdate,
 }: {
   item: CartItem;
-  optimisticUpdate: (lineId: string, variant: ProductVariant, product: Product) => void;
+  optimisticUpdate: (
+    lineId: string,
+    variant: ProductVariant,
+    product: Product,
+  ) => void;
 }) {
   const [message, formAction] = useActionState(updateItemVariant, null);
 
@@ -60,7 +79,9 @@ function LineShippingSelector({
 
   return (
     <div className="mb-2 mx-7">
-      <h3 className="text-sm font-semibold mb-2 text-yellow-600">Seleccione el tipo de envío:</h3>
+      <h3 className="text-sm font-semibold mb-2 text-yellow-600">
+        Seleccione el tipo de envío:
+      </h3>
       <div className="mx-4">
         <div className="flex flex-col gap-4">
           <label className="flex items-center gap-2">
@@ -87,7 +108,9 @@ function LineShippingSelector({
           </label>
         </div>
       </div>
-      <p aria-live="polite" className="sr-only" role="status">{message}</p>
+      <p aria-live="polite" className="sr-only" role="status">
+        {message}
+      </p>
     </div>
   );
 }
@@ -96,7 +119,26 @@ type MerchandiseSearchParams = {
   [key: string]: string;
 };
 
-export default function CartModal({isWhite=false}) {
+type BranchOption = {
+  id: string;
+  name: string;
+  address?: string;
+};
+
+const CART_BRANCHES: BranchOption[] = [
+  {
+    id: "1",
+    name: "NHS",
+    address: "Av Niños Héroes Esquina, Ignacio Torres #1050",
+  },
+  { id: "2", name: "TEC", address: "Av Tecnológico #7, La Frontera" },
+  { id: "3", name: "BJZ", address: "Av. Benito Juárez #365, La Gloria" },
+  { id: "4", name: "CON", address: "Av. Constitución #1837, Parque Royal" },
+  { id: "5", name: "REY", address: "Av. Enrique Corona Morfin #422" },
+  { id: "6", name: "MAN", address: "Boulevard Miguel de la Madrid #11386" },
+];
+
+export default function CartModal({ isWhite = false }) {
   const { cart, updateCartItem, updateCartItemVariant } = useCart();
   const router = useRouter();
   const pathname = usePathname();
@@ -107,10 +149,13 @@ export default function CartModal({isWhite=false}) {
   const [autoOpenService, setAutoOpenService] = useState(false);
   const [isTriggerVisible, setIsTriggerVisible] = useState(false);
   const quantityRef = useRef(cart?.totalQuantity);
-  const [shippingType, setShippingType] = useState<string>("store");
+  const [selectedBranchId, setSelectedBranchId] = useState<string>("");
   const modalId = useId();
   const [activeId, setActiveId] = useState<string | null>(activeCartModalId);
   const isActive = activeId === modalId;
+  const selectedBranch = CART_BRANCHES.find(
+    (branch) => branch.id === selectedBranchId,
+  );
 
   useEffect(() => {
     const listener = (id: string | null) => setActiveId(id);
@@ -358,11 +403,13 @@ export default function CartModal({isWhite=false}) {
                                     width={64}
                                     height={64}
                                     alt={
-                                      item.merchandise?.product?.featuredImage?.altText ||
+                                      item.merchandise?.product?.featuredImage
+                                        ?.altText ||
                                       item.merchandise.product.title
                                     }
                                     src={
-                                      item.merchandise?.product?.featuredImage?.url
+                                      item.merchandise?.product?.featuredImage
+                                        ?.url
                                     }
                                   />
                                 </div>
@@ -386,15 +433,22 @@ export default function CartModal({isWhite=false}) {
                               </div>
                               <div className="flex h-16 flex-col justify-between">
                                 {(() => {
-                                  const productAny = (item?.merchandise?.product ?? {}) as any;
+                                  const productAny = (item?.merchandise
+                                    ?.product ?? {}) as any;
                                   const fallbackAmount =
-                                    productAny?.priceRange?.minVariantPrice?.amount;
+                                    productAny?.priceRange?.minVariantPrice
+                                      ?.amount;
                                   const fallbackCurrency =
-                                    productAny?.priceRange?.minVariantPrice?.currencyCode;
+                                    productAny?.priceRange?.minVariantPrice
+                                      ?.currencyCode;
                                   const amount =
-                                    item?.cost?.totalAmount?.amount || fallbackAmount || "0";
+                                    item?.cost?.totalAmount?.amount ||
+                                    fallbackAmount ||
+                                    "0";
                                   const currencyCode =
-                                    item?.cost?.totalAmount?.currencyCode || fallbackCurrency || "MXN";
+                                    item?.cost?.totalAmount?.currencyCode ||
+                                    fallbackCurrency ||
+                                    "MXN";
                                   return (
                                     <Price
                                       className="flex justify-end space-y-2 text-right text-sm"
@@ -422,7 +476,10 @@ export default function CartModal({isWhite=false}) {
                                 </div>
                               </div>
                             </div>
-                            <LineShippingSelector item={item} optimisticUpdate={updateCartItemVariant} />
+                            <LineShippingSelector
+                              item={item}
+                              optimisticUpdate={updateCartItemVariant}
+                            />
                           </li>
                         );
                       })}
@@ -436,6 +493,51 @@ export default function CartModal({isWhite=false}) {
                         currencyCode={cart.cost.totalTaxAmount.currencyCode}
                       />
                     </div> */}
+                    
+                    <div className="mb-3 border-b border-neutral-200 pb-3 pt-1 dark:border-neutral-700">
+                      <Listbox
+                        value={selectedBranchId}
+                        onChange={setSelectedBranchId}
+                      >
+                        <div className="relative w-full">
+                          <Listbox.Button className="flex w-full items-center justify-between gap-3 rounded-sm border border-neutral-300 bg-white px-3 py-2 text-left text-xs text-neutral-700 hover:border-yellow-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-900 dark:text-white">
+                            <span
+                              className={clsx(
+                                "truncate",
+                                selectedBranch
+                                  ? "text-neutral-700 dark:text-white"
+                                  : "text-neutral-400",
+                              )}
+                            >
+                              {selectedBranch
+                                ? `${selectedBranch.name}${selectedBranch.address ? ` — ${selectedBranch.address}` : ""}`
+                                : "Seleccionar sucursal"}
+                            </span>
+                            <ChevronUpDownIcon className="h-4 w-4 text-neutral-400" />
+                          </Listbox.Button>
+                          <Listbox.Options className="absolute left-0 top-full z-30 mt-1 max-h-56 w-full overflow-auto rounded-sm border border-neutral-300 bg-white shadow-[0_8px_24px_rgba(0,0,0,0.15)] dark:border-neutral-700 dark:bg-neutral-900">
+                            {CART_BRANCHES.map((branch) => (
+                              <Listbox.Option
+                                key={branch.id}
+                                value={branch.id}
+                                className={({ active, selected }) =>
+                                  clsx(
+                                    "cursor-pointer px-3 py-2 text-xs transition",
+                                    active
+                                      ? "bg-yellow-400 text-black"
+                                      : "text-neutral-700 dark:text-white",
+                                    selected && "font-semibold",
+                                  )
+                                }
+                              >
+                                {branch.name}
+                                {branch.address ? ` — ${branch.address}` : ""}
+                              </Listbox.Option>
+                            ))}
+                          </Listbox.Options>
+                        </div>
+                      </Listbox>
+                    </div>
                     <div className="mb-3 flex items-center justify-between border-b border-neutral-200 pb-1 pt-1 dark:border-neutral-700">
                       <p>Tipo de envío</p>
                       <p className="text-right">GRATIS</p>
@@ -453,12 +555,11 @@ export default function CartModal({isWhite=false}) {
                     <form action={redirectToCheckout}>
                       <CheckoutButton />
                     </form>
-                    <ServiceModal
+                    {/* <ServiceModal
                       autoOpen={autoOpenService}
                       quoteIdFromQuery={quoteIdFromQuery}
-                    ></ServiceModal>
+                    ></ServiceModal> */}
                   </div>
-      
                 </div>
               )}
             </Dialog.Panel>
