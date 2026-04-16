@@ -42,7 +42,7 @@ export function ProductDescription({
           </div>
         </div>
       </div>
-
+{/*  */}
       <div className="flex lg:flex-row ">
         <VariantSelector
           options={product.options}

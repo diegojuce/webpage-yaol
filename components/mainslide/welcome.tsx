@@ -1,10 +1,13 @@
 "use client";
 
+import { DirectionsCarFilled } from "@mui/icons-material";
 import clsx from "clsx";
+import LlantaLupaIcon from "components/icons/llanta-lupa";
 import { useEffect, useRef, useState } from "react";
 import { useModal } from "../hooks/use-modal";
 import { FullscreenModal } from "../ui/fullscreen-modal";
 import { WelcomeModalContent } from "./welcome-modal-content";
+
 
 // Coloca aquí las rutas de tus videos
 const VIDEO_SOURCES = [
@@ -226,14 +229,29 @@ export default function Welcome() {
               </button>
             </div>
             <div className="pointer-events-auto flex w-full px-6 pt-2 md:px-40 lg:px-60">
-              <div className="flex h-15 p-2 md:h-20 w-full items-center  justify-start rounded-full border border-white/25 bg-white/95">
+              <div className="flex h-15 p-2 md:h-20 w-full items-center justify-between rounded-full border border-white/25 bg-white/95">
+                <div className="hidden md:flex items-center justify-end bg-black p-4 rounded-full flex gap-4 ">
+                <div className="flex items-center gap-4 group ">
+                <span className="ml-2 text-sm font-medium text-white group-hover:text-[#FFC600] ">Buscar por Modelo de Auto</span>
+                <DirectionsCarFilled fontSize="large" className="text-white group-hover:text-[#FFC600] "/ >
+                </div>
+                <div className="border-r-2 border-white h-7"></div>
+                <div className="flex items-center gap-4 group">
+                <span className="ml-2 text-sm font-medium text-white group-hover:text-[#FFC600]">Buscar por tamaño de llanta</span>
+                <LlantaLupaIcon
+                  aria-label="Buscar por medida"
+                  className="h-6 w-6 text-white group-hover:text-[#FFC600]"
+                />
+                </div>
+                </div>
                 <button
                   type="button"
                   onClick={openModal}
                   className="flex items-center justify-center h-full rounded-full border border-black bg-black p-5 text-sm font-semibold text-white transition hover:bg-white hover:text-black focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2"
                 >
-                  Buscar llantas
+                  Buscar →
                 </button>
+                
               </div>
             </div>
           </div>

@@ -1,4 +1,5 @@
 import { Relevantes } from "components/grid/relevantes";
+import HomepageLogoLoader from "components/home/homepage-logo-loader";
 import Footer from "components/layout/footer";
 import Welcome from "components/mainslide/welcome";
 import { getProducts } from "lib/shopify";
@@ -14,9 +15,9 @@ export const metadata = {
 };
 
 const SERVICES = [
-  { 
-    title: "AFINACIÓN", 
-    subtitle: "MAYOR Y MENOR", 
+  {
+    title: "AFINACIÓN",
+    subtitle: "MAYOR Y MENOR",
     icon: (
       <Image
         src="/Recurso 3.svg"
@@ -26,10 +27,9 @@ const SERVICES = [
         priority
       />
     ),
-    
-  
   },
-  { title: "VENTA Y MONTAJE", 
+  {
+    title: "VENTA Y MONTAJE",
     subtitle: "DE LLANTAS",
     icon: (
       <Image
@@ -39,11 +39,11 @@ const SERVICES = [
         height={64}
         priority
       />
-    ), 
-  
+    ),
   },
-  { title: "ALINEACIÓN 3D", 
-    subtitle: "Y ESCANTILLÓN", 
+  {
+    title: "ALINEACIÓN 3D",
+    subtitle: "Y ESCANTILLÓN",
     icon: (
       <Image
         src="/Recurso 5.svg"
@@ -52,11 +52,11 @@ const SERVICES = [
         height={64}
         priority
       />
-    ), 
-  
+    ),
   },
-  { title: "SUSPENSIÓN", 
-    subtitle: "Y AMORTIGUADORES", 
+  {
+    title: "SUSPENSIÓN",
+    subtitle: "Y AMORTIGUADORES",
     icon: (
       <Image
         src="/Recurso 6.svg"
@@ -65,10 +65,11 @@ const SERVICES = [
         height={64}
         priority
       />
-    ), 
+    ),
   },
-  { title: "RECARGA", 
-    subtitle: "DE NITRÓGENO", 
+  {
+    title: "RECARGA",
+    subtitle: "DE NITRÓGENO",
     icon: (
       <Image
         src="/Recurso 7.svg"
@@ -77,10 +78,11 @@ const SERVICES = [
         height={64}
         priority
       />
-    ), 
+    ),
   },
-  { title: "FRENOS", 
-    subtitle: "Y BALATAS", 
+  {
+    title: "FRENOS",
+    subtitle: "Y BALATAS",
     icon: (
       <Image
         src="/Recurso 8.svg"
@@ -89,9 +91,10 @@ const SERVICES = [
         height={64}
         priority
       />
-    ), 
+    ),
   },
-  { title: "BALANCEO", 
+  {
+    title: "BALANCEO",
     subtitle: "PRO",
     icon: (
       <Image
@@ -101,7 +104,7 @@ const SERVICES = [
         height={64}
         priority
       />
-    ),  
+    ),
   },
 ];
 
@@ -116,8 +119,9 @@ export default async function HomePage() {
 
   return (
     <>
+      <HomepageLogoLoader />
       <Welcome />
-      <Relevantes/>
+      <Relevantes />
       {/* <ThreeItemGrid /> */}
       {/* <Carousel /> */}
       {/* <section
