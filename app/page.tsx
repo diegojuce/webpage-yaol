@@ -1,5 +1,4 @@
 import { Relevantes } from "components/grid/relevantes";
-import HomepageLoaderGate from "components/home/homepage-loader-gate";
 import Footer from "components/layout/footer";
 import Welcome from "components/mainslide/welcome";
 import { getProducts } from "lib/shopify";
@@ -119,11 +118,9 @@ export default async function HomePage() {
 
   return (
     <>
-      <HomepageLoaderGate>
-        <Welcome />
-        <Relevantes />
-        <Footer />
-      </HomepageLoaderGate>
+      <Welcome />
+      <Relevantes />
+      <Footer />
       {/* <ThreeItemGrid /> */}
       {/* <Carousel /> */}
       {/* <section

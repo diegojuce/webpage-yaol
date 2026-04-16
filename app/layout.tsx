@@ -1,4 +1,5 @@
 import { CartProvider } from "components/cart/cart-context";
+import HomepageLoaderGate from "components/home/homepage-loader-gate";
 import { Navbar } from "components/layout/navbar";
 import { WelcomeToast } from "components/welcome-toast";
 import { getCart } from "lib/shopify";
@@ -7,7 +8,6 @@ import { Fjalla_One, Geist, Staatliches } from "next/font/google";
 import { ReactNode } from "react";
 import { Toaster } from "sonner";
 import "./globals.css";
-
 
 const { SITE_NAME } = process.env;
 const fjallaOne = Fjalla_One({
@@ -62,13 +62,15 @@ export default async function RootLayout({
     >
       <body className="bg-[#1D1D1D] text-white selection:bg-teal-300 dark:bg-[#1D1D1D] dark:text-white dark:selection:bg-pink-500 dark:selection:text-white">
         <CartProvider cartPromise={cart}>
-          {/* <Header /> */}
-          <Navbar />
-          <main>
-            {children}
-            <Toaster closeButton />
-            <WelcomeToast />
-          </main>
+          <HomepageLoaderGate>
+            {/* <Header /> */}
+            <Navbar />
+            <main>
+              {children}
+              <Toaster closeButton />
+              <WelcomeToast />
+            </main>
+          </HomepageLoaderGate>
         </CartProvider>
       </body>
     </html>
