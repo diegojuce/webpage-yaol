@@ -1,5 +1,5 @@
 import { Relevantes } from "components/grid/relevantes";
-import HomepageLogoLoader from "components/home/homepage-logo-loader";
+import HomepageLoaderGate from "components/home/homepage-loader-gate";
 import Footer from "components/layout/footer";
 import Welcome from "components/mainslide/welcome";
 import { getProducts } from "lib/shopify";
@@ -119,9 +119,11 @@ export default async function HomePage() {
 
   return (
     <>
-      <HomepageLogoLoader />
-      <Welcome />
-      <Relevantes />
+      <HomepageLoaderGate>
+        <Welcome />
+        <Relevantes />
+        <Footer />
+      </HomepageLoaderGate>
       {/* <ThreeItemGrid /> */}
       {/* <Carousel /> */}
       {/* <section
@@ -150,7 +152,6 @@ export default async function HomePage() {
           ))}
         </div>
       </div> */}
-      <Footer />
     </>
   );
 }

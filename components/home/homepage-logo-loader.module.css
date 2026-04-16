@@ -1,7 +1,7 @@
 .overlay {
   position: fixed;
   inset: 0;
-  z-index: 120;
+  z-index: 9999;
   display: grid;
   place-items: center;
   background: radial-gradient(1100px 420px at 50% 18%, #1c1c1c, #090909 60%);

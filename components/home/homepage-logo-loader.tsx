@@ -1,7 +1,7 @@
 "use client";
 
 import Script from "next/script";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import styles from "./homepage-logo-loader.module.css";
 
 const WHEEL_ICON_SRC = "/llanta_icon.svg";
@@ -35,10 +35,24 @@ type gsapTimeline = {
   kill: () => void;
 };
 
-export default function HomepageLogoLoader() {
+type HomepageLogoLoaderProps = {
+  onFinish?: () => void;
+};
+
+export default function HomepageLogoLoader({
+  onFinish,
+}: HomepageLogoLoaderProps) {
   const [isVisible, setIsVisible] = useState(true);
   const [isGsapReady, setIsGsapReady] = useState(false);
   const [hasWheelIconError, setHasWheelIconError] = useState(false);
+  const hasFinishedRef = useRef(false);
+
+  const finishLoader = useCallback(() => {
+    if (hasFinishedRef.current) return;
+    hasFinishedRef.current = true;
+    onFinish?.();
+    setIsVisible(false);
+  }, [onFinish]);
 
   const overlayRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<HTMLDivElement>(null);
@@ -61,16 +75,16 @@ export default function HomepageLogoLoader() {
   useEffect(() => {
     if (!isVisible || isGsapReady) return;
     const fallback = window.setTimeout(() => {
-      setIsVisible(false);
+      finishLoader();
     }, 4000);
 
     return () => window.clearTimeout(fallback);
-  }, [isVisible, isGsapReady]);
+  }, [finishLoader, isVisible, isGsapReady]);
 
   useEffect(() => {
     if (!isVisible || !isGsapReady) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      setIsVisible(false);
+      finishLoader();
       return;
     }
 
@@ -101,7 +115,7 @@ export default function HomepageLogoLoader() {
       !spokes ||
       !hub
     ) {
-      setIsVisible(false);
+      finishLoader();
       return;
     }
 
@@ -142,7 +156,7 @@ export default function HomepageLogoLoader() {
           autoAlpha: 0,
           duration: 0.45,
           ease: "power2.out",
-          onComplete: () => setIsVisible(false),
+          onComplete: finishLoader,
         });
       },
     });
@@ -214,7 +228,7 @@ export default function HomepageLogoLoader() {
     revealLogo();
 
     return () => timeline.kill();
-  }, [hasWheelIconError, isGsapReady, isVisible]);
+  }, [finishLoader, hasWheelIconError, isGsapReady, isVisible]);
 
   if (!isVisible) return null;
 
