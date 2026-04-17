@@ -78,7 +78,6 @@ function SelectField({
   disabled,
 }: SelectFieldProps) {
   const [query, setQuery] = useState("");
-  const [isMobile, setIsMobile] = useState(false);
   const [openUpward, setOpenUpward] = useState(false);
   const [optionsMaxHeight, setOptionsMaxHeight] = useState(
     COMBOBOX_DEFAULT_MAX_HEIGHT,
@@ -108,20 +107,6 @@ function SelectField({
     setOptionsMaxHeight(
       Math.min(COMBOBOX_DEFAULT_MAX_HEIGHT, Math.floor(availableSpace)),
     );
-  }, []);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-
-    const mediaQuery = window.matchMedia("(max-width: 767px)");
-    const updateIsMobile = () => setIsMobile(mediaQuery.matches);
-
-    updateIsMobile();
-    mediaQuery.addEventListener("change", updateIsMobile);
-
-    return () => {
-      mediaQuery.removeEventListener("change", updateIsMobile);
-    };
   }, []);
 
   useEffect(() => {
@@ -199,11 +184,7 @@ function SelectField({
               displayValue={(selected: string) =>
                 optionLabelByValue.get(selected) ?? selected ?? ""
               }
-              onChange={(event) => {
-                if (!isMobile) {
-                  setQuery(event.target.value);
-                }
-              }}
+              onChange={(event) => setQuery(event.target.value)}
               onFocus={updateDropdownPlacement}
               onClick={updateDropdownPlacement}
               onKeyDown={(event) => {
@@ -213,8 +194,7 @@ function SelectField({
               }}
               placeholder={placeholder}
               autoComplete="off"
-              readOnly={isMobile || Boolean(disabled)}
-              inputMode={isMobile ? "none" : undefined}
+              readOnly={Boolean(disabled)}
             />
             <Combobox.Button
               data-combobox-toggle="true"
