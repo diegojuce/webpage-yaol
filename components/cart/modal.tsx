@@ -194,15 +194,15 @@ export default function CartModal({ isWhite = false }) {
     }
   }, [activeId, isTriggerVisible, modalId]);
 
-  useEffect(() => {
-    if (isActive && !isTriggerVisible) {
-      setActiveCartModalId(null);
-    }
-  }, [isActive, isTriggerVisible]);
+  const activateModal = () => {
+    // Keep local state in sync so the first click can open immediately.
+    setActiveId(modalId);
+    setActiveCartModalId(modalId);
+  };
 
   const openCart = () => {
     if (!isActive) {
-      setActiveCartModalId(modalId);
+      activateModal();
     }
     setIsOpen(true);
   };
@@ -299,7 +299,7 @@ export default function CartModal({ isWhite = false }) {
     }
 
     if (!isActive) {
-      setActiveCartModalId(modalId);
+      activateModal();
     }
     setIsOpen(true);
     setAutoOpenService(true);
