@@ -3,29 +3,44 @@
 import { Combobox } from "@headlessui/react";
 import { ChevronUpDownIcon } from "@heroicons/react/24/outline";
 import clsx from "clsx";
+import {
+  fetchVehicleMakes,
+  fetchVehicleModels,
+  fetchVehicleTires,
+  fetchVehicleYears,
+  type VehicleMakeOption,
+  type VehicleModelOption,
+  type VehicleYearOption,
+} from "lib/vehicle-fitment-client";
 import { useRouter } from "next/navigation";
 import {
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
   type MouseEvent,
 } from "react";
+import { toast } from "sonner";
 
 type SearchTab = "measure" | "vehicle";
+
+type SelectOption = {
+  value: string;
+  label: string;
+};
 
 const createRange = (start: number, end: number, step: number): string[] =>
   Array.from({ length: Math.floor((end - start) / step) + 1 }, (_, index) =>
     String(start + index * step),
   );
 
-const MEASURE_WIDTH_OPTIONS = createRange(135, 325, 10);
-const MEASURE_HEIGHT_OPTIONS = createRange(30, 90, 5);
-const MEASURE_RIM_OPTIONS = createRange(13, 25, 1);
+const toSelectOptions = (values: string[]): SelectOption[] =>
+  values.map((value) => ({ value, label: value }));
 
-const CAR_BRAND_OPTIONS = ["Toyota", "Nissan", "Honda", "Mazda"];
-const CAR_MODEL_OPTIONS = ["Corolla", "Sentra", "Civic", "Mazda 3"];
-const CAR_YEAR_OPTIONS = createRange(2015, 2026, 1);
+const MEASURE_WIDTH_OPTIONS = toSelectOptions(createRange(135, 325, 10));
+const MEASURE_HEIGHT_OPTIONS = toSelectOptions(createRange(30, 90, 5));
+const MEASURE_RIM_OPTIONS = toSelectOptions(createRange(13, 25, 1));
 const COMBOBOX_DEFAULT_MAX_HEIGHT = 256;
 const VIEWPORT_EDGE_PADDING = 12;
 
@@ -33,8 +48,9 @@ type SelectFieldProps = {
   label: string;
   value: string;
   placeholder: string;
-  options: string[];
+  options: SelectOption[];
   onChange: (value: string) => void;
+  disabled?: boolean;
 };
 
 function SelectField({
@@ -43,6 +59,7 @@ function SelectField({
   placeholder,
   options,
   onChange,
+  disabled,
 }: SelectFieldProps) {
   const [query, setQuery] = useState("");
   const [isMobile, setIsMobile] = useState(false);
@@ -52,6 +69,11 @@ function SelectField({
   );
   const inputRef = useRef<HTMLInputElement | null>(null);
   const fieldRef = useRef<HTMLDivElement | null>(null);
+
+  const optionLabelByValue = useMemo(
+    () => new Map(options.map((option) => [option.value, option.label])),
+    [options],
+  );
 
   const updateDropdownPlacement = useCallback(() => {
     if (typeof window === "undefined" || !fieldRef.current) return;
@@ -104,10 +126,14 @@ function SelectField({
 
   const normalizedQuery = query.trim().toLowerCase();
   const filteredOptions = normalizedQuery
-    ? options.filter((option) => option.toLowerCase().includes(normalizedQuery))
+    ? options.filter((option) =>
+        option.label.toLowerCase().includes(normalizedQuery),
+      )
     : options;
 
   const handleContainerClick = (event: MouseEvent<HTMLDivElement>) => {
+    if (disabled) return;
+
     const target = event.target as HTMLElement;
 
     if (target.closest("[data-combobox-input='true']")) {
@@ -133,6 +159,7 @@ function SelectField({
         }}
         onClose={() => setQuery("")}
         immediate
+        disabled={disabled}
       >
         {() => (
           <div
@@ -141,7 +168,11 @@ function SelectField({
             onMouseDownCapture={updateDropdownPlacement}
           >
             <div
-              className="group flex w-full items-center justify-between gap-3 rounded-2xl border bg-neutral-200 px-4 py-3 text-left text-sm text-white hover:border-yellow-400"
+              className={clsx(
+                "group flex w-full items-center justify-between gap-3 rounded-2xl border bg-neutral-200 px-4 py-3 text-left text-sm text-white hover:border-yellow-400",
+                disabled &&
+                  "cursor-not-allowed bg-neutral-100 text-neutral-400",
+              )}
               onClick={handleContainerClick}
             >
               <Combobox.Input
@@ -149,9 +180,13 @@ function SelectField({
                 data-combobox-input="true"
                 className={clsx(
                   "w-full appearance-none border-none bg-transparent text-sm outline-none ring-0 group-hover:placeholder:text-yellow-600 focus:!border-none focus:!outline-none focus:!ring-0 focus:placeholder:text-neutral-600 focus-visible:!outline-none focus-visible:!ring-0 focus-visible:!ring-offset-0",
-                  value ? "text-black" : "text-black",
+                  disabled
+                    ? "cursor-not-allowed text-neutral-400"
+                    : "text-black",
                 )}
-                displayValue={(selected: string) => selected || ""}
+                displayValue={(selected: string) =>
+                  optionLabelByValue.get(selected) ?? selected ?? ""
+                }
                 onChange={(event) => {
                   if (!isMobile) {
                     setQuery(event.target.value);
@@ -166,7 +201,7 @@ function SelectField({
                 }}
                 placeholder={placeholder}
                 autoComplete="off"
-                readOnly={isMobile}
+                readOnly={isMobile || Boolean(disabled)}
                 inputMode={isMobile ? "none" : undefined}
               />
               <Combobox.Button
@@ -186,8 +221,8 @@ function SelectField({
               {filteredOptions.length > 0 ? (
                 filteredOptions.map((option) => (
                   <Combobox.Option
-                    key={`${label}-${option}`}
-                    value={option}
+                    key={`${label}-${option.value}`}
+                    value={option.value}
                     className={({ active, selected }) =>
                       clsx(
                         "cursor-pointer px-4 py-2 text-sm transition",
@@ -196,7 +231,7 @@ function SelectField({
                       )
                     }
                   >
-                    {option}
+                    {option.label}
                   </Combobox.Option>
                 ))
               ) : (
@@ -222,13 +257,218 @@ export function WelcomeModalContent() {
   const [carBrand, setCarBrand] = useState("");
   const [carModel, setCarModel] = useState("");
   const [carYear, setCarYear] = useState("");
+  const [carBrandOptions, setCarBrandOptions] = useState<VehicleMakeOption[]>(
+    [],
+  );
+  const [carModelOptions, setCarModelOptions] = useState<VehicleModelOption[]>(
+    [],
+  );
+  const [carYearOptions, setCarYearOptions] = useState<VehicleYearOption[]>([]);
+
+  const [isLoadingMakes, setIsLoadingMakes] = useState(false);
+  const [isLoadingModels, setIsLoadingModels] = useState(false);
+  const [isLoadingYears, setIsLoadingYears] = useState(false);
+  const [isSearchingVehicle, setIsSearchingVehicle] = useState(false);
+  const [hasAttemptedMakesLoad, setHasAttemptedMakesLoad] = useState(false);
+
+  const loadMakes = useCallback(async (silent = false) => {
+    setIsLoadingMakes(true);
+
+    try {
+      const makes = await fetchVehicleMakes();
+      setCarBrandOptions(makes);
+    } catch (error) {
+      if (!silent) {
+        const message =
+          error instanceof Error
+            ? error.message
+            : "No fue posible cargar las marcas.";
+        toast.error(message);
+      }
+    } finally {
+      setIsLoadingMakes(false);
+    }
+  }, []);
+
+  const loadModels = useCallback(async (make: string, silent = false) => {
+    if (!make) {
+      setCarModelOptions([]);
+      return;
+    }
+
+    setIsLoadingModels(true);
+
+    try {
+      const models = await fetchVehicleModels(make);
+      setCarModelOptions(models);
+    } catch (error) {
+      setCarModelOptions([]);
+      if (!silent) {
+        const message =
+          error instanceof Error
+            ? error.message
+            : "No fue posible cargar los modelos.";
+        toast.error(message);
+      }
+    } finally {
+      setIsLoadingModels(false);
+    }
+  }, []);
+
+  const loadYears = useCallback(
+    async (make: string, model: string, silent = false) => {
+      if (!make || !model) {
+        setCarYearOptions([]);
+        return;
+      }
+
+      setIsLoadingYears(true);
+
+      try {
+        const years = await fetchVehicleYears(make, model);
+        setCarYearOptions(years);
+      } catch (error) {
+        setCarYearOptions([]);
+        if (!silent) {
+          const message =
+            error instanceof Error
+              ? error.message
+              : "No fue posible cargar los años.";
+          toast.error(message);
+        }
+      } finally {
+        setIsLoadingYears(false);
+      }
+    },
+    [],
+  );
+
+  useEffect(() => {
+    if (activeTab !== "vehicle") return;
+    if (carBrandOptions.length > 0 || isLoadingMakes || hasAttemptedMakesLoad) {
+      return;
+    }
+
+    setHasAttemptedMakesLoad(true);
+    void loadMakes(false);
+  }, [
+    activeTab,
+    carBrandOptions.length,
+    isLoadingMakes,
+    hasAttemptedMakesLoad,
+    loadMakes,
+  ]);
+
+  const handleSetVehicleTab = useCallback(() => {
+    setActiveTab("vehicle");
+
+    if (
+      hasAttemptedMakesLoad &&
+      !isLoadingMakes &&
+      carBrandOptions.length === 0
+    ) {
+      setHasAttemptedMakesLoad(false);
+    }
+  }, [carBrandOptions.length, hasAttemptedMakesLoad, isLoadingMakes]);
+
+  const handleCarBrandChange = useCallback(
+    async (nextBrand: string) => {
+      setCarBrand(nextBrand);
+      setCarModel("");
+      setCarYear("");
+      setCarModelOptions([]);
+      setCarYearOptions([]);
+      await loadModels(nextBrand);
+    },
+    [loadModels],
+  );
+
+  const handleCarModelChange = useCallback(
+    async (nextModel: string) => {
+      setCarModel(nextModel);
+      setCarYear("");
+      setCarYearOptions([]);
+      await loadYears(carBrand, nextModel);
+    },
+    [carBrand, loadYears],
+  );
 
   const canSearchByMeasure = Boolean(width && height && rim);
+  const canSearchByVehicle = Boolean(carBrand && carModel && carYear);
   const formattedMeasure = `${width}/${height} R${rim}`;
+  const vehicleMakesUnavailable =
+    activeTab === "vehicle" &&
+    hasAttemptedMakesLoad &&
+    !isLoadingMakes &&
+    carBrandOptions.length === 0;
 
-  const handleSearch = () => {
-    if (activeTab !== "measure" || !canSearchByMeasure) return;
+  const brandSelectOptions = useMemo<SelectOption[]>(
+    () =>
+      carBrandOptions.map((option) => ({
+        value: option.slug,
+        label: option.name,
+      })),
+    [carBrandOptions],
+  );
+
+  const modelSelectOptions = useMemo<SelectOption[]>(
+    () =>
+      carModelOptions.map((option) => ({
+        value: option.slug,
+        label: option.name,
+      })),
+    [carModelOptions],
+  );
+
+  const yearSelectOptions = useMemo<SelectOption[]>(
+    () =>
+      carYearOptions.map((option) => ({
+        value: option.slug,
+        label: option.name,
+      })),
+    [carYearOptions],
+  );
+
+  const handleSearchByMeasure = () => {
+    if (!canSearchByMeasure) return;
     router.push(`/search?q=${encodeURIComponent(formattedMeasure)}`);
+  };
+
+  const handleSearchByVehicle = async () => {
+    if (!canSearchByVehicle || isSearchingVehicle) return;
+
+    setIsSearchingVehicle(true);
+
+    try {
+      const response = await fetchVehicleTires({
+        make: carBrand,
+        model: carModel,
+        year: carYear,
+      });
+
+      if (!response.sizes?.length) {
+        toast.error(
+          "No encontramos medidas de llanta para ese auto. Intenta con otra combinación.",
+        );
+        return;
+      }
+
+      const nextParams = new URLSearchParams();
+      nextParams.set("by", "vehicle");
+      nextParams.set("make", carBrand);
+      nextParams.set("model", carModel);
+      nextParams.set("year", carYear);
+      nextParams.set("sizes", response.sizes.join(","));
+      router.push(`/search?${nextParams.toString()}`);
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "No fue posible completar la búsqueda por auto.";
+      toast.error(message);
+    } finally {
+      setIsSearchingVehicle(false);
+    }
   };
 
   return (
@@ -262,7 +502,7 @@ export function WelcomeModalContent() {
             </button>
             <button
               type="button"
-              onClick={() => setActiveTab("vehicle")}
+              onClick={handleSetVehicleTab}
               className={clsx(
                 "rounded-2xl w-full border px-4 py-3 text-left text-sm font-semibold transition",
                 activeTab === "vehicle"
@@ -306,33 +546,61 @@ export function WelcomeModalContent() {
                 <SelectField
                   label="Marca"
                   value={carBrand}
-                  placeholder="Selecciona marca"
-                  options={CAR_BRAND_OPTIONS}
-                  onChange={setCarBrand}
+                  placeholder={
+                    isLoadingMakes
+                      ? "Cargando marcas..."
+                      : vehicleMakesUnavailable
+                        ? "Configura WHEEL_SIZE_API_KEY"
+                        : "Selecciona marca"
+                  }
+                  options={brandSelectOptions}
+                  onChange={handleCarBrandChange}
+                  disabled={isLoadingMakes || vehicleMakesUnavailable}
                 />
                 <SelectField
                   label="Modelo"
                   value={carModel}
-                  placeholder="Selecciona modelo"
-                  options={CAR_MODEL_OPTIONS}
-                  onChange={setCarModel}
+                  placeholder={
+                    !carBrand
+                      ? "Selecciona marca primero"
+                      : isLoadingModels
+                        ? "Cargando modelos..."
+                        : "Selecciona modelo"
+                  }
+                  options={modelSelectOptions}
+                  onChange={handleCarModelChange}
+                  disabled={!carBrand || isLoadingModels}
                 />
                 <SelectField
                   label="Año"
                   value={carYear}
-                  placeholder="Selecciona año"
-                  options={CAR_YEAR_OPTIONS}
+                  placeholder={
+                    !carModel
+                      ? "Selecciona modelo primero"
+                      : isLoadingYears
+                        ? "Cargando años..."
+                        : "Selecciona año"
+                  }
+                  options={yearSelectOptions}
                   onChange={setCarYear}
+                  disabled={!carModel || isLoadingYears}
                 />
               </>
             )}
           </div>
 
+          {vehicleMakesUnavailable ? (
+            <p className="mt-4 text-xs text-red-500">
+              El buscador por auto necesita configuracion del servidor (falta
+              `WHEEL_SIZE_API_KEY`).
+            </p>
+          ) : null}
+
           <div className="mt-10">
             {activeTab === "measure" ? (
               <button
                 type="button"
-                onClick={handleSearch}
+                onClick={handleSearchByMeasure}
                 disabled={!canSearchByMeasure}
                 className={clsx(
                   "w-full rounded-full px-6 py-3 text-sm font-semibold transition",
@@ -346,10 +614,16 @@ export function WelcomeModalContent() {
             ) : (
               <button
                 type="button"
-                disabled
-                className="w-full cursor-not-allowed rounded-full bg-neutral-200 px-6 py-3 text-sm font-semibold text-neutral-500"
+                onClick={handleSearchByVehicle}
+                disabled={!canSearchByVehicle || isSearchingVehicle}
+                className={clsx(
+                  "w-full rounded-full px-6 py-3 text-sm font-semibold transition",
+                  canSearchByVehicle && !isSearchingVehicle
+                    ? "bg-black text-white hover:bg-neutral-800"
+                    : "cursor-not-allowed bg-neutral-200 text-neutral-500",
+                )}
               >
-                Buscar (próximamente por auto)
+                {isSearchingVehicle ? "Buscando..." : "Buscar por auto"}
               </button>
             )}
           </div>

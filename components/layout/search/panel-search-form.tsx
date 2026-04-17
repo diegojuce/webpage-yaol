@@ -3,29 +3,44 @@
 import { Combobox } from "@headlessui/react";
 import { ChevronUpDownIcon } from "@heroicons/react/24/outline";
 import clsx from "clsx";
+import {
+  fetchVehicleMakes,
+  fetchVehicleModels,
+  fetchVehicleTires,
+  fetchVehicleYears,
+  type VehicleMakeOption,
+  type VehicleModelOption,
+  type VehicleYearOption,
+} from "lib/vehicle-fitment-client";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
   type MouseEvent,
 } from "react";
+import { toast } from "sonner";
 
 type SearchTab = "measure" | "vehicle";
+
+type SelectOption = {
+  value: string;
+  label: string;
+};
 
 const createRange = (start: number, end: number, step: number): string[] =>
   Array.from({ length: Math.floor((end - start) / step) + 1 }, (_, index) =>
     String(start + index * step),
   );
 
-const MEASURE_WIDTH_OPTIONS = createRange(135, 325, 10);
-const MEASURE_HEIGHT_OPTIONS = createRange(30, 90, 5);
-const MEASURE_RIM_OPTIONS = createRange(13, 25, 1);
+const toSelectOptions = (values: string[]): SelectOption[] =>
+  values.map((value) => ({ value, label: value }));
 
-const CAR_BRAND_OPTIONS = ["Toyota", "Nissan", "Honda", "Mazda"];
-const CAR_MODEL_OPTIONS = ["Corolla", "Sentra", "Civic", "Mazda 3"];
-const CAR_YEAR_OPTIONS = createRange(2015, 2026, 1);
+const MEASURE_WIDTH_OPTIONS = toSelectOptions(createRange(135, 325, 10));
+const MEASURE_HEIGHT_OPTIONS = toSelectOptions(createRange(30, 90, 5));
+const MEASURE_RIM_OPTIONS = toSelectOptions(createRange(13, 25, 1));
 const COMBOBOX_DEFAULT_MAX_HEIGHT = 256;
 const VIEWPORT_EDGE_PADDING = 12;
 
@@ -33,8 +48,9 @@ type SelectFieldProps = {
   label: string;
   value: string;
   placeholder: string;
-  options: string[];
+  options: SelectOption[];
   onChange: (value: string) => void;
+  disabled?: boolean;
 };
 
 function parseMeasure(query: string | null) {
@@ -59,6 +75,7 @@ function SelectField({
   placeholder,
   options,
   onChange,
+  disabled,
 }: SelectFieldProps) {
   const [query, setQuery] = useState("");
   const [isMobile, setIsMobile] = useState(false);
@@ -68,6 +85,11 @@ function SelectField({
   );
   const inputRef = useRef<HTMLInputElement | null>(null);
   const fieldRef = useRef<HTMLDivElement | null>(null);
+
+  const optionLabelByValue = useMemo(
+    () => new Map(options.map((option) => [option.value, option.label])),
+    [options],
+  );
 
   const updateDropdownPlacement = useCallback(() => {
     if (typeof window === "undefined" || !fieldRef.current) return;
@@ -120,10 +142,14 @@ function SelectField({
 
   const normalizedQuery = query.trim().toLowerCase();
   const filteredOptions = normalizedQuery
-    ? options.filter((option) => option.toLowerCase().includes(normalizedQuery))
+    ? options.filter((option) =>
+        option.label.toLowerCase().includes(normalizedQuery),
+      )
     : options;
 
   const handleContainerClick = (event: MouseEvent<HTMLDivElement>) => {
+    if (disabled) return;
+
     const target = event.target as HTMLElement;
 
     if (target.closest("[data-combobox-input='true']")) {
@@ -149,6 +175,7 @@ function SelectField({
         }}
         onClose={() => setQuery("")}
         immediate
+        disabled={disabled}
       >
         <div
           className="relative"
@@ -156,7 +183,10 @@ function SelectField({
           onMouseDownCapture={updateDropdownPlacement}
         >
           <div
-            className="group flex w-full items-center justify-between gap-3 rounded-md border border-neutral-300 bg-white px-3 py-2 text-left text-sm hover:border-yellow-400"
+            className={clsx(
+              "group flex w-full items-center justify-between gap-3 rounded-md border border-neutral-300 bg-white px-3 py-2 text-left text-sm hover:border-yellow-400",
+              disabled && "cursor-not-allowed bg-neutral-100 text-neutral-400",
+            )}
             onClick={handleContainerClick}
           >
             <Combobox.Input
@@ -164,8 +194,11 @@ function SelectField({
               data-combobox-input="true"
               className={clsx(
                 "w-full appearance-none border-none bg-transparent text-sm text-black outline-none ring-0 ring-offset-0 placeholder:text-neutral-500 group-hover:placeholder:text-yellow-600 [box-shadow:none!important] focus:!border-none focus:!outline-none focus:!ring-0 focus:!ring-offset-0 focus:[box-shadow:none!important] focus-visible:!outline-none focus-visible:!ring-0 focus-visible:!ring-offset-0 focus-visible:[box-shadow:none!important]",
+                disabled && "cursor-not-allowed text-neutral-400",
               )}
-              displayValue={(selected: string) => selected || ""}
+              displayValue={(selected: string) =>
+                optionLabelByValue.get(selected) ?? selected ?? ""
+              }
               onChange={(event) => {
                 if (!isMobile) {
                   setQuery(event.target.value);
@@ -180,7 +213,7 @@ function SelectField({
               }}
               placeholder={placeholder}
               autoComplete="off"
-              readOnly={isMobile}
+              readOnly={isMobile || Boolean(disabled)}
               inputMode={isMobile ? "none" : undefined}
             />
             <Combobox.Button
@@ -200,8 +233,8 @@ function SelectField({
             {filteredOptions.length > 0 ? (
               filteredOptions.map((option) => (
                 <Combobox.Option
-                  key={`${label}-${option}`}
-                  value={option}
+                  key={`${label}-${option.value}`}
+                  value={option.value}
                   className={({ active, selected }) =>
                     clsx(
                       "cursor-pointer px-4 py-2 text-sm transition",
@@ -210,7 +243,7 @@ function SelectField({
                     )
                   }
                 >
-                  {option}
+                  {option.label}
                 </Combobox.Option>
               ))
             ) : (
@@ -237,8 +270,111 @@ export default function PanelSearchForm() {
   const [carBrand, setCarBrand] = useState("");
   const [carModel, setCarModel] = useState("");
   const [carYear, setCarYear] = useState("");
+  const [carBrandOptions, setCarBrandOptions] = useState<VehicleMakeOption[]>(
+    [],
+  );
+  const [carModelOptions, setCarModelOptions] = useState<VehicleModelOption[]>(
+    [],
+  );
+  const [carYearOptions, setCarYearOptions] = useState<VehicleYearOption[]>([]);
+
+  const [isLoadingMakes, setIsLoadingMakes] = useState(false);
+  const [isLoadingModels, setIsLoadingModels] = useState(false);
+  const [isLoadingYears, setIsLoadingYears] = useState(false);
+  const [isSearchingVehicle, setIsSearchingVehicle] = useState(false);
+  const [hasAttemptedMakesLoad, setHasAttemptedMakesLoad] = useState(false);
+  const [hasAttemptedModelsLoad, setHasAttemptedModelsLoad] = useState(false);
+  const [hasAttemptedYearsLoad, setHasAttemptedYearsLoad] = useState(false);
+
+  const loadMakes = useCallback(async (silent = false) => {
+    setIsLoadingMakes(true);
+
+    try {
+      const makes = await fetchVehicleMakes();
+      setCarBrandOptions(makes);
+    } catch (error) {
+      if (!silent) {
+        const message =
+          error instanceof Error
+            ? error.message
+            : "No fue posible cargar las marcas.";
+        toast.error(message);
+      }
+    } finally {
+      setIsLoadingMakes(false);
+    }
+  }, []);
+
+  const loadModels = useCallback(async (make: string, silent = false) => {
+    if (!make) {
+      setCarModelOptions([]);
+      return;
+    }
+
+    setIsLoadingModels(true);
+
+    try {
+      const models = await fetchVehicleModels(make);
+      setCarModelOptions(models);
+    } catch (error) {
+      setCarModelOptions([]);
+      if (!silent) {
+        const message =
+          error instanceof Error
+            ? error.message
+            : "No fue posible cargar los modelos.";
+        toast.error(message);
+      }
+    } finally {
+      setIsLoadingModels(false);
+    }
+  }, []);
+
+  const loadYears = useCallback(
+    async (make: string, model: string, silent = false) => {
+      if (!make || !model) {
+        setCarYearOptions([]);
+        return;
+      }
+
+      setIsLoadingYears(true);
+
+      try {
+        const years = await fetchVehicleYears(make, model);
+        setCarYearOptions(years);
+      } catch (error) {
+        setCarYearOptions([]);
+        if (!silent) {
+          const message =
+            error instanceof Error
+              ? error.message
+              : "No fue posible cargar los años.";
+          toast.error(message);
+        }
+      } finally {
+        setIsLoadingYears(false);
+      }
+    },
+    [],
+  );
 
   useEffect(() => {
+    const by = searchParams.get("by");
+    const vehicleMake = searchParams.get("make");
+    const vehicleModel = searchParams.get("model");
+    const vehicleYear = searchParams.get("year");
+
+    if (by === "vehicle" && vehicleMake && vehicleModel && vehicleYear) {
+      setActiveTab("vehicle");
+      setCarBrand(vehicleMake);
+      setCarModel(vehicleModel);
+      setCarYear(vehicleYear);
+      setWidth("");
+      setHeight("");
+      setRim("");
+      return;
+    }
+
     const parsed = parseMeasure(searchParams.get("q"));
     if (!parsed) {
       setWidth("");
@@ -253,15 +389,208 @@ export default function PanelSearchForm() {
     setRim(parsed.rim);
   }, [searchParams]);
 
-  const canSearchByMeasure = Boolean(width && height && rim);
-  const formattedMeasure = `${width}/${height} R${rim}`;
+  useEffect(() => {
+    if (activeTab !== "vehicle") return;
+    if (carBrandOptions.length > 0 || isLoadingMakes || hasAttemptedMakesLoad) {
+      return;
+    }
 
-  const handleSearch = () => {
-    if (activeTab !== "measure" || !canSearchByMeasure) return;
+    setHasAttemptedMakesLoad(true);
+    void loadMakes(false);
+  }, [
+    activeTab,
+    carBrandOptions.length,
+    isLoadingMakes,
+    hasAttemptedMakesLoad,
+    loadMakes,
+  ]);
+
+  useEffect(() => {
+    if (!carBrand) {
+      setHasAttemptedModelsLoad(false);
+      return;
+    }
+
+    setHasAttemptedModelsLoad(false);
+  }, [carBrand]);
+
+  useEffect(() => {
+    if (activeTab !== "vehicle") return;
+    if (
+      !carBrand ||
+      carModelOptions.length > 0 ||
+      isLoadingModels ||
+      hasAttemptedModelsLoad
+    ) {
+      return;
+    }
+
+    setHasAttemptedModelsLoad(true);
+    void loadModels(carBrand, true);
+  }, [
+    activeTab,
+    carBrand,
+    carModelOptions.length,
+    isLoadingModels,
+    hasAttemptedModelsLoad,
+    loadModels,
+  ]);
+
+  useEffect(() => {
+    if (!carModel) {
+      setHasAttemptedYearsLoad(false);
+      return;
+    }
+
+    setHasAttemptedYearsLoad(false);
+  }, [carModel]);
+
+  useEffect(() => {
+    if (activeTab !== "vehicle") return;
+    if (
+      !carBrand ||
+      !carModel ||
+      carYearOptions.length > 0 ||
+      isLoadingYears ||
+      hasAttemptedYearsLoad
+    ) {
+      return;
+    }
+
+    setHasAttemptedYearsLoad(true);
+    void loadYears(carBrand, carModel, true);
+  }, [
+    activeTab,
+    carBrand,
+    carModel,
+    carYearOptions.length,
+    isLoadingYears,
+    hasAttemptedYearsLoad,
+    loadYears,
+  ]);
+
+  const handleCarBrandChange = useCallback(
+    async (nextBrand: string) => {
+      setCarBrand(nextBrand);
+      setCarModel("");
+      setCarYear("");
+      setCarModelOptions([]);
+      setCarYearOptions([]);
+      setHasAttemptedModelsLoad(true);
+      setHasAttemptedYearsLoad(false);
+      await loadModels(nextBrand);
+    },
+    [loadModels],
+  );
+
+  const handleCarModelChange = useCallback(
+    async (nextModel: string) => {
+      setCarModel(nextModel);
+      setCarYear("");
+      setCarYearOptions([]);
+      setHasAttemptedYearsLoad(true);
+      await loadYears(carBrand, nextModel);
+    },
+    [carBrand, loadYears],
+  );
+
+  const handleSetVehicleTab = useCallback(() => {
+    setActiveTab("vehicle");
+
+    if (
+      hasAttemptedMakesLoad &&
+      !isLoadingMakes &&
+      carBrandOptions.length === 0
+    ) {
+      setHasAttemptedMakesLoad(false);
+    }
+  }, [carBrandOptions.length, hasAttemptedMakesLoad, isLoadingMakes]);
+
+  const canSearchByMeasure = Boolean(width && height && rim);
+  const canSearchByVehicle = Boolean(carBrand && carModel && carYear);
+  const formattedMeasure = `${width}/${height} R${rim}`;
+  const vehicleMakesUnavailable =
+    activeTab === "vehicle" &&
+    hasAttemptedMakesLoad &&
+    !isLoadingMakes &&
+    carBrandOptions.length === 0;
+
+  const brandSelectOptions = useMemo<SelectOption[]>(
+    () =>
+      carBrandOptions.map((option) => ({
+        value: option.slug,
+        label: option.name,
+      })),
+    [carBrandOptions],
+  );
+
+  const modelSelectOptions = useMemo<SelectOption[]>(
+    () =>
+      carModelOptions.map((option) => ({
+        value: option.slug,
+        label: option.name,
+      })),
+    [carModelOptions],
+  );
+
+  const yearSelectOptions = useMemo<SelectOption[]>(
+    () =>
+      carYearOptions.map((option) => ({
+        value: option.slug,
+        label: option.name,
+      })),
+    [carYearOptions],
+  );
+
+  const handleSearchByMeasure = () => {
+    if (!canSearchByMeasure) return;
 
     const nextParams = new URLSearchParams(searchParams.toString());
     nextParams.set("q", formattedMeasure);
+    nextParams.delete("by");
+    nextParams.delete("make");
+    nextParams.delete("model");
+    nextParams.delete("year");
+    nextParams.delete("sizes");
     router.push(`/search?${nextParams.toString()}`);
+  };
+
+  const handleSearchByVehicle = async () => {
+    if (!canSearchByVehicle || isSearchingVehicle) return;
+
+    setIsSearchingVehicle(true);
+
+    try {
+      const response = await fetchVehicleTires({
+        make: carBrand,
+        model: carModel,
+        year: carYear,
+      });
+
+      if (!response.sizes?.length) {
+        toast.error(
+          "No encontramos medidas de llanta para ese auto. Intenta con otra combinación.",
+        );
+        return;
+      }
+
+      const nextParams = new URLSearchParams(searchParams.toString());
+      nextParams.delete("q");
+      nextParams.set("by", "vehicle");
+      nextParams.set("make", carBrand);
+      nextParams.set("model", carModel);
+      nextParams.set("year", carYear);
+      nextParams.set("sizes", response.sizes.join(","));
+      router.push(`/search?${nextParams.toString()}`);
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "No fue posible completar la búsqueda por auto.";
+      toast.error(message);
+    } finally {
+      setIsSearchingVehicle(false);
+    }
   };
 
   return (
@@ -282,7 +611,7 @@ export default function PanelSearchForm() {
           </button>
           <button
             type="button"
-            onClick={() => setActiveTab("vehicle")}
+            onClick={handleSetVehicleTab}
             className={clsx(
               "rounded-full px-4 py-1 text-xs font-semibold transition",
               activeTab === "vehicle"
@@ -325,33 +654,61 @@ export default function PanelSearchForm() {
             <SelectField
               label="Marca"
               value={carBrand}
-              placeholder="Selecciona marca"
-              options={CAR_BRAND_OPTIONS}
-              onChange={setCarBrand}
+              placeholder={
+                isLoadingMakes
+                  ? "Cargando marcas..."
+                  : vehicleMakesUnavailable
+                    ? "Configura WHEEL_SIZE_API_KEY"
+                    : "Selecciona marca"
+              }
+              options={brandSelectOptions}
+              onChange={handleCarBrandChange}
+              disabled={isLoadingMakes || vehicleMakesUnavailable}
             />
             <SelectField
               label="Modelo"
               value={carModel}
-              placeholder="Selecciona modelo"
-              options={CAR_MODEL_OPTIONS}
-              onChange={setCarModel}
+              placeholder={
+                !carBrand
+                  ? "Selecciona marca primero"
+                  : isLoadingModels
+                    ? "Cargando modelos..."
+                    : "Selecciona modelo"
+              }
+              options={modelSelectOptions}
+              onChange={handleCarModelChange}
+              disabled={!carBrand || isLoadingModels}
             />
             <SelectField
               label="Año"
               value={carYear}
-              placeholder="Selecciona año"
-              options={CAR_YEAR_OPTIONS}
+              placeholder={
+                !carModel
+                  ? "Selecciona modelo primero"
+                  : isLoadingYears
+                    ? "Cargando años..."
+                    : "Selecciona año"
+              }
+              options={yearSelectOptions}
               onChange={setCarYear}
+              disabled={!carModel || isLoadingYears}
             />
           </>
         )}
       </div>
 
+      {vehicleMakesUnavailable ? (
+        <p className="mt-3 text-xs text-red-500">
+          El buscador por auto necesita configuracion del servidor (falta
+          `WHEEL_SIZE_API_KEY`).
+        </p>
+      ) : null}
+
       <div className="mt-4">
         {activeTab === "measure" ? (
           <button
             type="button"
-            onClick={handleSearch}
+            onClick={handleSearchByMeasure}
             disabled={!canSearchByMeasure}
             className={clsx(
               "w-full rounded-md px-4 py-2 text-sm font-semibold transition",
@@ -365,10 +722,16 @@ export default function PanelSearchForm() {
         ) : (
           <button
             type="button"
-            disabled
-            className="w-full cursor-not-allowed rounded-md bg-neutral-200 px-4 py-2 text-sm font-semibold text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400"
+            onClick={handleSearchByVehicle}
+            disabled={!canSearchByVehicle || isSearchingVehicle}
+            className={clsx(
+              "w-full rounded-md px-4 py-2 text-sm font-semibold transition",
+              canSearchByVehicle && !isSearchingVehicle
+                ? "bg-yellow-500 text-white hover:bg-neutral-800 dark:bg-yellow-500 dark:text-black dark:hover:bg-neutral-200"
+                : "cursor-not-allowed bg-neutral-200 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400",
+            )}
           >
-            Buscar (próximamente por auto)
+            {isSearchingVehicle ? "Buscando..." : "Buscar por auto"}
           </button>
         )}
       </div>

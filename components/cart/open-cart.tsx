@@ -11,22 +11,21 @@ export default function OpenCart({
   isWhite?: boolean;
 }) {
   const baseClasses =
-    "relative flex h-11 w-11 items-center justify-center rounded-md border-2 transition-colors";
-  const iconClasses =
-    "h-6 transition-all ease-in-out hover:scale-110";
+    "relative flex h-11 w-11 items-center justify-center rounded-md  transition-colors";
+  const iconClasses = "h-6 transition-all ease-in-out hover:scale-110";
 
   return (
     <div
       className={clsx(
         baseClasses,
-        isWhite ? "border-white text-black" : "border-black text-white"
+        isWhite ? "border-white text-black" : "border-black text-white",
       )}
     >
       <ShoppingCartIcon
         className={clsx(
           iconClasses,
           isWhite ? "text-white" : "text-black",
-          className
+          className,
         )}
       />
 

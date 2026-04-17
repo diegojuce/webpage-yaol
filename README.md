@@ -49,6 +49,12 @@ You will need to use the environment variables [defined in `.env.example`](.env.
 
 > Note: You should not commit your `.env` file or it will expose secrets that will allow others to control your Shopify store.
 
+For the `Por auto` search flow (make/model/year -> tire sizes), configure:
+
+- `WHEEL_SIZE_API_KEY` (required)
+- `WHEEL_SIZE_REGION_DEFAULT` (default: `mxndm`)
+- `WHEEL_SIZE_API_BASE_URL` (optional, default: `https://api.wheel-size.com/v2`)
+
 1. Install Vercel CLI: `npm i -g vercel`
 2. Link local instance with Vercel and GitHub accounts (creates `.vercel` directory): `vercel link`
 3. Download your environment variables: `vercel env pull`
