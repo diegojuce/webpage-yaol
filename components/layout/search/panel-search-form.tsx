@@ -241,15 +241,40 @@ function SelectField({
 export default function PanelSearchForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [activeTab, setActiveTab] = useState<SearchTab>("measure");
+  const initialBy = searchParams.get("by");
+  const initialVehicleMake = searchParams.get("make");
+  const initialVehicleModel = searchParams.get("model");
+  const initialVehicleYear = searchParams.get("year");
+  const hasInitialVehicleSelection = Boolean(
+    initialBy === "vehicle" &&
+      initialVehicleMake &&
+      initialVehicleModel &&
+      initialVehicleYear,
+  );
+  const initialParsedMeasure = parseMeasure(searchParams.get("q"));
+  const [activeTab, setActiveTab] = useState<SearchTab>(
+    hasInitialVehicleSelection ? "vehicle" : "measure",
+  );
 
-  const [width, setWidth] = useState("");
-  const [height, setHeight] = useState("");
-  const [rim, setRim] = useState("");
+  const [width, setWidth] = useState(
+    hasInitialVehicleSelection ? "" : (initialParsedMeasure?.width ?? ""),
+  );
+  const [height, setHeight] = useState(
+    hasInitialVehicleSelection ? "" : (initialParsedMeasure?.height ?? ""),
+  );
+  const [rim, setRim] = useState(
+    hasInitialVehicleSelection ? "" : (initialParsedMeasure?.rim ?? ""),
+  );
 
-  const [carBrand, setCarBrand] = useState("");
-  const [carModel, setCarModel] = useState("");
-  const [carYear, setCarYear] = useState("");
+  const [carBrand, setCarBrand] = useState(
+    hasInitialVehicleSelection ? (initialVehicleMake ?? "") : "",
+  );
+  const [carModel, setCarModel] = useState(
+    hasInitialVehicleSelection ? (initialVehicleModel ?? "") : "",
+  );
+  const [carYear, setCarYear] = useState(
+    hasInitialVehicleSelection ? (initialVehicleYear ?? "") : "",
+  );
   const [carBrandOptions, setCarBrandOptions] = useState<VehicleMakeOption[]>(
     [],
   );
@@ -527,11 +552,12 @@ export default function PanelSearchForm() {
 
     const nextParams = new URLSearchParams(searchParams.toString());
     nextParams.set("q", formattedMeasure);
-    nextParams.delete("by");
+    nextParams.set("by", "measure");
     nextParams.delete("make");
     nextParams.delete("model");
     nextParams.delete("year");
-    nextParams.delete("sizes");
+    nextParams.set("sizes", formattedMeasure);
+    nextParams.set("availableSizes", formattedMeasure);
     router.push(`/search?${nextParams.toString()}`);
   };
 
@@ -561,6 +587,7 @@ export default function PanelSearchForm() {
       nextParams.set("model", carModel);
       nextParams.set("year", carYear);
       nextParams.set("sizes", response.sizes.join(","));
+      nextParams.set("availableSizes", response.sizes.join(","));
       router.push(`/search?${nextParams.toString()}`);
     } catch (error) {
       const message =
@@ -574,7 +601,7 @@ export default function PanelSearchForm() {
   };
 
   return (
-    <article className="mb-3 relative rounded-lg border border-neutral-200 bg-white px-3 pb-3 pt-8 shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
+    <article className=" hidden md:block mb-3 mt-15 relative rounded-lg border border-neutral-200 bg-white px-3 pb-3 pt-8 shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
       <div className="absolute -top-4 left-3 right-3 z-10">
         <div className="inline-flex rounded-full border border-neutral-200 bg-white p-1 shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
           <button

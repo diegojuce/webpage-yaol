@@ -411,7 +411,12 @@ export function WelcomeModalContent() {
 
   const handleSearchByMeasure = () => {
     if (!canSearchByMeasure) return;
-    router.push(`/search?q=${encodeURIComponent(formattedMeasure)}`);
+    const nextParams = new URLSearchParams();
+    nextParams.set("q", formattedMeasure);
+    nextParams.set("by", "measure");
+    nextParams.set("sizes", formattedMeasure);
+    nextParams.set("availableSizes", formattedMeasure);
+    router.push(`/search?${nextParams.toString()}`);
   };
 
   const handleSearchByVehicle = async () => {
@@ -439,6 +444,7 @@ export function WelcomeModalContent() {
       nextParams.set("model", carModel);
       nextParams.set("year", carYear);
       nextParams.set("sizes", response.sizes.join(","));
+      nextParams.set("availableSizes", response.sizes.join(","));
       router.push(`/search?${nextParams.toString()}`);
     } catch (error) {
       const message =
