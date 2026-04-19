@@ -7,7 +7,7 @@ import styles from "./homepage-logo-loader.module.css";
 const WHEEL_ICON_SRC = "/llanta_icon.svg";
 const LOGO_O_CENTER_RATIO = 0.905;
 const LOGO_O_OFFSET_PX = 0;
-const ANIMATION_SPEED_FACTOR = 2;
+const ANIMATION_SPEED_FACTOR = 1.5;
 
 const scaleTime = (seconds: number) => seconds / ANIMATION_SPEED_FACTOR;
 
