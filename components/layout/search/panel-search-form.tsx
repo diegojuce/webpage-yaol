@@ -147,8 +147,8 @@ function SelectField({
   };
 
   return (
-    <div className="space-y-1">
-      <label className="text-[11px] font-semibold uppercase tracking-[0.18em] text-neutral-500">
+    <div className="space-y-1.5">
+      <label className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#555]">
         {label}
       </label>
       <Combobox
@@ -169,8 +169,9 @@ function SelectField({
         >
           <div
             className={clsx(
-              "group flex w-full items-center justify-between gap-3 rounded-md border border-neutral-300 bg-white px-3 py-2 text-left text-sm hover:border-yellow-400",
-              disabled && "cursor-not-allowed bg-neutral-100 text-neutral-400",
+              "group flex w-full items-center justify-between gap-3 rounded-lg border border-[#222] bg-[#111] px-3 py-[9px] text-left text-[13px] text-white transition-colors hover:border-[#303030]",
+              disabled &&
+                "cursor-not-allowed border-[#1d1d1d] bg-[#0f0f0f] text-[#5b5b5b]",
             )}
             onClick={handleContainerClick}
           >
@@ -178,8 +179,8 @@ function SelectField({
               ref={inputRef}
               data-combobox-input="true"
               className={clsx(
-                "w-full appearance-none border-none bg-transparent text-sm text-black outline-none ring-0 ring-offset-0 placeholder:text-neutral-500 group-hover:placeholder:text-yellow-600 [box-shadow:none!important] focus:!border-none focus:!outline-none focus:!ring-0 focus:!ring-offset-0 focus:[box-shadow:none!important] focus-visible:!outline-none focus-visible:!ring-0 focus-visible:!ring-offset-0 focus-visible:[box-shadow:none!important]",
-                disabled && "cursor-not-allowed text-neutral-400",
+                "w-full appearance-none border-none bg-transparent text-[13px] text-white outline-none ring-0 ring-offset-0 placeholder:text-[#5b5b5b] group-hover:placeholder:text-[#7a7a7a] [box-shadow:none!important] focus:!border-none focus:!outline-none focus:!ring-0 focus:!ring-offset-0 focus:[box-shadow:none!important] focus-visible:!outline-none focus-visible:!ring-0 focus-visible:!ring-offset-0 focus-visible:[box-shadow:none!important]",
+                disabled && "cursor-not-allowed text-[#5b5b5b]",
               )}
               displayValue={(selected: string) =>
                 optionLabelByValue.get(selected) ?? selected ?? ""
@@ -200,12 +201,12 @@ function SelectField({
               data-combobox-toggle="true"
               className="pointer-events-none flex items-center justify-center focus:!outline-none focus:!ring-0 md:pointer-events-auto"
             >
-              <ChevronUpDownIcon className="h-4 w-4 text-neutral-400" />
+              <ChevronUpDownIcon className="h-4 w-4 text-[#666]" />
             </Combobox.Button>
           </div>
           <Combobox.Options
             className={clsx(
-              "absolute z-30 w-full overflow-auto rounded-xl border border-neutral-700 bg-neutral-900/95 shadow-[0_18px_40px_rgba(0,0,0,0.45)]",
+              "absolute z-30 w-full overflow-auto rounded-xl border border-[#2a2a2a] bg-[#0f0f0f]/95 shadow-[0_18px_40px_rgba(0,0,0,0.45)]",
               openUpward ? "bottom-full mb-2" : "top-full mt-2",
             )}
             style={{ maxHeight: `${optionsMaxHeight}px` }}
@@ -218,7 +219,7 @@ function SelectField({
                   className={({ active, selected }) =>
                     clsx(
                       "cursor-pointer px-4 py-2 text-sm transition",
-                      active ? "bg-yellow-400 text-black" : "text-white",
+                      active ? "bg-[#ffd34a] text-[#0f0f0f]" : "text-[#efefef]",
                       selected && "font-semibold",
                     )
                   }
@@ -227,7 +228,7 @@ function SelectField({
                 </Combobox.Option>
               ))
             ) : (
-              <div className="px-4 py-2 text-sm text-neutral-400">
+              <div className="px-4 py-2 text-sm text-[#777]">
                 Sin coincidencias
               </div>
             )}
@@ -601,34 +602,32 @@ export default function PanelSearchForm() {
   };
 
   return (
-    <article className=" hidden md:block mb-3 mt-15 relative rounded-lg border border-neutral-200 bg-white px-3 pb-3 pt-8 shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
-      <div className="absolute -top-4 left-3 right-3 z-10">
-        <div className="inline-flex rounded-full border border-neutral-200 bg-white p-1 shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
-          <button
-            type="button"
-            onClick={() => setActiveTab("measure")}
-            className={clsx(
-              "rounded-full px-4 py-1 text-xs font-semibold transition",
-              activeTab === "measure"
-                ? "bg-yellow-500 text-black"
-                : "text-neutral-600 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-800",
-            )}
-          >
-            Medida
-          </button>
-          <button
-            type="button"
-            onClick={handleSetVehicleTab}
-            className={clsx(
-              "rounded-full px-4 py-1 text-xs font-semibold transition",
-              activeTab === "vehicle"
-                ? "bg-yellow-500 text-black"
-                : "text-neutral-600 hover:bg-neutral-100 dark:text-neutral-300 dark:hover:bg-neutral-800",
-            )}
-          >
-            Auto
-          </button>
-        </div>
+    <article className="hidden rounded-[14px] border border-[#1e1e1e] bg-[#161616] p-[18px] md:block">
+      <div className="mb-[18px] flex gap-1.5">
+        <button
+          type="button"
+          onClick={handleSetVehicleTab}
+          className={clsx(
+            "flex-1 rounded-[7px] px-2 py-[7px] text-xs font-semibold transition-colors",
+            activeTab === "vehicle"
+              ? "bg-[#ffd34a] text-[#0f0f0f]"
+              : "bg-[#111] text-[#555] hover:text-[#8a8a8a]",
+          )}
+        >
+          Auto
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab("measure")}
+          className={clsx(
+            "flex-1 rounded-[7px] px-2 py-[7px] text-xs font-semibold transition-colors",
+            activeTab === "measure"
+              ? "bg-[#ffd34a] text-[#0f0f0f]"
+              : "bg-[#111] text-[#555] hover:text-[#8a8a8a]",
+          )}
+        >
+          Medida
+        </button>
       </div>
 
       <div className="grid gap-3">
@@ -705,7 +704,7 @@ export default function PanelSearchForm() {
       </div>
 
       {vehicleMakesUnavailable ? (
-        <p className="mt-3 text-xs text-red-500">
+        <p className="mt-3 text-xs text-[#ff8b8b]">
           El buscador por auto necesita configuracion del servidor (falta
           `WHEEL_SIZE_API_KEY`).
         </p>
@@ -718,10 +717,10 @@ export default function PanelSearchForm() {
             onClick={handleSearchByMeasure}
             disabled={!canSearchByMeasure}
             className={clsx(
-              "w-full rounded-md px-4 py-2 text-sm font-semibold transition",
+              "w-full rounded-lg px-4 py-3 text-[13px] font-bold transition-colors",
               canSearchByMeasure
-                ? "bg-yellow-500 text-white hover:bg-neutral-800 dark:bg-yellow-500 dark:text-black dark:hover:bg-neutral-200"
-                : "cursor-not-allowed bg-neutral-200 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400",
+                ? "bg-[#ffd34a] text-[#0f0f0f] hover:bg-[#eec235]"
+                : "cursor-not-allowed bg-[#2a2a2a] text-[#696969]",
             )}
           >
             Buscar
@@ -732,10 +731,10 @@ export default function PanelSearchForm() {
             onClick={handleSearchByVehicle}
             disabled={!canSearchByVehicle || isSearchingVehicle}
             className={clsx(
-              "w-full rounded-md px-4 py-2 text-sm font-semibold transition",
+              "w-full rounded-lg px-4 py-3 text-[13px] font-bold transition-colors",
               canSearchByVehicle && !isSearchingVehicle
-                ? "bg-yellow-500 text-white hover:bg-neutral-800 dark:bg-yellow-500 dark:text-black dark:hover:bg-neutral-200"
-                : "cursor-not-allowed bg-neutral-200 text-neutral-500 dark:bg-neutral-800 dark:text-neutral-400",
+                ? "bg-[#ffd34a] text-[#0f0f0f] hover:bg-[#eec235]"
+                : "cursor-not-allowed bg-[#2a2a2a] text-[#696969]",
             )}
           >
             {isSearchingVehicle ? "Buscando..." : "Buscar por auto"}

@@ -277,10 +277,14 @@ export default async function SearchPage(props: {
     <div className="mx-auto w-full max-w-(--breakpoint-2xl) px-4 pb-10 text-black dark:text-white mt-35">
       <div className="flex flex-col gap-8 lg:flex-row">
         <aside className="w-full flex-none lg:max-w-[240px]">
-          <PanelSearchForm />
-          <div className="hidden md:block space-y-8 rounded-lg border border-neutral-200 bg-white p-4 shadow-sm dark:border-neutral-800 dark:bg-neutral-900 lg:sticky lg:top-24">
-            <FilterList list={sorting} title="Ordenar por" />
-            <Collections />
+          <div className="hidden space-y-3 md:block lg:sticky lg:top-24">
+            <PanelSearchForm />
+            <div className="rounded-[14px] border border-[#1e1e1e] bg-[#161616] p-[18px]">
+              <FilterList list={sorting} title="Ordenar por" />
+            </div>
+            <div className="rounded-[14px] border border-[#1e1e1e] bg-[#161616] p-[18px]">
+              <Collections />
+            </div>
           </div>
         </aside>
         <div className="flex-1">
@@ -325,7 +329,7 @@ export default async function SearchPage(props: {
             />
           ) : null}
           {hasProducts ? (
-            <Grid className="grid-cols-1 gap-6 xl:gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <Grid className="grid-cols-1 gap-6 xl:gap-6 sm:grid-cols-2 xl:grid-cols-3">
               <ProductGridItems products={products} />
             </Grid>
           ) : (

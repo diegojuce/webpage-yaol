@@ -60,7 +60,7 @@ export default async function RootLayout({
       lang="es"
       className={`${geistSans.variable} ${fjallaOne.variable} ${staatliches.variable}`}
     >
-      <body className="bg-[#1D1D1D] text-white selection:bg-teal-300 dark:bg-[#1D1D1D] dark:text-white dark:selection:bg-pink-500 dark:selection:text-white">
+      <body className="bg-[#0f0f0f] text-white selection:bg-teal-300 dark:bg-[#0f0f0f] dark:text-white dark:selection:bg-pink-500 dark:selection:text-white">
         <CartProvider cartPromise={cart}>
           <HomepageLoaderGate>
             {/* <Header /> */}

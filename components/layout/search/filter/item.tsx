@@ -7,28 +7,39 @@ import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import type { ListItem, PathFilterItem } from ".";
 
+const getItemClassName = (active: boolean) =>
+  clsx(
+    "block w-full rounded-md py-1 text-left text-[13px] transition-colors",
+    active
+      ? "font-semibold text-[#ffd34a]"
+      : "font-normal text-[#777] hover:text-[#b8b8b8]",
+  );
+
+const getItemLabel = (title: string, active: boolean) =>
+  `${active ? "· " : ""}${title}`;
+
 function PathFilterItem({ item }: { item: PathFilterItem }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const active = pathname === item.path;
   const newParams = new URLSearchParams(searchParams.toString());
-  const DynamicTag = active ? "p" : Link;
 
   newParams.delete("q");
 
   return (
-    <li className="mt-2 flex text-black dark:text-white" key={item.title}>
-      <DynamicTag
-        href={createUrl(item.path, newParams)}
-        className={clsx(
-          "w-full text-sm underline-offset-4 hover:underline dark:hover:text-neutral-100",
-          {
-            "underline underline-offset-4": active,
-          },
-        )}
-      >
-        {item.title}
-      </DynamicTag>
+    <li className="flex" key={item.title}>
+      {active ? (
+        <p className={getItemClassName(true)}>
+          {getItemLabel(item.title, true)}
+        </p>
+      ) : (
+        <Link
+          href={createUrl(item.path, newParams)}
+          className={getItemClassName(false)}
+        >
+          {getItemLabel(item.title, false)}
+        </Link>
+      )}
     </li>
   );
 }
@@ -46,22 +57,18 @@ function SortFilterItem({ item }: { item: SortFilterItem }) {
   }
 
   const href = createUrl(pathname, nextParams);
-  const DynamicTag = active ? "p" : Link;
 
   return (
-    <li
-      className="mt-2 flex text-sm text-black dark:text-white"
-      key={item.title}
-    >
-      <DynamicTag
-        prefetch={!active ? false : undefined}
-        href={href}
-        className={clsx("w-full hover:underline hover:underline-offset-4", {
-          "underline underline-offset-4": active,
-        })}
-      >
-        {item.title}
-      </DynamicTag>
+    <li className="flex" key={item.title}>
+      {active ? (
+        <p className={getItemClassName(true)}>
+          {getItemLabel(item.title, true)}
+        </p>
+      ) : (
+        <Link prefetch={false} href={href} className={getItemClassName(false)}>
+          {getItemLabel(item.title, false)}
+        </Link>
+      )}
     </li>
   );
 }

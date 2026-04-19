@@ -42,17 +42,17 @@ export default function FilterItemDropdown({ list }: { list: ListItem[] }) {
         onClick={() => {
           setOpenSelect(!openSelect);
         }}
-        className="flex w-full items-center justify-between rounded-sm border border-black/30 px-4 py-2 text-sm dark:border-white/30"
+        className="flex w-full items-center justify-between rounded-lg border border-[#222] bg-[#111] px-3 py-2 text-[13px] text-[#efefef]"
       >
         <div>{active}</div>
-        <ChevronDownIcon className="h-4" />
+        <ChevronDownIcon className="h-4 text-[#666]" />
       </div>
       {openSelect && (
         <div
           onClick={() => {
             setOpenSelect(false);
           }}
-          className="absolute z-40 w-full rounded-b-md bg-white p-4 shadow-md dark:bg-black"
+          className="absolute z-40 mt-1 w-full rounded-xl border border-[#2a2a2a] bg-[#0f0f0f] p-3 shadow-[0_18px_40px_rgba(0,0,0,0.45)]"
         >
           {list.map((item: ListItem, i) => (
             <FilterItem key={i} item={item} />
