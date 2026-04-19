@@ -193,23 +193,24 @@ export default async function SearchPage(props: {
 
   if (searchMode === "vehicle") {
     sizeSearchMode = "vehicle";
-    selectedSizes = parsedSelectedSizes;
+    selectedSizes = parsedSelectedSizes.slice(0, 1);
     availableSizes =
       parsedAvailableSizes.length > 0
         ? parsedAvailableSizes
         : parsedSelectedSizes;
 
     if (selectedSizes.length === 0 && availableSizes.length > 0) {
-      selectedSizes = [...availableSizes];
+      selectedSizes = [availableSizes[0] ?? ""].filter(Boolean);
     }
   } else if (searchMode === "measure") {
     sizeSearchMode = "measure";
-    selectedSizes =
+    selectedSizes = (
       parsedSelectedSizes.length > 0
         ? parsedSelectedSizes
         : normalizedSearchMeasure
           ? [normalizedSearchMeasure]
-          : [];
+          : []
+    ).slice(0, 1);
     availableSizes =
       parsedAvailableSizes.length > 0
         ? parsedAvailableSizes
@@ -220,10 +221,11 @@ export default async function SearchPage(props: {
     }
   } else if (normalizedSearchMeasure) {
     sizeSearchMode = "measure";
-    selectedSizes =
+    selectedSizes = (
       parsedSelectedSizes.length > 0
         ? parsedSelectedSizes
-        : [normalizedSearchMeasure];
+        : [normalizedSearchMeasure]
+    ).slice(0, 1);
     availableSizes =
       parsedAvailableSizes.length > 0
         ? parsedAvailableSizes
@@ -232,6 +234,7 @@ export default async function SearchPage(props: {
 
   availableSizes = mergeUniqueSizes(availableSizes, selectedSizes);
   selectedSizes = orderSelectedSizes(selectedSizes, availableSizes);
+  selectedSizes = selectedSizes.slice(0, 1);
 
   if (
     sizeSearchMode === "measure" &&
@@ -299,12 +302,7 @@ export default async function SearchPage(props: {
               <span className="font-semibold">
                 &quot;{primaryMeasureLabel}&quot;
               </span>
-              {selectedSizes.length > 1 ? (
-                <span className="ml-2 text-xs text-neutral-500 dark:text-neutral-400">
-                  ({selectedSizes.length} medidas seleccionadas de{" "}
-                  {availableSizes.length})
-                </span>
-              ) : availableSizes.length > 1 ? (
+              {availableSizes.length > 1 ? (
                 <span className="ml-2 text-xs text-neutral-500 dark:text-neutral-400">
                   ({availableSizes.length - 1} medidas cercanas disponibles)
                 </span>

@@ -7,6 +7,9 @@ import styles from "./homepage-logo-loader.module.css";
 const WHEEL_ICON_SRC = "/llanta_icon.svg";
 const LOGO_O_CENTER_RATIO = 0.905;
 const LOGO_O_OFFSET_PX = 0;
+const ANIMATION_SPEED_FACTOR = 2;
+
+const scaleTime = (seconds: number) => seconds / ANIMATION_SPEED_FACTOR;
 
 declare global {
   interface Window {
@@ -154,7 +157,7 @@ export default function HomepageLogoLoader({
       onComplete: () => {
         gsap.to(overlay, {
           autoAlpha: 0,
-          duration: 0.45,
+          duration: scaleTime(0.45),
           ease: "power2.out",
           onComplete: finishLoader,
         });
@@ -164,7 +167,7 @@ export default function HomepageLogoLoader({
     timeline
       .to(wheelWrap, {
         rotation: 430,
-        duration: 0.88,
+        duration: scaleTime(0.88),
         ease: "none",
       })
       .to(
@@ -175,10 +178,10 @@ export default function HomepageLogoLoader({
           background:
             "radial-gradient(circle at 50% 50%, #2c2c2c 0%, #141414 60%, #090909 100%)",
           boxShadow: "0 0 0 2px #252525 inset, 0 12px 20px rgba(0, 0, 0, 0.4)",
-          duration: 0.45,
+          duration: scaleTime(0.45),
           ease: "power2.inOut",
         },
-        "-=0.2",
+        `-=${scaleTime(0.2)}`,
       )
       .to(
         hasWheelIconError ? [rim, spokes, hub] : wheelIcon,
@@ -186,14 +189,14 @@ export default function HomepageLogoLoader({
           ? {
               opacity: 1,
               scale: 1,
-              duration: 0.45,
-              stagger: 0.05,
+              duration: scaleTime(0.45),
+              stagger: scaleTime(0.05),
               ease: "power2.out",
             }
           : {
               opacity: 1,
               scale: 1,
-              duration: 0.45,
+              duration: scaleTime(0.45),
               ease: "power2.out",
             },
         "<",
@@ -201,7 +204,7 @@ export default function HomepageLogoLoader({
       .to(wheelWrap, {
         x: distance,
         rotation: `+=${rollingDegrees}`,
-        duration: 1.65,
+        duration: scaleTime(1.65),
         ease: "power4.inOut",
         onUpdate: revealLogo,
       })
@@ -210,19 +213,19 @@ export default function HomepageLogoLoader({
         {
           opacity: 0,
           x: 8,
-          duration: 0.32,
+          duration: scaleTime(0.32),
           ease: "power2.out",
         },
-        "<+=0.04",
+        `<+=${scaleTime(0.04)}`,
       )
       .to(
         hasWheelIconError ? wheel : [wheelIcon, wheel],
         {
           opacity: 0,
-          duration: 0.28,
+          duration: scaleTime(0.28),
           ease: "power2.out",
         },
-        "+=0.02",
+        `+=${scaleTime(0.02)}`,
       );
 
     revealLogo();
