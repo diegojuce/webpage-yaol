@@ -168,6 +168,14 @@ export function AddToCart({ product }: { product: Product }) {
         );
 
         addCartItem(normalizedVariant, product, quantity);
+        window.dispatchEvent(
+          new CustomEvent("cart:item-added", {
+            detail: {
+              merchandiseId: selectedVariantId,
+              quantity,
+            },
+          })
+        );
         formAction({ selectedVariantId, quantity });
       }}
     >

@@ -35,6 +35,7 @@ export async function setCartIdFromParam(rawCartId?: string | null) {
 export async function setCartAttributes(payload: {
   quoteId?: string | number | null;
   sucursal?: string | null;
+  phone?: string | null;
 }) {
   const quoteId =
     payload.quoteId !== undefined && payload.quoteId !== null
@@ -44,10 +45,15 @@ export async function setCartAttributes(payload: {
     payload.sucursal !== undefined && payload.sucursal !== null
       ? String(payload.sucursal).trim()
       : "";
+  const phone =
+    payload.phone !== undefined && payload.phone !== null
+      ? String(payload.phone).trim()
+      : "";
 
   const attributes = [
     ...(quoteId ? [{ key: "quote_id", value: quoteId }] : []),
     ...(sucursal ? [{ key: "sucursal", value: sucursal }] : []),
+    ...(phone ? [{ key: "telefono", value: phone }] : []),
   ];
 
   console.debug("[actions][setCartAttributes] Setting attributes:", attributes);
