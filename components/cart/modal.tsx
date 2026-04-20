@@ -15,6 +15,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
+  useCallback,
   Fragment,
   useActionState,
   useEffect,
@@ -124,6 +125,7 @@ type MerchandiseSearchParams = {
 };
 
 const PRE_CART_EVENT = "cart:item-added";
+const CART_ICON_BUMP_EVENT = "cart:icon-bump";
 
 function PreCartWizard({
   open,
@@ -411,6 +413,55 @@ export default function CartModal({ isWhite = false }) {
     (branch) => branch.id === selectedBranchId
   );
 
+  const bumpCartTrigger = useCallback(() => {
+    const trigger = cartButtonRef.current;
+    if (!trigger) {
+      return;
+    }
+
+    trigger.animate(
+      [
+        { transform: "scale(1)" },
+        { transform: "scale(0.95)", offset: 0.35 },
+        { transform: "scale(1.08)", offset: 0.65 },
+        { transform: "scale(1)" },
+      ],
+      {
+        duration: 420,
+        easing: "cubic-bezier(.34,1.56,.64,1)",
+      }
+    );
+
+    const cartIcon = trigger.querySelector<HTMLElement>("[data-cart-icon='true']");
+    cartIcon?.animate(
+      [
+        { transform: "rotate(0deg)" },
+        { transform: "rotate(-10deg)", offset: 0.3 },
+        { transform: "rotate(6deg)", offset: 0.62 },
+        { transform: "rotate(0deg)" },
+      ],
+      {
+        duration: 420,
+        easing: "cubic-bezier(.34,1.56,.64,1)",
+      }
+    );
+
+    const cartBadge = trigger.querySelector<HTMLElement>(
+      "[data-cart-badge='true']"
+    );
+    cartBadge?.animate(
+      [
+        { transform: "scale(1)" },
+        { transform: "scale(1.28)", offset: 0.5 },
+        { transform: "scale(1)" },
+      ],
+      {
+        duration: 360,
+        easing: "cubic-bezier(.34,1.56,.64,1)",
+      }
+    );
+  }, []);
+
   useEffect(() => {
     const listener = (id: string | null) => setActiveId(id);
     activeCartModalListeners.add(listener);
@@ -536,6 +587,7 @@ export default function CartModal({ isWhite = false }) {
       if (!isVisible) {
         return;
       }
+      bumpCartTrigger();
       shouldOpenWizardAfterAddRef.current = true;
       if (!isActive) {
         setActiveId(modalId);
@@ -549,7 +601,32 @@ export default function CartModal({ isWhite = false }) {
 
     window.addEventListener(PRE_CART_EVENT, handleItemAdded);
     return () => window.removeEventListener(PRE_CART_EVENT, handleItemAdded);
-  }, [isActive, modalId]);
+  }, [isActive, modalId, bumpCartTrigger]);
+
+  useEffect(() => {
+    const handleIconBump = () => {
+      const el = cartButtonRef.current;
+      if (!el) {
+        return;
+      }
+
+      const styles = window.getComputedStyle(el);
+      const isVisible =
+        styles.display !== "none" &&
+        styles.visibility !== "hidden" &&
+        el.getClientRects().length > 0;
+
+      if (!isVisible) {
+        return;
+      }
+
+      bumpCartTrigger();
+    };
+
+    window.addEventListener(CART_ICON_BUMP_EVENT, handleIconBump);
+    return () =>
+      window.removeEventListener(CART_ICON_BUMP_EVENT, handleIconBump);
+  }, [bumpCartTrigger]);
 
   useEffect(() => {
     if (!isActive) {
@@ -661,7 +738,12 @@ export default function CartModal({ isWhite = false }) {
 
   return (
     <>
-      <button ref={cartButtonRef} aria-label="Abrir carrito" onClick={openCart}>
+      <button
+        ref={cartButtonRef}
+        data-cart-trigger="true"
+        aria-label="Abrir carrito"
+        onClick={openCart}
+      >
         <OpenCart quantity={cart?.totalQuantity} isWhite={isWhite} />
       </button>
       <PreCartWizard
