@@ -1,5 +1,6 @@
 import { CartProvider } from "components/cart/cart-context";
 import HomepageLoaderGate from "components/home/homepage-loader-gate";
+import { HideOnPathPrefixes } from "components/layout/hide-on-path-prefixes";
 import { Navbar } from "components/layout/navbar";
 import { WelcomeToast } from "components/welcome-toast";
 import { getCart } from "lib/shopify";
@@ -63,12 +64,15 @@ export default async function RootLayout({
       <body className="bg-[#0f0f0f] text-white selection:bg-teal-300 dark:bg-[#0f0f0f] dark:text-white dark:selection:bg-pink-500 dark:selection:text-white">
         <CartProvider cartPromise={cart}>
           <HomepageLoaderGate>
-            {/* <Header /> */}
-            <Navbar />
+            <HideOnPathPrefixes prefixes={["/encuesta"]}>
+              <Navbar />
+            </HideOnPathPrefixes>
             <main>
               {children}
               <Toaster closeButton />
-              <WelcomeToast />
+              <HideOnPathPrefixes prefixes={["/encuesta"]}>
+                <WelcomeToast />
+              </HideOnPathPrefixes>
             </main>
           </HomepageLoaderGate>
         </CartProvider>
