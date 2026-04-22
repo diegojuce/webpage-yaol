@@ -397,11 +397,15 @@
     transform 0.15s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.nps-slider:focus-visible .nps-slider__thumb,
 .nps-slider__track:hover .nps-slider__thumb {
   box-shadow:
     0 0 0 8px rgba(255, 198, 0, 0.18),
     0 8px 20px rgba(0, 0, 0, 0.55);
+}
+
+.nps-slider:focus,
+.nps-slider:focus-visible {
+  outline: none;
 }
 
 .nps-slider.is-dragging .nps-slider__thumb {
