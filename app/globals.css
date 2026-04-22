@@ -3,12 +3,42 @@
 @plugin "@tailwindcss/container-queries";
 @plugin "@tailwindcss/typography";
 
+@font-face {
+  font-family: "Geist";
+  font-style: normal;
+  font-weight: 300 900;
+  font-display: swap;
+  src: url("/fonts/geist-latin.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Fjalla One";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/fjalla-one-latin.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Staatliches";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/staatliches-latin.woff2") format("woff2");
+}
+
 @theme {
-  --font-fjalla: var(--font-fjalla-one), sans-serif;
-  --font-staatliches: var(--font-staatliches-google), sans-serif;
+  --font-fjalla: "Fjalla One", sans-serif;
+  --font-staatliches: "Staatliches", sans-serif;
 }
 
 @layer base {
+  :root {
+    --font-fjalla-one: "Fjalla One";
+    --font-staatliches-google: "Staatliches";
+    --font-geist-sans: "Geist";
+  }
+
   *,
   ::after,
   ::before,
@@ -73,7 +103,7 @@ button {
     flex-direction: column;
     gap: 1rem;
   }
-  
+
   .servicios__head > p {
     font-size: 0.9rem;
     font-weight: 700;
@@ -99,7 +129,6 @@ button {
     gap: 28px;
     margin: 0 auto;
   }
-
 
   @media (max-width: 1024px) {
     .servicios__grid {
@@ -135,8 +164,12 @@ button {
     color: #e9e9ea;
     border: 1px solid rgba(255, 255, 255, 0.06);
     box-shadow: 0 0 0 rgba(0, 0, 0, 0);
-    transition: background 0.25s ease, color 0.25s ease, transform 0.25s ease,
-    box-shadow 0.25s ease, border-color 0.25s ease;
+    transition:
+      background 0.25s ease,
+      color 0.25s ease,
+      transform 0.25s ease,
+      box-shadow 0.25s ease,
+      border-color 0.25s ease;
     overflow: hidden;
   }
 
