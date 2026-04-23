@@ -1,8 +1,8 @@
 "use client";
 
-import { Dialog, Listbox, Transition } from "@headlessui/react";
+import { Dialog, Transition } from "@headlessui/react";
 import {
-  ChevronUpDownIcon,
+  PencilSquareIcon,
   ShoppingCartIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
@@ -57,7 +57,7 @@ function LineShippingSelector({
   optimisticUpdate: (
     lineId: string,
     variant: ProductVariant,
-    product: Product
+    product: Product,
   ) => void;
 }) {
   const [message, formAction] = useActionState(updateItemVariant, null);
@@ -126,6 +126,28 @@ type MerchandiseSearchParams = {
 
 const PRE_CART_EVENT = "cart:item-added";
 const CART_ICON_BUMP_EVENT = "cart:icon-bump";
+
+const normalizeBranchLabel = (value: string) => value.trim().toLowerCase();
+
+const findBranchByName = (branchName: string) => {
+  const normalizedBranchName = normalizeBranchLabel(branchName);
+  if (!normalizedBranchName) {
+    return undefined;
+  }
+
+  return CART_BRANCHES.find(
+    (branch) => normalizeBranchLabel(branch.name) === normalizedBranchName,
+  );
+};
+
+const formatPhoneForDisplay = (phone: string) => {
+  const digits = phone.replace(/\D/g, "");
+  if (digits.length !== 10) {
+    return phone;
+  }
+
+  return `${digits.slice(0, 3)} ${digits.slice(3, 6)} ${digits.slice(6)}`;
+};
 
 function PreCartWizard({
   open,
@@ -209,7 +231,7 @@ function PreCartWizard({
               step === 1
                 ? "inset-x-0 bottom-0 rounded-t-[24px] border-t border-white/10"
                 : "inset-x-0 bottom-0 rounded-none",
-              "md:inset-x-4 md:top-1/2 md:bottom-auto md:mx-auto md:h-auto md:max-h-[92vh] md:w-[min(980px,calc(100%-2rem))] md:-translate-y-1/2 md:rounded-[24px] md:border md:border-white/10 md:shadow-[0_40px_120px_rgba(0,0,0,0.65)]"
+              "md:inset-x-4 md:top-1/2 md:bottom-auto md:mx-auto md:h-auto md:max-h-[92vh] md:w-[min(980px,calc(100%-2rem))] md:-translate-y-1/2 md:rounded-[24px] md:border md:border-white/10 md:shadow-[0_40px_120px_rgba(0,0,0,0.65)]",
             )}
             style={{
               ["--wizard-mobile-height" as any]: mobilePanelHeight,
@@ -363,7 +385,7 @@ function PreCartWizard({
                     "rounded-full px-7 py-3 text-sm font-black uppercase tracking-[0.08em] transition",
                     isPhoneValid
                       ? "bg-yellow-400 text-black hover:bg-yellow-300"
-                      : "cursor-not-allowed bg-white/10 text-neutral-500"
+                      : "cursor-not-allowed bg-white/10 text-neutral-500",
                   )}
                 >
                   Siguiente
@@ -377,7 +399,7 @@ function PreCartWizard({
                     "rounded-full px-7 py-3 text-sm font-black uppercase tracking-[0.08em] transition",
                     canSubmit
                       ? "bg-yellow-400 text-black hover:bg-yellow-300"
-                      : "cursor-not-allowed bg-white/10 text-neutral-500"
+                      : "cursor-not-allowed bg-white/10 text-neutral-500",
                   )}
                 >
                   {isSubmitting ? "Guardando..." : "Continuar al carrito"}
@@ -410,8 +432,23 @@ export default function CartModal({ isWhite = false }) {
   const [activeId, setActiveId] = useState<string | null>(activeCartModalId);
   const isActive = activeId === modalId;
   const selectedBranch = CART_BRANCHES.find(
-    (branch) => branch.id === selectedBranchId
+    (branch) => branch.id === selectedBranchId,
   );
+  const cartAttributes = cart?.attributes ?? [];
+  const phoneFromAttributes =
+    cartAttributes
+      .find((attribute) => attribute.key === "telefono")
+      ?.value?.trim() ?? "";
+  const branchNameFromAttributes =
+    cartAttributes
+      .find((attribute) => attribute.key === "sucursal")
+      ?.value?.trim() ?? "";
+  const branchFromAttributes = findBranchByName(branchNameFromAttributes);
+  const branchIdFromAttributes = branchFromAttributes?.id ?? "";
+  const branchForDisplay = selectedBranch ?? branchFromAttributes;
+  const displayedPhone = preCartPhone || phoneFromAttributes;
+  const displayedBranchName =
+    branchForDisplay?.name || branchNameFromAttributes || "Pendiente";
 
   const bumpCartTrigger = useCallback(() => {
     const trigger = cartButtonRef.current;
@@ -429,10 +466,12 @@ export default function CartModal({ isWhite = false }) {
       {
         duration: 420,
         easing: "cubic-bezier(.34,1.56,.64,1)",
-      }
+      },
     );
 
-    const cartIcon = trigger.querySelector<HTMLElement>("[data-cart-icon='true']");
+    const cartIcon = trigger.querySelector<HTMLElement>(
+      "[data-cart-icon='true']",
+    );
     cartIcon?.animate(
       [
         { transform: "rotate(0deg)" },
@@ -443,11 +482,11 @@ export default function CartModal({ isWhite = false }) {
       {
         duration: 420,
         easing: "cubic-bezier(.34,1.56,.64,1)",
-      }
+      },
     );
 
     const cartBadge = trigger.querySelector<HTMLElement>(
-      "[data-cart-badge='true']"
+      "[data-cart-badge='true']",
     );
     cartBadge?.animate(
       [
@@ -458,7 +497,7 @@ export default function CartModal({ isWhite = false }) {
       {
         duration: 360,
         easing: "cubic-bezier(.34,1.56,.64,1)",
-      }
+      },
     );
   }, []);
 
@@ -543,10 +582,14 @@ export default function CartModal({ isWhite = false }) {
   };
   const handleWizardSubmit = async () => {
     const selectedBranch = CART_BRANCHES.find(
-      (branch) => branch.id === selectedBranchId
+      (branch) => branch.id === selectedBranchId,
     );
     const normalizedPhone = preCartPhone.replace(/\D/g, "");
-    if (!selectedBranch || normalizedPhone.length !== 10 || isSavingPreCartData) {
+    if (
+      !selectedBranch ||
+      normalizedPhone.length !== 10 ||
+      isSavingPreCartData
+    ) {
       return;
     }
 
@@ -572,6 +615,21 @@ export default function CartModal({ isWhite = false }) {
       createCartAndSetCookie();
     }
   }, [cart]);
+
+  useEffect(() => {
+    if (phoneFromAttributes && !preCartPhone) {
+      setPreCartPhone(phoneFromAttributes);
+    }
+
+    if (!selectedBranchId && branchIdFromAttributes) {
+      setSelectedBranchId(branchIdFromAttributes);
+    }
+  }, [
+    branchIdFromAttributes,
+    phoneFromAttributes,
+    preCartPhone,
+    selectedBranchId,
+  ]);
 
   useEffect(() => {
     const handleItemAdded = () => {
@@ -736,6 +794,27 @@ export default function CartModal({ isWhite = false }) {
     });
   }, [isActive, isTriggerVisible, pathname, router, searchParams]);
 
+  const openWizardForEdit = (step: 1 | 2) => {
+    if (!isActive) {
+      activateModal();
+    }
+
+    const nextPhone = preCartPhone || phoneFromAttributes;
+    const nextBranchId = selectedBranchId || branchIdFromAttributes;
+
+    if (nextPhone) {
+      setPreCartPhone(nextPhone);
+    }
+    if (nextBranchId) {
+      setSelectedBranchId(nextBranchId);
+    }
+
+    const canStartOnStep2 = nextPhone.replace(/\D/g, "").length === 10;
+    setPreCartStep(step === 2 && canStartOnStep2 ? 2 : 1);
+    setIsOpen(false);
+    setIsPreCartWizardOpen(true);
+  };
+
   return (
     <>
       <button
@@ -805,8 +884,8 @@ export default function CartModal({ isWhite = false }) {
                     {cart.lines
                       .sort((a, b) =>
                         a.merchandise.product.title.localeCompare(
-                          b.merchandise.product.title
-                        )
+                          b.merchandise.product.title,
+                        ),
                       )
                       .map((item, i) => {
                         const merchandiseSearchParams =
@@ -818,12 +897,12 @@ export default function CartModal({ isWhite = false }) {
                               merchandiseSearchParams[name.toLowerCase()] =
                                 value;
                             }
-                          }
+                          },
                         );
 
                         const merchandiseUrl = createUrl(
                           `/product/${item.merchandise.product.handle}`,
-                          new URLSearchParams(merchandiseSearchParams)
+                          new URLSearchParams(merchandiseSearchParams),
                         );
 
                         return (
@@ -936,49 +1015,39 @@ export default function CartModal({ isWhite = false }) {
                       />
                     </div> */}
 
-                    <div className="mb-3 border-b border-neutral-200 pb-3 pt-1 dark:border-neutral-700">
-                      <Listbox
-                        value={selectedBranchId}
-                        onChange={setSelectedBranchId}
-                      >
-                        <div className="relative w-full">
-                          <Listbox.Button className="flex w-full items-center justify-between gap-3 rounded-sm border border-neutral-300 bg-white px-3 py-2 text-left text-xs text-neutral-700 hover:border-yellow-500 focus:outline-none dark:border-neutral-700 dark:bg-neutral-900 dark:text-white">
-                            <span
-                              className={clsx(
-                                "truncate",
-                                selectedBranch
-                                  ? "text-neutral-700 dark:text-white"
-                                  : "text-neutral-400"
-                              )}
-                            >
-                              {selectedBranch
-                                ? `${selectedBranch.name}${selectedBranch.address ? ` — ${selectedBranch.address}` : ""}`
-                                : "Seleccionar sucursal"}
-                            </span>
-                            <ChevronUpDownIcon className="h-4 w-4 text-neutral-400" />
-                          </Listbox.Button>
-                          <Listbox.Options className="absolute left-0 top-full z-30 mt-1 max-h-56 w-full overflow-auto rounded-sm border border-neutral-300 bg-white shadow-[0_8px_24px_rgba(0,0,0,0.15)] dark:border-neutral-700 dark:bg-neutral-900">
-                            {CART_BRANCHES.map((branch) => (
-                              <Listbox.Option
-                                key={branch.id}
-                                value={branch.id}
-                                className={({ active, selected }) =>
-                                  clsx(
-                                    "cursor-pointer px-3 py-2 text-xs transition",
-                                    active
-                                      ? "bg-yellow-400 text-black"
-                                      : "text-neutral-700 dark:text-white",
-                                    selected && "font-semibold"
-                                  )
-                                }
-                              >
-                                {branch.name}
-                                {branch.address ? ` — ${branch.address}` : ""}
-                              </Listbox.Option>
-                            ))}
-                          </Listbox.Options>
-                        </div>
-                      </Listbox>
+                    <div className="mb-3 flex items-center justify-between border-b border-neutral-200 pb-1 pt-1 dark:border-neutral-700">
+                      <p>Teléfono</p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-right">
+                          {displayedPhone
+                            ? formatPhoneForDisplay(displayedPhone)
+                            : "Pendiente"}
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => openWizardForEdit(1)}
+                          aria-label="Editar teléfono"
+                          className="rounded-full p-1 text-neutral-500 transition hover:bg-neutral-100 hover:text-neutral-800 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-white"
+                        >
+                          <PencilSquareIcon className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </div>
+                    <div className="mb-3 flex items-center justify-between border-b border-neutral-200 pb-1 pt-1 dark:border-neutral-700">
+                      <p>Sucursal</p>
+                      <div className="flex items-center gap-2">
+                        <p className="max-w-[180px] text-right text-xs leading-tight md:max-w-[220px] md:text-sm">
+                          {displayedBranchName}
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => openWizardForEdit(2)}
+                          aria-label="Editar sucursal"
+                          className="rounded-full p-1 text-neutral-500 transition hover:bg-neutral-100 hover:text-neutral-800 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-white"
+                        >
+                          <PencilSquareIcon className="h-4 w-4" />
+                        </button>
+                      </div>
                     </div>
                     <div className="mb-3 flex items-center justify-between border-b border-neutral-200 pb-1 pt-1 dark:border-neutral-700">
                       <p>Tipo de envío</p>
@@ -1016,7 +1085,7 @@ function CloseCart({ className }: { className?: string }) {
       <XMarkIcon
         className={clsx(
           "h-6 transition-all ease-in-out hover:scale-110",
-          className
+          className,
         )}
       />
     </div>
@@ -1037,7 +1106,7 @@ function CheckoutButton() {
           const details = result.unavailableItems
             .map(
               (it) =>
-                `${it.title}: solicitado ${it.requested}, disponible ${it.available}`
+                `${it.title}: solicitado ${it.requested}, disponible ${it.available}`,
             )
             .join("\n");
           toast.error("Algunos productos no están disponibles", {
@@ -1047,7 +1116,7 @@ function CheckoutButton() {
           toast.error("Tu carrito está vacío.");
         } else {
           toast.error(
-            "No se pudo validar la disponibilidad del carrito. Inténtalo de nuevo."
+            "No se pudo validar la disponibilidad del carrito. Inténtalo de nuevo.",
           );
         }
         setPending(false);
