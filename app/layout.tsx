@@ -1,32 +1,15 @@
 import { CartProvider } from "components/cart/cart-context";
 import HomepageLoaderGate from "components/home/homepage-loader-gate";
+import { HideOnPathPrefixes } from "components/layout/hide-on-path-prefixes";
 import { Navbar } from "components/layout/navbar";
 import { WelcomeToast } from "components/welcome-toast";
 import { getCart } from "lib/shopify";
 import { baseUrl } from "lib/utils";
-import { Fjalla_One, Geist, Staatliches } from "next/font/google";
 import { ReactNode } from "react";
 import { Toaster } from "sonner";
 import "./globals.css";
 
 const { SITE_NAME } = process.env;
-const fjallaOne = Fjalla_One({
-  subsets: ["latin"],
-  weight: "400",
-  display: "swap",
-  variable: "--font-fjalla-one",
-});
-const staatliches = Staatliches({
-  subsets: ["latin"],
-  weight: "400",
-  display: "swap",
-  variable: "--font-staatliches-google",
-});
-const geistSans = Geist({
-  subsets: ["latin"],
-  display: "swap",
-  variable: "--font-geist-sans",
-});
 
 export const metadata = {
   metadataBase: new URL(baseUrl),
@@ -56,19 +39,19 @@ export default async function RootLayout({
   const cart = getCart();
 
   return (
-    <html
-      lang="es"
-      className={`${geistSans.variable} ${fjallaOne.variable} ${staatliches.variable}`}
-    >
+    <html lang="es">
       <body className="bg-[#0f0f0f] text-white selection:bg-teal-300 dark:bg-[#0f0f0f] dark:text-white dark:selection:bg-pink-500 dark:selection:text-white">
         <CartProvider cartPromise={cart}>
           <HomepageLoaderGate>
-            {/* <Header /> */}
-            <Navbar />
+            <HideOnPathPrefixes prefixes={["/encuesta"]}>
+              <Navbar />
+            </HideOnPathPrefixes>
             <main>
               {children}
               <Toaster closeButton />
-              <WelcomeToast />
+              <HideOnPathPrefixes prefixes={["/encuesta"]}>
+                <WelcomeToast />
+              </HideOnPathPrefixes>
             </main>
           </HomepageLoaderGate>
         </CartProvider>
