@@ -59,7 +59,7 @@ export async function setCartAttributes(payload: {
   console.debug("[actions][setCartAttributes] Setting attributes:", attributes);
   if (!attributes.length) {
     console.warn(
-      "[actions][setCartAttributes] No valid attributes to set, skipping."
+      "[actions][setCartAttributes] No valid attributes to set, skipping.",
     );
     return;
   }
@@ -70,7 +70,7 @@ export async function setCartAttributes(payload: {
     console.debug(
       "[actions][setCartAttributes] Missing/invalid cartId cookie (",
       cartId,
-      "). Creating cart with attributes..."
+      "). Creating cart with attributes...",
     );
     const newCart = await createCart(attributes);
     cartId = newCart.id!;
@@ -78,12 +78,12 @@ export async function setCartAttributes(payload: {
   } else {
     console.debug(
       "[actions][setCartAttributes] Updating cart attributes for cartId:",
-      cartId
+      cartId,
     );
     const res = await updateCartAttributes(attributes, cartId);
     console.debug(
       "[actions][setCartAttributes] updateCartAttributes response:",
-      res
+      res,
     );
   }
 
@@ -92,7 +92,7 @@ export async function setCartAttributes(payload: {
 
 export async function addItem(
   prevState: any,
-  payload: { selectedVariantId: string | undefined; quantity: number }
+  payload: { selectedVariantId: string | undefined; quantity: number },
 ) {
   console.debug("[actions][addItem] Payload:", payload);
   const { selectedVariantId } = payload;
@@ -104,7 +104,7 @@ export async function addItem(
   console.debug(
     "[actions][addItem] Adding to cart:",
     selectedVariantId,
-    quantity
+    quantity,
   );
 
   try {
@@ -116,7 +116,7 @@ export async function addItem(
       console.debug(
         "[actions][addItem] Missing/invalid cartId cookie (",
         cartId,
-        "). Creating cart..."
+        "). Creating cart...",
       );
       const newCart = await createCart();
       cartId = newCart.id!; // Keep full id with ?key
@@ -129,7 +129,7 @@ export async function addItem(
 
     // Si ya existe una línea con este variant en el carrito, actualizar su cantidad
     const existingLine = cart?.lines.find(
-      (line) => line.merchandise.id === selectedVariantId
+      (line) => line.merchandise.id === selectedVariantId,
     );
 
     if (existingLine) {
@@ -140,7 +140,7 @@ export async function addItem(
       const edges = productAny?.variants?.edges ?? [];
       const variants = edges.map((e: any) => e.node);
       const currentVariant = variants.find(
-        (variant: any) => variant.id === existingLine.merchandise.id
+        (variant: any) => variant.id === existingLine.merchandise.id,
       );
       if (typeof currentVariant?.quantityAvailable === "number") {
         maxAvailable = currentVariant.quantityAvailable;
@@ -171,7 +171,7 @@ export async function addItem(
       // Si no existe en el carrito, usar la lógica normal de Shopify
       await addToCart(
         [{ merchandiseId: selectedVariantId, quantity }],
-        cartId
+        cartId,
       ).then((r) => {
         console.debug("[actions][addItem] addToCart response:", r);
       });
@@ -192,7 +192,7 @@ export async function removeItem(prevState: any, merchandiseId: string) {
     }
 
     const lineItem = cart.lines.find(
-      (line) => line.merchandise.id === merchandiseId
+      (line) => line.merchandise.id === merchandiseId,
     );
 
     if (lineItem && lineItem.id) {
@@ -212,7 +212,7 @@ export async function updateItemQuantity(
     lineId?: string;
     merchandiseId?: string;
     updateType: "plus" | "minus";
-  }
+  },
 ) {
   const { lineId, merchandiseId, updateType } = payload;
 
@@ -239,7 +239,7 @@ export async function updateItemQuantity(
     const edges = productAny?.variants?.edges ?? [];
     const variants = edges.map((e: any) => e.node);
     const currentVariant = variants.find(
-      (variant: any) => variant.id === lineItem.merchandise.id
+      (variant: any) => variant.id === lineItem.merchandise.id,
     );
     const maxAvailable =
       typeof currentVariant?.quantityAvailable === "number"
@@ -281,7 +281,7 @@ export async function updateItemVariant(
   payload: {
     lineId: string;
     merchandiseId: string; // new variant id
-  }
+  },
 ) {
   try {
     const cart = await getCart();
@@ -322,11 +322,14 @@ export type UnavailableCartItem = {
 
 export type ValidateCartAvailabilityResult =
   | { ok: true; checkoutUrl: string }
-  | { ok: false; error: "empty_cart" | "unavailable" | "error"; unavailableItems: UnavailableCartItem[] };
+  | {
+      ok: false;
+      error: "empty_cart" | "unavailable" | "error";
+      unavailableItems: UnavailableCartItem[];
+    };
 
 // Last-mile validation before checkout: re-fetches each product in the cart
-// from the backend and verifies that the selected variant still has enough
-// stock to fulfill the requested quantity.
+// from the backend and verifies the binary sufficientStock flag.
 export async function validateCartAvailability(): Promise<ValidateCartAvailabilityResult> {
   try {
     const cart = await getCart();
@@ -335,58 +338,50 @@ export async function validateCartAvailability(): Promise<ValidateCartAvailabili
       return { ok: false, error: "empty_cart", unavailableItems: [] };
     }
 
-    // Fetch fresh product data once per unique handle.
+    // Fetch fresh availability once per unique handle.
     const handles = Array.from(
-      new Set(cart.lines.map((line) => line.merchandise.product.handle))
+      new Set(cart.lines.map((line) => line.merchandise.product.handle)),
     );
+
     const freshEntries = await Promise.all(
       handles.map(async (handle) => {
         try {
-          const product = await getProductFresh(handle);
-          return [handle, product] as const;
+          const quantityForHandle = cart.lines
+            .filter((line) => line.merchandise.product.handle === handle)
+            .reduce((sum, line) => sum + line.quantity, 0);
+          console.debug(
+            `[validateCartAvailability] Fetching fresh product for handle: ${handle} (total quantity in cart: ${quantityForHandle})`,
+          );
+          const product = await getProductFresh(handle, quantityForHandle);
+          return [handle, product?.sufficientStock === true] as const;
         } catch (e) {
           console.error(
             "[actions][validateCartAvailability] getProductFresh failed for",
             handle,
-            e
+            e,
           );
-          return [handle, undefined] as const;
+          return [handle, false] as const;
         }
-      })
+      }),
     );
-    const freshByHandle = new Map(freshEntries);
+    const sufficientStockByHandle = new Map(freshEntries);
 
     const unavailableItems: UnavailableCartItem[] = [];
 
     for (const line of cart.lines) {
       const handle = line.merchandise.product.handle;
-      const fresh = freshByHandle.get(handle);
+      const hasSufficientStock = sufficientStockByHandle.get(handle) === true;
       const productTitle = line.merchandise.product.title;
       const variantLabel =
         line.merchandise.title && line.merchandise.title !== "Default Title"
           ? `${productTitle} (${line.merchandise.title})`
           : productTitle;
 
-      if (!fresh) {
+      if (!hasSufficientStock) {
         unavailableItems.push({
           title: variantLabel,
           requested: line.quantity,
           available: 0,
-        });
-        continue;
-      }
-
-      const variant = fresh.variants.find((v) => v.id === line.merchandise.id);
-      const available =
-        typeof variant?.quantityAvailable === "number"
-          ? variant.quantityAvailable
-          : 0;
-
-      if (!variant || !variant.availableForSale || available < line.quantity) {
-        unavailableItems.push({
-          title: variantLabel,
-          requested: line.quantity,
-          available: Math.max(0, available),
         });
       }
     }

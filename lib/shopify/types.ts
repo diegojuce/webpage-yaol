@@ -78,6 +78,11 @@ export type Product = Omit<ShopifyProduct, "variants" | "images"> & {
   images: Image[];
 };
 
+export type ProductAvailability = {
+  availableForSale: boolean;
+  sufficientStock: boolean;
+};
+
 export type ProductOption = {
   id: string;
   name: string;
@@ -279,6 +284,14 @@ export type ShopifyProductOperation = {
   data: { product: ShopifyProduct };
   variables: {
     handle: string;
+  };
+};
+
+export type ShopifyVerifyQty = {
+  data: { product: ProductAvailability };
+  variables: {
+    handle: string;
+    quantity: number;
   };
 };
 

@@ -37,6 +37,7 @@ import {
   Menu,
   Page,
   Product,
+  ProductAvailability,
   ShopifyAddToCartOperation,
   ShopifyCart,
   ShopifyCartAttributesUpdateOperation,
@@ -55,6 +56,7 @@ import {
   ShopifyProductsOperation,
   ShopifyRemoveFromCartOperation,
   ShopifyUpdateCartOperation,
+  ShopifyVerifyQty,
 } from "./types";
 
 const domain = process.env.SHOPIFY_STORE_DOMAIN
@@ -642,17 +644,27 @@ export async function getProduct(handle: string): Promise<Product | undefined> {
 // Uncached variant of getProduct: always hits the backend to get fresh
 // availability/stock data. Use for last-mile validation (e.g. at checkout).
 export async function getProductFresh(
-  handle: string
-): Promise<Product | undefined> {
-  const res = await backendFetch<ShopifyProductOperation>({
-    endpoint: "/get/product",
+  handle: string,
+  quantity: number
+): Promise<ProductAvailability | undefined> {
+  const res = await backendFetch<ShopifyVerifyQty>({
+    endpoint: "/verify-availability",
     variables: {
       handle,
+      quantity,
     },
   });
+  // return res.json({
+  //     data: {
+  //       product: {
+  //         availableForSale,
+  //         sufficientStock,
+  //       },
+  //     },
+  //   });
   const product = res.body?.data?.product;
   if (!product) return undefined;
-  return reshapeProduct(product, false);
+  return product;
 }
 
 export async function getProductRecommendations(
