@@ -2,8 +2,12 @@
 
 import { Dialog, Transition } from "@headlessui/react";
 import {
+  BuildingStorefrontIcon,
+  MapPinIcon,
+  PhoneIcon,
   PencilSquareIcon,
   ShoppingCartIcon,
+  TruckIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
 import clsx from "clsx";
@@ -83,34 +87,127 @@ function LineShippingSelector({
   };
 
   return (
-    <div className="mb-2 mx-7">
-      <h3 className="text-sm font-semibold mb-2 text-yellow-600">
+    <div className="mb-3 mx-4 mt-1">
+      <h3 className="mb-2 text-sm font-semibold text-yellow-500">
         Seleccione el tipo de envío:
       </h3>
-      <div className="mx-4">
-        <div className="flex flex-col gap-4">
-          <label className="flex items-center gap-2">
-            <input
-              type="radio"
-              name={`shippingType-${item.id}`}
-              value={first.id}
-              checked={currentVariantId === first.id}
-              onChange={() => handleSelect(first.id)}
-              className="form-radio h-3 w-3 text-yellow-600"
-            />
-            <span className="text-xs">Instalar en Yantissimo</span>
-          </label>
-          <label className="flex items-center gap-2">
-            <input
-              type="radio"
-              name={`shippingType-${item.id}`}
-              value={second.id}
-              checked={currentVariantId === second.id}
-              onChange={() => handleSelect(second.id)}
-              className="form-radio h-3 w-3 text-yellow-600"
-            />
-            <span className="text-xs">Envío a domicilio</span>
-          </label>
+      <div className="flex flex-col gap-2 md:grid md:grid-cols-2">
+        <button
+          type="button"
+          onClick={() => void handleSelect(first.id)}
+          aria-pressed={currentVariantId === first.id}
+          className={clsx(
+            "flex h-[88px] w-full items-center gap-3 rounded-xl border p-3 text-left transition-all duration-200",
+            currentVariantId === first.id
+              ? "border-yellow-400 bg-yellow-400 text-black shadow-[0_14px_36px_rgba(255,211,74,0.18)]"
+              : "border-white/10 bg-[#141416] text-white hover:border-white/20",
+          )}
+        >
+          <span
+            className={clsx(
+              "flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px]",
+              currentVariantId === first.id
+                ? "bg-black/10 text-black"
+                : "bg-white/5 text-yellow-300",
+            )}
+          >
+            <BuildingStorefrontIcon className="h-5 w-5" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-[13px] font-bold">
+              Instalar en Yantissimo
+            </span>
+            <span
+              className={clsx(
+                "mt-0.5 block text-[11px] font-semibold md:hidden",
+                currentVariantId === first.id
+                  ? "text-black/70"
+                  : "text-neutral-400",
+              )}
+            >
+              Montaje GRATIS · listo en 24h
+            </span>
+          </span>
+          <span
+            className={clsx(
+              "flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2",
+              currentVariantId === first.id
+                ? "border-black"
+                : "border-white/25",
+            )}
+          >
+            {currentVariantId === first.id ? (
+              <span className="h-2.5 w-2.5 rounded-full bg-black" />
+            ) : null}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => void handleSelect(second.id)}
+          aria-pressed={currentVariantId === second.id}
+          className={clsx(
+            "flex h-[88px] w-full items-center gap-3 rounded-xl border p-3 text-left transition-all duration-200",
+            currentVariantId === second.id
+              ? "border-yellow-400 bg-yellow-400 text-black shadow-[0_14px_36px_rgba(255,211,74,0.18)]"
+              : "border-white/10 bg-[#141416] text-white hover:border-white/20",
+          )}
+        >
+          <span
+            className={clsx(
+              "flex h-9 w-9 shrink-0 items-center justify-center rounded-[10px]",
+              currentVariantId === second.id
+                ? "bg-black/10 text-black"
+                : "bg-white/5 text-yellow-300",
+            )}
+          >
+            <TruckIcon className="h-5 w-5" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-[13px] font-bold">
+              Envío a domicilio
+            </span>
+            <span
+              className={clsx(
+                "mt-0.5 block text-[11px] font-semibold md:hidden",
+                currentVariantId === second.id
+                  ? "text-black/70"
+                  : "text-neutral-400",
+              )}
+            >
+              GRATIS · 2-4 días
+            </span>
+          </span>
+          <span
+            className={clsx(
+              "flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2",
+              currentVariantId === second.id
+                ? "border-black"
+                : "border-white/25",
+            )}
+          >
+            {currentVariantId === second.id ? (
+              <span className="h-2.5 w-2.5 rounded-full bg-black" />
+            ) : null}
+          </span>
+        </button>
+      </div>
+      <div className="sr-only">
+        <div role="radiogroup" aria-label="Tipo de envío">
+          <input
+            readOnly
+            type="radio"
+            name={`shippingType-${item.id}`}
+            value={first.id}
+            checked={currentVariantId === first.id}
+          />
+          <input
+            readOnly
+            type="radio"
+            name={`shippingType-${item.id}`}
+            value={second.id}
+            checked={currentVariantId === second.id}
+          />
         </div>
       </div>
       <p aria-live="polite" className="sr-only" role="status">
@@ -148,6 +245,97 @@ const formatPhoneForDisplay = (phone: string) => {
 
   return `${digits.slice(0, 3)} ${digits.slice(3, 6)} ${digits.slice(6)}`;
 };
+
+const isPickupLabel = (value: string) => {
+  const normalized = value.trim().toLowerCase();
+  if (!normalized) {
+    return false;
+  }
+  return (
+    normalized.includes("pickup") ||
+    normalized.includes("recoger") ||
+    normalized.includes("sucursal") ||
+    normalized.includes("instalar")
+  );
+};
+
+const isPickupCartLine = (item: CartItem) => {
+  const title = item?.merchandise?.title ?? "";
+  if (isPickupLabel(title)) {
+    return true;
+  }
+  return item?.merchandise?.selectedOptions?.some((option) =>
+    isPickupLabel(option.value),
+  );
+};
+
+function BranchContactCard({
+  branchName,
+  branchAddress,
+  branchDistance,
+  phone,
+  onEditBranch,
+  onEditPhone,
+}: {
+  branchName: string;
+  branchAddress?: string;
+  branchDistance?: string;
+  phone: string;
+  onEditBranch: () => void;
+  onEditPhone: () => void;
+}) {
+  return (
+    <div className="mb-4 rounded-xl border border-yellow-500/35 bg-[#0f0f10] p-3 text-white">
+      <div className="relative mb-3 h-20 overflow-hidden rounded-lg bg-gradient-to-br from-neutral-800 via-neutral-900 to-black">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_35%,rgba(255,198,0,0.2),transparent_55%)]" />
+        <div className="absolute left-1/2 top-1/2 h-5 w-5 -translate-x-1/2 -translate-y-1/2 rounded-full border border-yellow-400/60 bg-yellow-400/20">
+          <span className="absolute left-1/2 top-1/2 block h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-yellow-400" />
+        </div>
+      </div>
+
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-yellow-400/95">
+            <MapPinIcon className="h-3 w-3" />
+            Tu sucursal
+          </p>
+          <p className="truncate text-sm font-semibold">{branchName}</p>
+          <p className="mt-0.5 text-[11px] text-neutral-400">
+            {branchAddress || "Sucursal por confirmar"}
+            {branchDistance ? ` · ${branchDistance}` : ""}
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={onEditBranch}
+          aria-label="Editar sucursal"
+          className="rounded-full p-1.5 text-neutral-400 transition hover:bg-white/10 hover:text-white"
+        >
+          <PencilSquareIcon className="h-4 w-4" />
+        </button>
+      </div>
+
+      <div className="mt-2 flex items-center justify-between gap-2 border-t border-white/10 pt-2.5">
+        <div className="flex min-w-0 items-center gap-2">
+          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-yellow-400/15 text-yellow-400">
+            <PhoneIcon className="h-3.5 w-3.5" />
+          </span>
+          <p className="truncate text-xs text-neutral-300">
+            {phone ? formatPhoneForDisplay(phone) : "Teléfono pendiente"}
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={onEditPhone}
+          aria-label="Editar teléfono"
+          className="rounded-full p-1.5 text-neutral-400 transition hover:bg-white/10 hover:text-white"
+        >
+          <PencilSquareIcon className="h-4 w-4" />
+        </button>
+      </div>
+    </div>
+  );
+}
 
 function PreCartWizard({
   open,
@@ -449,6 +637,7 @@ export default function CartModal({ isWhite = false }) {
   const displayedPhone = preCartPhone || phoneFromAttributes;
   const displayedBranchName =
     branchForDisplay?.name || branchNameFromAttributes || "Pendiente";
+  const shouldShowBranchContact = (cart?.lines ?? []).some(isPickupCartLine);
 
   const bumpCartTrigger = useCallback(() => {
     const trigger = cartButtonRef.current;
@@ -616,20 +805,26 @@ export default function CartModal({ isWhite = false }) {
     }
   }, [cart]);
 
-  useEffect(() => {
-    if (phoneFromAttributes && !preCartPhone) {
-      setPreCartPhone(phoneFromAttributes);
-    }
+  // Seed the wizard's local state from cart attributes ONLY once per session.
+  // Without the refs, the effect would re-run whenever preCartPhone /
+  // selectedBranchId change, so clearing the input would immediately re-write
+  // it with the value stored in cart attributes.
+  const seededPhoneRef = useRef(false);
+  const seededBranchRef = useRef(false);
 
-    if (!selectedBranchId && branchIdFromAttributes) {
-      setSelectedBranchId(branchIdFromAttributes);
-    }
-  }, [
-    branchIdFromAttributes,
-    phoneFromAttributes,
-    preCartPhone,
-    selectedBranchId,
-  ]);
+  useEffect(() => {
+    if (seededPhoneRef.current) return;
+    if (!phoneFromAttributes) return;
+    setPreCartPhone(phoneFromAttributes);
+    seededPhoneRef.current = true;
+  }, [phoneFromAttributes]);
+
+  useEffect(() => {
+    if (seededBranchRef.current) return;
+    if (!branchIdFromAttributes) return;
+    setSelectedBranchId(branchIdFromAttributes);
+    seededBranchRef.current = true;
+  }, [branchIdFromAttributes]);
 
   useEffect(() => {
     const handleItemAdded = () => {
@@ -863,7 +1058,7 @@ export default function CartModal({ isWhite = false }) {
             leaveFrom="translate-x-0"
             leaveTo="translate-x-full"
           >
-            <Dialog.Panel className="fixed bottom-0 right-0 top-0 z-[220] flex h-full w-full flex-col border-l border-neutral-200 bg-white/80 p-6 text-black backdrop-blur-xl md:w-[390px] dark:border-neutral-700 dark:bg-black/80 dark:text-white">
+            <Dialog.Panel className="fixed bottom-0 right-0 top-0 z-[220] flex h-full w-full flex-col border-l border-neutral-200 bg-white/80 p-6 text-black backdrop-blur-xl md:w-[460px] dark:border-neutral-700 dark:bg-black/80 dark:text-white">
               <div className="flex items-center justify-between">
                 <p className="text-lg font-semibold">Mi carrito</p>
                 <button aria-label="Cerrar carrito" onClick={closeCart}>
@@ -1005,6 +1200,16 @@ export default function CartModal({ isWhite = false }) {
                         );
                       })}
                   </ul>
+                  {shouldShowBranchContact ? (
+                    <BranchContactCard
+                      branchName={displayedBranchName}
+                      branchAddress={branchForDisplay?.address}
+                      branchDistance={branchForDisplay?.distance}
+                      phone={displayedPhone}
+                      onEditBranch={() => openWizardForEdit(2)}
+                      onEditPhone={() => openWizardForEdit(1)}
+                    />
+                  ) : null}
                   <div className="py-4 text-sm text-neutral-500 dark:text-neutral-400">
                     {/* <div className="mb-3 flex items-center justify-between border-b border-neutral-200 pb-1 dark:border-neutral-700">
                       <p>Taxes</p>
@@ -1015,40 +1220,6 @@ export default function CartModal({ isWhite = false }) {
                       />
                     </div> */}
 
-                    <div className="mb-3 flex items-center justify-between border-b border-neutral-200 pb-1 pt-1 dark:border-neutral-700">
-                      <p>Teléfono</p>
-                      <div className="flex items-center gap-2">
-                        <p className="text-right">
-                          {displayedPhone
-                            ? formatPhoneForDisplay(displayedPhone)
-                            : "Pendiente"}
-                        </p>
-                        <button
-                          type="button"
-                          onClick={() => openWizardForEdit(1)}
-                          aria-label="Editar teléfono"
-                          className="rounded-full p-1 text-neutral-500 transition hover:bg-neutral-100 hover:text-neutral-800 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-white"
-                        >
-                          <PencilSquareIcon className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </div>
-                    <div className="mb-3 flex items-center justify-between border-b border-neutral-200 pb-1 pt-1 dark:border-neutral-700">
-                      <p>Sucursal</p>
-                      <div className="flex items-center gap-2">
-                        <p className="max-w-[180px] text-right text-xs leading-tight md:max-w-[220px] md:text-sm">
-                          {displayedBranchName}
-                        </p>
-                        <button
-                          type="button"
-                          onClick={() => openWizardForEdit(2)}
-                          aria-label="Editar sucursal"
-                          className="rounded-full p-1 text-neutral-500 transition hover:bg-neutral-100 hover:text-neutral-800 dark:text-neutral-400 dark:hover:bg-neutral-800 dark:hover:text-white"
-                        >
-                          <PencilSquareIcon className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </div>
                     <div className="mb-3 flex items-center justify-between border-b border-neutral-200 pb-1 pt-1 dark:border-neutral-700">
                       <p>Tipo de envío</p>
                       <p className="text-right">GRATIS</p>

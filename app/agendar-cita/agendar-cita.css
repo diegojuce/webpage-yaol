@@ -1,0 +1,692 @@
+/* =========================================================
+   AGENDAR CITA — Yantissimo
+   Scoped under .yt-agendar-page to avoid leaking globally.
+   ========================================================= */
+
+.yt-agendar-page {
+  --yt-yellow: #ffc600;
+  --yt-yellow-hi: #ffd34a;
+  --yt-yellow-deep: #d19d00;
+  --yt-black: #0f0f0f;
+  --font-display: "Staatliches", "Fjalla One", "Impact", sans-serif;
+  --font-body: "Geist", "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+
+  min-height: 100vh;
+  padding-bottom: 100px;
+  background: #f4f4f2;
+  color: var(--yt-black);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+.yt-agendar-page * {
+  box-sizing: border-box;
+}
+.yt-agendar-page button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+/* ============================ LAYOUT ============================ */
+.yt-agendar-page .layout {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 40px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ============================ PAGE HEAD ============================ */
+.yt-agendar-page .page-head {
+  padding: 0;
+}
+.yt-agendar-page .eyebrow {
+  margin: 0 0 12px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  color: var(--yt-yellow-deep);
+  text-transform: uppercase;
+}
+.yt-agendar-page .display-title {
+  margin: 0 0 12px;
+  font-family: var(--font-display);
+  font-size: clamp(40px, 6vw, 56px);
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  line-height: 0.95;
+  color: var(--yt-black);
+}
+.yt-agendar-page .lead {
+  margin: 0;
+  font-size: 16px;
+  color: #525252;
+}
+
+/* ============================ SUMMARY STRIP ============================ */
+.yt-agendar-page .strip-card {
+  background: var(--yt-black);
+  color: #fff;
+  border-radius: 16px;
+  padding: 16px 20px;
+}
+.yt-agendar-page .strip-card__head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 12px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+.yt-agendar-page .strip-card__check {
+  width: 22px;
+  height: 22px;
+  border-radius: 9999px;
+  background: var(--yt-yellow);
+  color: var(--yt-black);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.yt-agendar-page .strip-card__title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: var(--yt-yellow-hi);
+}
+.yt-agendar-page .strip-card__edit {
+  margin-left: auto;
+  font-size: 12px;
+  color: #fff;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  background: none;
+  border: none;
+  padding: 0;
+}
+.yt-agendar-page .strip-card__grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px 24px;
+}
+.yt-agendar-page .cell__label {
+  margin: 0 0 2px;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  color: #9ea0a3;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.yt-agendar-page .cell__value {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  line-height: 1.3;
+}
+.yt-agendar-page .cell__sub {
+  margin: 2px 0 0;
+  font-size: 11px;
+  color: #9ea0a3;
+}
+.yt-agendar-page .cell__input {
+  margin-top: 6px;
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  outline: none;
+  transition: border-color 0.15s var(--ease-out), background 0.15s var(--ease-out);
+}
+.yt-agendar-page .cell__input::placeholder {
+  color: #9ea0a3;
+  font-weight: 500;
+}
+.yt-agendar-page .cell__input:hover {
+  border-color: rgba(255, 198, 0, 0.45);
+}
+.yt-agendar-page .cell__input:focus {
+  border-color: var(--yt-yellow);
+  background: rgba(255, 255, 255, 0.1);
+}
+.yt-agendar-page .cell__input--select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 28px;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6' fill='none'><path d='M1 1l4 4 4-4' stroke='%23ffc600' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+}
+.yt-agendar-page .cell__input--select option {
+  background: #0f0f0f;
+  color: #fff;
+}
+.yt-agendar-page .cell__row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 2px;
+}
+.yt-agendar-page .cell__value--inline {
+  margin: 0;
+  flex: 1;
+  min-width: 0;
+}
+.yt-agendar-page .cell__sub--strong {
+  margin: 0;
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+}
+.yt-agendar-page .cell__pencil {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.04);
+  color: #9ea0a3;
+  transition: color 0.15s var(--ease-out), border-color 0.15s var(--ease-out),
+    background 0.15s var(--ease-out);
+}
+.yt-agendar-page .cell__pencil:hover {
+  color: var(--yt-yellow);
+  border-color: rgba(255, 198, 0, 0.55);
+  background: rgba(255, 198, 0, 0.08);
+}
+
+@media (max-width: 600px) {
+  .yt-agendar-page .strip-card__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ============================ CARD ============================ */
+.yt-agendar-page .card {
+  background: #fff;
+  border-radius: 20px;
+  border: 1px solid #eaeaea;
+  padding: 24px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+.yt-agendar-page .card--locked {
+  opacity: 0.6;
+}
+.yt-agendar-page .card__head {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+.yt-agendar-page .card__step {
+  margin: 0;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 9999px;
+  background: var(--yt-yellow);
+  color: var(--yt-black);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 13px;
+}
+.yt-agendar-page .card__title {
+  margin: 0 0 2px;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--yt-black);
+}
+.yt-agendar-page .card__sub {
+  margin: 0;
+  font-size: 13px;
+  color: #707070;
+}
+
+/* ============================ CALENDAR ============================ */
+.yt-agendar-page .cal__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+.yt-agendar-page .cal__title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  text-transform: capitalize;
+}
+.yt-agendar-page .cal__nav {
+  width: 32px;
+  height: 32px;
+  border-radius: 9999px;
+  background: #fafafa;
+  border: 1px solid #e5e5e5;
+  color: var(--yt-black);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s var(--ease-out);
+}
+.yt-agendar-page .cal__nav:hover:not(:disabled) {
+  background: var(--yt-yellow);
+  border-color: var(--yt-yellow);
+}
+.yt-agendar-page .cal__nav:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.yt-agendar-page .cal__grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+.yt-agendar-page .cal__grid--head {
+  margin-bottom: 6px;
+}
+.yt-agendar-page .cal__dow {
+  text-align: center;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: #999;
+  padding: 4px 0;
+}
+
+.yt-agendar-page .cal__cell {
+  position: relative;
+  aspect-ratio: 1;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--yt-black);
+  transition: all 0.15s var(--ease-out);
+}
+.yt-agendar-page .cal__cell:hover:not(:disabled) {
+  background: #fafafa;
+  border-color: var(--yt-black);
+}
+.yt-agendar-page .cal__cell--empty {
+  visibility: hidden;
+}
+.yt-agendar-page .cal__cell--today {
+  color: var(--yt-yellow-deep);
+}
+.yt-agendar-page .cal__cell-today-dot {
+  position: absolute;
+  bottom: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 4px;
+  border-radius: 9999px;
+  background: var(--yt-yellow-deep);
+}
+.yt-agendar-page .cal__cell--sel {
+  background: var(--yt-black) !important;
+  color: #fff !important;
+  border-color: var(--yt-black) !important;
+}
+.yt-agendar-page .cal__cell--sel .cal__cell-today-dot {
+  background: var(--yt-yellow);
+}
+.yt-agendar-page .cal__cell--dis {
+  color: #ccc;
+  cursor: not-allowed;
+}
+.yt-agendar-page .cal__cell--dis:hover {
+  background: transparent;
+  border-color: transparent;
+}
+
+/* ============================ TIME PICKER (MUI brand overrides) ============================ */
+/* Outlined input — yellow accents */
+.yt-agendar-page .yt-time-field .MuiOutlinedInput-root {
+  border-radius: 8px;
+  background: #fff;
+}
+.yt-agendar-page .yt-time-field .MuiOutlinedInput-notchedOutline {
+  border-color: #cfcfcf;
+}
+.yt-agendar-page .yt-time-field .MuiOutlinedInput-root:hover:not(.Mui-disabled) .MuiOutlinedInput-notchedOutline {
+  border-color: #707070;
+}
+.yt-agendar-page .yt-time-field .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline {
+  border-color: var(--yt-yellow-deep);
+  border-width: 2px;
+}
+.yt-agendar-page .yt-time-field .MuiInputLabel-root.Mui-focused {
+  color: var(--yt-yellow-deep);
+}
+.yt-agendar-page .yt-time-field .MuiInputBase-input {
+  font-family: var(--font-body);
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--yt-black);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+
+/* Popup — selected hour/minute pills in yellow */
+.yt-time-popper .MuiMultiSectionDigitalClock-root {
+  border-radius: 6px;
+}
+.yt-time-popper .MuiMultiSectionDigitalClockSection-item.Mui-selected,
+.yt-time-popper .MuiMultiSectionDigitalClockSection-item.Mui-selected:hover,
+.yt-time-popper .MuiMultiSectionDigitalClockSection-item.Mui-selected:focus-visible {
+  background-color: #ffd34a !important;
+  color: #0f0f0f !important;
+  font-weight: 600;
+}
+.yt-time-popper .MuiPickersLayout-actionBar .MuiButton-root {
+  color: #d19d00;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+.yt-time-popper .MuiPickersLayout-actionBar .MuiButton-root:hover {
+  background-color: rgba(255, 198, 0, 0.12);
+}
+.yt-time-popper .MuiPaper-root {
+  border-radius: 8px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.14), 0 2px 6px rgba(0, 0, 0, 0.06);
+}
+
+/* ============================ FOOTER ============================ */
+.yt-agendar-page .yt-footer {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 40;
+  background: #fff;
+  border-top: 1px solid #eaeaea;
+  padding: 14px 24px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.06);
+}
+.yt-agendar-page .yt-footer__info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+.yt-agendar-page .yt-footer__eyebrow {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: #999;
+}
+.yt-agendar-page .yt-footer__main {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--yt-black);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.yt-agendar-page .yt-footer__main--mute {
+  color: #999;
+  font-weight: 500;
+}
+
+/* ============================ CTA ============================ */
+.yt-agendar-page .cta {
+  background: var(--yt-yellow);
+  color: var(--yt-black);
+  border: none;
+  border-radius: 9999px;
+  padding: 14px 24px;
+  font-size: 14px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s var(--ease-out);
+  white-space: nowrap;
+}
+.yt-agendar-page .cta:hover:not(:disabled) {
+  background: var(--yt-yellow-hi);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 32px rgba(255, 198, 0, 0.4);
+}
+.yt-agendar-page .cta__arrow {
+  transition: transform 0.2s;
+}
+.yt-agendar-page .cta:hover:not(:disabled) .cta__arrow {
+  transform: translateX(4px);
+}
+.yt-agendar-page .cta--dis {
+  background: #eaeaea;
+  color: #999;
+  cursor: not-allowed;
+}
+.yt-agendar-page .cta--ghost {
+  background: transparent;
+  color: var(--yt-black);
+  border: 1.5px solid #e5e5e5;
+}
+.yt-agendar-page .cta--ghost:hover:not(:disabled) {
+  background: var(--yt-black);
+  color: #fff;
+  border-color: var(--yt-black);
+  box-shadow: none;
+}
+
+.yt-agendar-page .cta--loading {
+  pointer-events: none;
+}
+.yt-agendar-page .cta__spin {
+  width: 18px;
+  height: 18px;
+  border-radius: 9999px;
+  border: 2.5px solid rgba(0, 0, 0, 0.2);
+  border-top-color: var(--yt-black);
+  animation: ytSpin 0.8s linear infinite;
+}
+@keyframes ytSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ============================ SUCCESS ============================ */
+.yt-agendar-page .success {
+  position: relative;
+  min-height: calc(100vh - 116px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 32px;
+  background: radial-gradient(circle at 20% 20%, rgba(255, 198, 0, 0.08), transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(255, 198, 0, 0.06), transparent 50%);
+  overflow: hidden;
+}
+.yt-agendar-page .success__card {
+  position: relative;
+  z-index: 2;
+  background: #fff;
+  border-radius: 28px;
+  padding: 44px 36px;
+  max-width: 520px;
+  width: 100%;
+  border: 1px solid #eaeaea;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.08);
+  text-align: center;
+  animation: ytPop 0.5s var(--ease-out) both;
+}
+@keyframes ytPop {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.yt-agendar-page .success__check {
+  width: 88px;
+  height: 88px;
+  border-radius: 9999px;
+  background: var(--yt-yellow);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 18px;
+  animation: ytBounceIn 0.6s var(--ease-out) 0.2s both;
+}
+@keyframes ytBounceIn {
+  0% {
+    transform: scale(0.4);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+.yt-agendar-page .success__circle {
+  stroke-dasharray: 200;
+  stroke-dashoffset: 200;
+  animation: ytDrawCircle 0.6s var(--ease-out) 0.4s forwards;
+}
+@keyframes ytDrawCircle {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+.yt-agendar-page .success__tick {
+  stroke-dasharray: 50;
+  stroke-dashoffset: 50;
+  animation: ytDrawTick 0.4s var(--ease-out) 0.9s forwards;
+}
+@keyframes ytDrawTick {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.yt-agendar-page .success__eyebrow {
+  margin: 0 0 8px;
+  font-size: 12px;
+  letter-spacing: 0.2em;
+  color: var(--yt-yellow-deep);
+  font-weight: 700;
+}
+.yt-agendar-page .success__title {
+  margin: 0 0 12px;
+  font-family: var(--font-display);
+  font-size: clamp(32px, 5vw, 48px);
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  color: var(--yt-black);
+}
+.yt-agendar-page .success__lead {
+  margin: 0 0 24px;
+  font-size: 15px;
+  color: #525252;
+  line-height: 1.5;
+}
+.yt-agendar-page .success__lead strong {
+  color: var(--yt-black);
+}
+
+.yt-agendar-page .success__detail {
+  background: #fafafa;
+  border-radius: 14px;
+  padding: 14px 18px;
+  border: 1px solid #eaeaea;
+  margin-bottom: 22px;
+}
+.yt-agendar-page .success__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 0;
+  border-bottom: 1px solid #eaeaea;
+}
+.yt-agendar-page .success__row:last-child {
+  border-bottom: none;
+}
+.yt-agendar-page .success__row > span {
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: #999;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.yt-agendar-page .success__row > strong {
+  font-size: 13px;
+  color: var(--yt-black);
+  font-weight: 600;
+  text-align: right;
+}
+.yt-agendar-page .success__folio {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  letter-spacing: 0.04em;
+  color: var(--yt-yellow-deep) !important;
+}
+
+.yt-agendar-page .success__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.yt-agendar-page .success__confetti {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+.yt-agendar-page .success__confetti span {
+  position: absolute;
+  top: -20px;
+  width: 8px;
+  height: 14px;
+  border-radius: 2px;
+  animation: ytFall 3s linear infinite;
+  opacity: 0.8;
+}
+@keyframes ytFall {
+  0% {
+    transform: translateY(-20px) rotate(0deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.9;
+  }
+  100% {
+    transform: translateY(110vh) rotate(720deg);
+    opacity: 0;
+  }
+}
