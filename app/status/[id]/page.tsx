@@ -45,24 +45,106 @@ type PostCheck = {
 };
 
 type EventData = {
-  client_name: string;
+  client_name: string | null;
   id: string;
+  quote_id: string | number | null;
   postcheck: PostCheck;
+};
+
+type RawEventData = {
+  id?: string | number | null;
+  quote_id?: string | number | null;
+  client_name?: string | null;
+  postcheck?: unknown;
+  check_out?: unknown;
 };
 
 type FetchResult =
   | { ok: true; data: EventData }
   | { ok: false; status: number; message: string };
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function asStringRecord(value: unknown): Record<string, string> {
+  if (!isRecord(value)) return {};
+
+  return Object.fromEntries(
+    Object.entries(value).map(([key, item]) => [key, String(item ?? "")]),
+  );
+}
+
+function normalizePostCheck(value: unknown): PostCheck | null {
+  if (!isRecord(value)) return null;
+
+  return {
+    noteState: asStringRecord(value.noteState),
+    radioState: asStringRecord(value.radioState),
+    cotizacionPCK: Number(value.cotizacionPCK) || 0,
+    tireDataState: asStringRecord(value.tireDataState),
+    tireRadioState: asStringRecord(value.tireRadioState),
+  };
+}
+
+function normalizeEventData(value: unknown): EventData | null {
+  if (!isRecord(value)) return null;
+
+  const raw = value as RawEventData;
+  const postcheck = normalizePostCheck(raw.postcheck ?? raw.check_out);
+
+  if (!postcheck) return null;
+
+  return {
+    client_name: raw.client_name ?? null,
+    id: String(raw.id ?? raw.quote_id ?? ""),
+    quote_id: raw.quote_id ?? null,
+    postcheck,
+  };
+}
+
 async function fetchEvent(id: string): Promise<FetchResult> {
   try {
-    const res = await fetch(`${BACKEND_URL}/bypass/yaol/postcheck/${id}`, {
-      cache: "no-store",
-    });
-    if (!res.ok) {
-      return { ok: false, status: res.status, message: res.statusText };
+    const baseUrl = BACKEND_URL.trim().replace(/\/$/, "");
+
+    if (!baseUrl) {
+      return {
+        ok: false,
+        status: 0,
+        message: "NEXT_PUBLIC_BACKEND_URL no está configurado",
+      };
     }
-    const data = await res.json();
+
+    const res = await fetch(
+      `${baseUrl}/bypass/yaol/postcheck/${encodeURIComponent(id)}`,
+      {
+        cache: "no-store",
+      },
+    );
+
+    if (!res.ok) {
+      let message = res.statusText;
+      try {
+        const errorBody = await res.json();
+        if (isRecord(errorBody) && typeof errorBody.error === "string") {
+          message = errorBody.error;
+        }
+      } catch {
+        // Keep the HTTP status text when the backend does not return JSON.
+      }
+      return { ok: false, status: res.status, message };
+    }
+
+    const data = normalizeEventData(await res.json());
+
+    if (!data) {
+      return {
+        ok: false,
+        status: 404,
+        message: "No hay reporte post-check para este folio",
+      };
+    }
+
     return { ok: true, data };
   } catch (e) {
     return { ok: false, status: 0, message: String(e) };
@@ -161,7 +243,8 @@ export default async function StatusPage({
     );
   }
 
-  const { client_name, postcheck } = result.data;
+  const { client_name, postcheck, quote_id } = result.data;
+  const folio = quote_id ? String(quote_id) : id;
   const {
     noteState,
     radioState,
@@ -193,7 +276,7 @@ export default async function StatusPage({
   };
 
   const hasAlerts = serviceItems.some(
-    (i) => i.status === "Cambio" || i.status === "Preventivo"
+    (i) => i.status === "Cambio" || i.status === "Preventivo",
   );
 
   return (
@@ -204,9 +287,11 @@ export default async function StatusPage({
           <p className="mb-1 text-xs font-semibold uppercase tracking-widest text-gray-400">
             Reporte de servicio
           </p>
-          <h1 className="text-2xl font-bold text-gray-900">{client_name}</h1>
+          <h1 className="text-2xl font-bold text-gray-900">
+            {client_name ?? "Reporte post-check"}
+          </h1>
           <p className="mt-1 text-sm text-gray-500">
-            Folio: <span className="font-mono text-gray-700">{id}</span>
+            Folio: <span className="font-mono text-gray-700">{folio}</span>
           </p>
           {hasAlerts && (
             <div className="mt-4 rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-800 ring-1 ring-amber-200">
