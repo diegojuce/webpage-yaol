@@ -28,6 +28,55 @@ export async function fetchBranches() {
   return res.json();
 }
 
+// ============================================================
+// Pre-registered customer data (used by /agendar-cita)
+// TODO: configure the endpoint URL.
+// ============================================================
+export type RegisteredClient = {
+  client_name: string;
+  phone: string;
+  sucursal: string; // display label (e.g. "Yantissimo Colima Centro")
+  branch_code: string; // backend code (e.g. "NHS", "TEC", "BJZ", "CON", "REY", "MAN")
+};
+
+export async function fetchRegisteredClient(
+  quoteId?: string
+): Promise<RegisteredClient> {
+  // TODO: replace empty string with the real endpoint path, e.g.
+  //   `/bypass/yaol/registered-client${quoteId ? `?quote_id=${encodeURIComponent(quoteId)}` : ""}`
+  const endpoint = "";
+  if (!endpoint) {
+    throw new Error("fetchRegisteredClient: endpoint not configured");
+  }
+  const res = await fetch(buildUrl(endpoint), { cache: "no-store" });
+  if (!res.ok) {
+    throw new Error("Error al obtener los datos del cliente");
+  }
+  return res.json();
+}
+
+export type RegisteredQuote = {
+  articulos: string; // display string for the items list
+  servicios: string; // display string for the chosen services
+  duracion: number; // total duration in minutes (must match backend service durations)
+};
+
+export async function fetchClientServiceAndItems(
+  quoteId?: string
+): Promise<RegisteredQuote> {
+  // TODO: replace empty string with the real endpoint path, e.g.
+  //   `/bypass/yaol/quote-summary${quoteId ? `?quote_id=${encodeURIComponent(quoteId)}` : ""}`
+  const endpoint = "";
+  if (!endpoint) {
+    throw new Error("fetchClientServiceAndItems: endpoint not configured");
+  }
+  const res = await fetch(buildUrl(endpoint), { cache: "no-store" });
+  if (!res.ok) {
+    throw new Error("Error al obtener los servicios y artículos");
+  }
+  return res.json();
+}
+
 export async function fetchAvailableDates(branchId: string) {
   const res = await fetch(
     buildUrl(
