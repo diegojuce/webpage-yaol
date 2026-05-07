@@ -6,7 +6,7 @@ import { TimePicker } from "@mui/x-date-pickers/TimePicker";
 import { renderMultiSectionDigitalClockTimeView } from "@mui/x-date-pickers/timeViewRenderers";
 import { useCart } from "components/cart/cart-context";
 import { setCartAttributes } from "components/cart/actions";
-import { CART_BRANCHES } from "components/cart/branches";
+import { CART_BRANCHES, backendBranchCode } from "components/cart/branches";
 import dayjs, { Dayjs } from "dayjs";
 import "dayjs/locale/es";
 import {
@@ -34,28 +34,18 @@ type ClientData = {
   duracion: number; // minutes — must match a backend-supported duration (60 or 120)
 };
 
-// Cart branch name → backend appointment branch code.
-// Both Manzanillo locations map to the same backend code (the backend only
-// has 6 codes: NHS, TEC, BJZ, CON, REY, MAN).
-const BRANCH_NAME_TO_CODE: Record<string, string> = {
-  "Niños Héroes": "NHS",
-  "Tecnológico": "TEC",
-  "Benito Juárez": "BJZ",
-  "Constitución": "CON",
-  "Colinas del Rey": "REY",
-  "Manzanillo Blvd.": "MAN",
-  "Manzanillo Tapeixtles": "MAN",
-};
-
+// Cart branch name → backend appointment branch code (uppercase, matches
+// backend rampDictionary). Source of truth: CART_BRANCHES; both Manzanillo
+// entries collapse to "MAN" via backendBranchCode().
 const normalizeBranchName = (s: string) => s.trim().toLowerCase();
 
 function codeFromBranchName(name: string): string {
   const target = normalizeBranchName(name);
   if (!target) return "";
-  const hit = Object.entries(BRANCH_NAME_TO_CODE).find(
-    ([k]) => normalizeBranchName(k) === target,
+  const branch = CART_BRANCHES.find(
+    (b) => normalizeBranchName(b.name) === target,
   );
-  return hit?.[1] ?? "";
+  return branch ? backendBranchCode(branch.id) : "";
 }
 
 // Empty initial state — populated only after fetchRegisteredClient /
@@ -261,6 +251,12 @@ function buildStartAtInCdmx(date: string, hhmm: string): string {
 }
 
 type Step = "form" | "confirming" | "success";
+type QuoteStatus =
+  | "loading"
+  | "ok"
+  | "not_found"
+  | "unpaid"
+  | "already_scheduled";
 
 export default function AgendarCitaPage() {
   const searchParams = useSearchParams();
@@ -277,6 +273,11 @@ export default function AgendarCitaPage() {
   const [timesLoading, setTimesLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [client, setClient] = useState<ClientData>(EMPTY_CLIENT);
+  const [quoteStatus, setQuoteStatus] = useState<QuoteStatus>(
+    quoteIdFromQuery ? "loading" : "ok",
+  );
+  const [scheduledAt, setScheduledAt] = useState<string | null>(null);
+  const [rescheduling, setRescheduling] = useState(false);
 
   // Cart attributes (saved by the PreCartWizard in components/cart/modal.tsx
   // via setCartAttributes — backed by the cartId cookie + Shopify cart).
@@ -305,23 +306,47 @@ export default function AgendarCitaPage() {
     }));
   }, [phoneFromCart, branchNameFromCart, branchCodeFromCart]);
 
-  // Fetch registered client data (name, phone, sucursal). Falls back silently
-  // to PRE_REGISTERED if the endpoint isn't configured yet.
+  // Fetch registered client data + quote status. Drives the invalid-state
+  // screens (not found / unpaid / already scheduled).
   useEffect(() => {
+    if (!quoteIdFromQuery) {
+      setQuoteStatus("ok");
+      return;
+    }
     let cancelled = false;
+    setQuoteStatus("loading");
     fetchRegisteredClient(quoteIdFromQuery)
       .then((data) => {
         if (cancelled) return;
+        if (!data.exists) {
+          setQuoteStatus("not_found");
+          return;
+        }
+        if (!data.paid) {
+          setQuoteStatus("unpaid");
+          return;
+        }
+        const code = data.branch_code || data.sucursal;
+        const branch = CART_BRANCHES.find(
+          (b) => backendBranchCode(b.id) === code,
+        );
         setClient((prev) => ({
           ...prev,
           nombre: data.client_name,
           telefono: data.phone,
-          sucursal: data.sucursal,
-          branchCode: data.branch_code,
+          sucursal: branch?.name ?? data.sucursal,
+          branchCode: code,
         }));
+        if (data.scheduled) {
+          setScheduledAt(data.scheduled_at ?? null);
+          setQuoteStatus("already_scheduled");
+        } else {
+          setQuoteStatus("ok");
+        }
       })
       .catch((error) => {
         console.warn("[agendar-cita] fetchRegisteredClient", error);
+        if (!cancelled) setQuoteStatus("ok");
       });
     return () => {
       cancelled = true;
@@ -417,7 +442,7 @@ export default function AgendarCitaPage() {
     setClient((prev) => ({ ...prev, sucursal: name, branchCode: code }));
     if (!name) return;
     try {
-      await setCartAttributes({ sucursal: name });
+      await setCartAttributes({ sucursal: name, sucursalCode: code });
     } catch (error) {
       console.warn("[agendar-cita] save branch failed", error);
     }
@@ -458,10 +483,14 @@ export default function AgendarCitaPage() {
         phone: client.telefono,
         sucursal: client.branchCode,
         additional_notes: client.servicios,
-        items,
         start_at: startAt,
         duration_minutes: client.duracion,
-        ...(quoteIdFromQuery ? { quote_id: quoteIdFromQuery } : {}),
+        // When the quote already exists (paid), items live in the DB from
+        // the orders/paid webhook — do not overwrite them. Only the legacy
+        // "schedule first, pay later" flow sends items.
+        ...(quoteIdFromQuery
+          ? { quote_id: quoteIdFromQuery }
+          : { items }),
       });
 
       const quoteId = extractQuoteId(response);
@@ -470,7 +499,8 @@ export default function AgendarCitaPage() {
         try {
           await setCartAttributes({
             quoteId,
-            sucursal: client.branchCode,
+            sucursal: client.sucursal,
+            sucursalCode: client.branchCode,
           });
         } catch (cartError) {
           console.warn("[agendar-cita] cart attributes sync failed", cartError);
@@ -501,6 +531,60 @@ export default function AgendarCitaPage() {
 
   if (!today) {
     return <div className="yt-agendar-page" style={{ minHeight: "100vh" }} />;
+  }
+
+  if (quoteStatus === "loading") {
+    return (
+      <div
+        className="yt-agendar-page"
+        style={{ paddingTop: "7rem", minHeight: "100vh" }}
+      >
+        <main className="layout">
+          <p className="lead">Cargando tu cotización…</p>
+        </main>
+      </div>
+    );
+  }
+
+  if (quoteStatus === "not_found") {
+    return (
+      <div className="yt-agendar-page" style={{ paddingTop: "7rem" }}>
+        <StatusScreen
+          eyebrow="COTIZACIÓN NO ENCONTRADA"
+          title="No encontramos esta cotización"
+          message={
+            "Verifica el enlace que te llegó por WhatsApp o escríbenos para ayudarte."
+          }
+        />
+      </div>
+    );
+  }
+
+  if (quoteStatus === "unpaid") {
+    return (
+      <div className="yt-agendar-page" style={{ paddingTop: "7rem" }}>
+        <StatusScreen
+          eyebrow="PAGO PENDIENTE"
+          title="Tu pago aún está pendiente"
+          message="Termina la compra para poder agendar tu cita."
+        />
+      </div>
+    );
+  }
+
+  if (quoteStatus === "already_scheduled" && !rescheduling) {
+    return (
+      <div className="yt-agendar-page" style={{ paddingTop: "7rem" }}>
+        <AlreadyScheduledScreen
+          scheduledAt={scheduledAt}
+          client={client}
+          onReschedule={() => {
+            setRescheduling(true);
+            setQuoteStatus("ok");
+          }}
+        />
+      </div>
+    );
   }
 
   return (
@@ -990,6 +1074,81 @@ function Footer({
         )}
       </button>
     </div>
+  );
+}
+
+function StatusScreen({
+  eyebrow,
+  title,
+  message,
+  actions,
+}: {
+  eyebrow: string;
+  title: string;
+  message: string;
+  actions?: React.ReactNode;
+}) {
+  return (
+    <main className="success">
+      <div className="success__card">
+        <p className="success__eyebrow">{eyebrow}</p>
+        <h1 className="success__title">{title}</h1>
+        <p className="success__lead">{message}</p>
+        {actions ? <div className="success__actions">{actions}</div> : null}
+      </div>
+    </main>
+  );
+}
+
+function AlreadyScheduledScreen({
+  scheduledAt,
+  client,
+  onReschedule,
+}: {
+  scheduledAt: string | null;
+  client: ClientData;
+  onReschedule: () => void;
+}) {
+  const date = scheduledAt ? new Date(scheduledAt) : null;
+  const valid = date && !Number.isNaN(date.getTime());
+  return (
+    <main className="success">
+      <div className="success__card">
+        <p className="success__eyebrow">YA TIENES CITA</p>
+        <h1 className="success__title">Tu cita está agendada</h1>
+        <p className="success__lead">
+          Si necesitas cambiar el día o la hora, puedes reagendar.
+        </p>
+        <div className="success__detail">
+          {valid ? (
+            <div className="success__row">
+              <span>Cita</span>
+              <strong>
+                {fmtFullDate(date!)} ·{" "}
+                {`${pad(date!.getHours())}:${pad(date!.getMinutes())}`}
+              </strong>
+            </div>
+          ) : null}
+          {client.sucursal ? (
+            <div className="success__row">
+              <span>Sucursal</span>
+              <strong>{client.sucursal}</strong>
+            </div>
+          ) : null}
+          {client.nombre ? (
+            <div className="success__row">
+              <span>Cliente</span>
+              <strong>{client.nombre}</strong>
+            </div>
+          ) : null}
+        </div>
+        <div className="success__actions">
+          <button type="button" className="cta" onClick={onReschedule}>
+            Reagendar <span className="cta__arrow">→</span>
+          </button>
+        </div>
+      </div>
+    </main>
   );
 }
 

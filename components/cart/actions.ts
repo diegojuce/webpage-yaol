@@ -35,6 +35,7 @@ export async function setCartIdFromParam(rawCartId?: string | null) {
 export async function setCartAttributes(payload: {
   quoteId?: string | number | null;
   sucursal?: string | null;
+  sucursalCode?: string | null;
   phone?: string | null;
 }) {
   const quoteId =
@@ -45,6 +46,10 @@ export async function setCartAttributes(payload: {
     payload.sucursal !== undefined && payload.sucursal !== null
       ? String(payload.sucursal).trim()
       : "";
+  const sucursalCode =
+    payload.sucursalCode !== undefined && payload.sucursalCode !== null
+      ? String(payload.sucursalCode).trim()
+      : "";
   const phone =
     payload.phone !== undefined && payload.phone !== null
       ? String(payload.phone).trim()
@@ -53,6 +58,7 @@ export async function setCartAttributes(payload: {
   const attributes = [
     ...(quoteId ? [{ key: "quote_id", value: quoteId }] : []),
     ...(sucursal ? [{ key: "sucursal", value: sucursal }] : []),
+    ...(sucursalCode ? [{ key: "sucursal_code", value: sucursalCode }] : []),
     ...(phone ? [{ key: "telefono", value: phone }] : []),
   ];
 

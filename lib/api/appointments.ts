@@ -30,51 +30,82 @@ export async function fetchBranches() {
 
 // ============================================================
 // Pre-registered customer data (used by /agendar-cita)
-// TODO: configure the endpoint URL.
 // ============================================================
 export type RegisteredClient = {
+  exists: boolean;
+  paid: boolean;
+  scheduled: boolean;
+  scheduled_at?: string | null;
   client_name: string;
   phone: string;
-  sucursal: string; // display label (e.g. "Yantissimo Colima Centro")
-  branch_code: string; // backend code (e.g. "NHS", "TEC", "BJZ", "CON", "REY", "MAN")
+  sucursal: string; // backend code (e.g. "NHS", "TEC", "BJZ", "CON", "REY", "MAN")
+  branch_code: string;
 };
 
 export async function fetchRegisteredClient(
   quoteId?: string
 ): Promise<RegisteredClient> {
-  // TODO: replace empty string with the real endpoint path, e.g.
-  //   `/bypass/yaol/registered-client${quoteId ? `?quote_id=${encodeURIComponent(quoteId)}` : ""}`
-  const endpoint = "";
-  if (!endpoint) {
-    throw new Error("fetchRegisteredClient: endpoint not configured");
+  if (!quoteId) {
+    return {
+      exists: false,
+      paid: false,
+      scheduled: false,
+      scheduled_at: null,
+      client_name: "",
+      phone: "",
+      sucursal: "",
+      branch_code: "",
+    };
   }
-  const res = await fetch(buildUrl(endpoint), { cache: "no-store" });
+  const res = await fetch(
+    buildUrl(
+      `/bypass/yaol/registered-client?quote_id=${encodeURIComponent(quoteId)}`
+    ),
+    { cache: "no-store" }
+  );
   if (!res.ok) {
     throw new Error("Error al obtener los datos del cliente");
   }
-  return res.json();
+  const data = await res.json();
+  return {
+    exists: Boolean(data.exists),
+    paid: Boolean(data.paid),
+    scheduled: Boolean(data.scheduled),
+    scheduled_at: data.scheduled_at ?? null,
+    client_name: data.client_name ?? "",
+    phone: data.phone ?? "",
+    sucursal: data.sucursal ?? "",
+    branch_code: data.branch_code ?? data.sucursal ?? "",
+  };
 }
 
 export type RegisteredQuote = {
-  articulos: string; // display string for the items list
-  servicios: string; // display string for the chosen services
-  duracion: number; // total duration in minutes (must match backend service durations)
+  articulos: string;
+  servicios: string;
+  duracion: number;
 };
 
 export async function fetchClientServiceAndItems(
   quoteId?: string
 ): Promise<RegisteredQuote> {
-  // TODO: replace empty string with the real endpoint path, e.g.
-  //   `/bypass/yaol/quote-summary${quoteId ? `?quote_id=${encodeURIComponent(quoteId)}` : ""}`
-  const endpoint = "";
-  if (!endpoint) {
-    throw new Error("fetchClientServiceAndItems: endpoint not configured");
+  if (!quoteId) {
+    return { articulos: "", servicios: "", duracion: 60 };
   }
-  const res = await fetch(buildUrl(endpoint), { cache: "no-store" });
+  const res = await fetch(
+    buildUrl(
+      `/bypass/yaol/quote-summary?quote_id=${encodeURIComponent(quoteId)}`
+    ),
+    { cache: "no-store" }
+  );
   if (!res.ok) {
     throw new Error("Error al obtener los servicios y artículos");
   }
-  return res.json();
+  const data = await res.json();
+  return {
+    articulos: data.articulos ?? "",
+    servicios: data.servicios ?? "",
+    duracion: Number(data.duracion) || 60,
+  };
 }
 
 export async function fetchAvailableDates(branchId: string) {
@@ -255,7 +286,7 @@ export type SaveAndSchedulePayload = {
   sucursal: string; // e.g., "NHS", "TEC"
   quote_id?: string;
   additional_notes?: string;
-  items: Array<{
+  items?: Array<{
     merchandise_id?: string;
     product_id?: string;
     title?: string;

@@ -37,7 +37,7 @@ import {
 } from "./actions";
 import BranchList from "./branch-list";
 import BranchMap from "./branch-map";
-import { CART_BRANCHES } from "./branches";
+import { CART_BRANCHES, backendBranchCode } from "./branches";
 import { useCart } from "./cart-context";
 import { DeleteItemButton } from "./delete-item-button";
 import { EditItemQuantityButton } from "./edit-item-quantity-button";
@@ -786,6 +786,7 @@ export default function CartModal({ isWhite = false }) {
     try {
       await setCartAttributes({
         sucursal: selectedBranch.name,
+        sucursalCode: backendBranchCode(selectedBranch.id),
         phone: normalizedPhone,
       });
       setIsPreCartWizardOpen(false);
@@ -1235,10 +1236,6 @@ export default function CartModal({ isWhite = false }) {
                   </div>
                   <div className="py-4">
                     <CheckoutButton />
-                    {/* <ServiceModal
-                      autoOpen={autoOpenService}
-                      quoteIdFromQuery={quoteIdFromQuery}
-                    ></ServiceModal> */}
                   </div>
                 </div>
               )}

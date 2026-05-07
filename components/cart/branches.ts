@@ -10,9 +10,13 @@ export type BranchOption = {
   lng: number;
 };
 
+// `id` matches the uppercase code expected by the backend's rampDictionary /
+// assignRamp / save-and-schedule (`backend-yssm/src/constants/rampas.js`).
+// Tapeixtles uses `MAN_TAP` so the UI can distinguish it; the backend code is
+// derived as `id.split("_")[0]` so both Manzanillo locations map to `MAN`.
 export const CART_BRANCHES: BranchOption[] = [
   {
-    id: "tecnologico",
+    id: "TEC",
     name: "Tecnológico",
     address: "Av. Tecnológico 512, Colima, Col.",
     city: "Colima",
@@ -23,7 +27,7 @@ export const CART_BRANCHES: BranchOption[] = [
     lng: -103.696,
   },
   {
-    id: "benito-juarez",
+    id: "BJZ",
     name: "Benito Juárez",
     address: "Av. Benito Juárez 880, Colima, Col.",
     city: "Colima",
@@ -34,7 +38,7 @@ export const CART_BRANCHES: BranchOption[] = [
     lng: -103.7221,
   },
   {
-    id: "constitucion",
+    id: "CON",
     name: "Constitución",
     address: "Av. Constitución 1240, Villa de Álvarez, Col.",
     city: "Villa de Álvarez",
@@ -45,7 +49,7 @@ export const CART_BRANCHES: BranchOption[] = [
     lng: -103.7395,
   },
   {
-    id: "ninos-heroes",
+    id: "NHS",
     name: "Niños Héroes",
     address: "Blvd. Niños Héroes 455, Colima, Col.",
     city: "Colima",
@@ -56,7 +60,7 @@ export const CART_BRANCHES: BranchOption[] = [
     lng: -103.711,
   },
   {
-    id: "colinas-del-rey",
+    id: "REY",
     name: "Colinas del Rey",
     address: "Av. Colinas del Rey 22, Villa de Álvarez, Col.",
     city: "Villa de Álvarez",
@@ -67,7 +71,7 @@ export const CART_BRANCHES: BranchOption[] = [
     lng: -103.7478,
   },
   {
-    id: "manzanillo-blvd",
+    id: "MAN",
     name: "Manzanillo Blvd.",
     address: "Blvd. Miguel de la Madrid 1820, Manzanillo, Col.",
     city: "Manzanillo",
@@ -78,7 +82,7 @@ export const CART_BRANCHES: BranchOption[] = [
     lng: -104.3385,
   },
   {
-    id: "manzanillo-tapeixtles",
+    id: "MAN_TAP",
     name: "Manzanillo Tapeixtles",
     address: "Carr. Manzanillo - Cihuatlán 75, Tapeixtles, Col.",
     city: "Manzanillo",
@@ -89,3 +93,7 @@ export const CART_BRANCHES: BranchOption[] = [
     lng: -104.368,
   },
 ];
+
+export function backendBranchCode(branchId: string): string {
+  return String(branchId || "").split("_")[0] || "";
+}
