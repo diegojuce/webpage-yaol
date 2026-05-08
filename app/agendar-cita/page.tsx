@@ -43,7 +43,7 @@ function codeFromBranchName(name: string): string {
   const target = normalizeBranchName(name);
   if (!target) return "";
   const branch = CART_BRANCHES.find(
-    (b) => normalizeBranchName(b.name) === target,
+    (b) => normalizeBranchName(b.name) === target
   );
   return branch ? backendBranchCode(branch.id) : "";
 }
@@ -61,20 +61,41 @@ const EMPTY_CLIENT: ClientData = {
 };
 
 const MONTHS_ES = [
-  "Enero","Febrero","Marzo","Abril","Mayo","Junio",
-  "Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre",
+  "Enero",
+  "Febrero",
+  "Marzo",
+  "Abril",
+  "Mayo",
+  "Junio",
+  "Julio",
+  "Agosto",
+  "Septiembre",
+  "Octubre",
+  "Noviembre",
+  "Diciembre",
 ];
-const DAYS_ES_SHORT = ["Lun","Mar","Mié","Jue","Vie","Sáb","Dom"];
-const DAYS_ES_LONG = ["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado","Domingo"];
+const DAYS_ES_SHORT = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
+const DAYS_ES_LONG = [
+  "Lunes",
+  "Martes",
+  "Miércoles",
+  "Jueves",
+  "Viernes",
+  "Sábado",
+  "Domingo",
+];
 
 function startOfDay(d: Date) {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate());
 }
 function sameDay(a: Date | null, b: Date | null) {
-  return !!a && !!b
-    && a.getFullYear() === b.getFullYear()
-    && a.getMonth() === b.getMonth()
-    && a.getDate() === b.getDate();
+  return (
+    !!a &&
+    !!b &&
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
+  );
 }
 function isSunday(d: Date) {
   return d.getDay() === 0;
@@ -181,7 +202,10 @@ function extractQuoteId(raw: unknown): string | null {
   const direct = data.quote_id ?? data.quoteId;
   if (direct) return String(direct);
   const quote =
-    data.quote ?? data.data?.quote ?? data.result?.quote ?? data.response?.quote;
+    data.quote ??
+    data.data?.quote ??
+    data.result?.quote ??
+    data.response?.quote;
   const nested = quote?.quote_id ?? quote?.quoteId ?? quote?.id;
   return nested ? String(nested) : null;
 }
@@ -203,7 +227,7 @@ function getTimeZoneOffsetMinutes(timeZone: string, date: Date): number {
       if (part.type !== "literal") acc[part.type] = part.value;
       return acc;
     },
-    {} as Record<string, string>,
+    {} as Record<string, string>
   );
   const year = Number(values.year);
   const month = Number(values.month);
@@ -212,9 +236,14 @@ function getTimeZoneOffsetMinutes(timeZone: string, date: Date): number {
   const minute = Number(values.minute);
   const second = Number(values.second);
   if (
-    Number.isNaN(year) || Number.isNaN(month) || Number.isNaN(day) ||
-    Number.isNaN(hour) || Number.isNaN(minute) || Number.isNaN(second)
-  ) return 0;
+    Number.isNaN(year) ||
+    Number.isNaN(month) ||
+    Number.isNaN(day) ||
+    Number.isNaN(hour) ||
+    Number.isNaN(minute) ||
+    Number.isNaN(second)
+  )
+    return 0;
   const asUtc = Date.UTC(year, month - 1, day, hour, minute, second);
   return (asUtc - date.getTime()) / 60000;
 }
@@ -274,10 +303,18 @@ export default function AgendarCitaPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [client, setClient] = useState<ClientData>(EMPTY_CLIENT);
   const [quoteStatus, setQuoteStatus] = useState<QuoteStatus>(
-    quoteIdFromQuery ? "loading" : "ok",
+    quoteIdFromQuery ? "loading" : "ok"
   );
   const [scheduledAt, setScheduledAt] = useState<string | null>(null);
   const [rescheduling, setRescheduling] = useState(false);
+  const [attempted, setAttempted] = useState(false);
+  const [snackbar, setSnackbar] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!snackbar) return;
+    const t = setTimeout(() => setSnackbar(null), 4000);
+    return () => clearTimeout(t);
+  }, [snackbar]);
 
   // Cart attributes (saved by the PreCartWizard in components/cart/modal.tsx
   // via setCartAttributes — backed by the cartId cookie + Shopify cart).
@@ -328,7 +365,7 @@ export default function AgendarCitaPage() {
         }
         const code = data.branch_code || data.sucursal;
         const branch = CART_BRANCHES.find(
-          (b) => backendBranchCode(b.id) === code,
+          (b) => backendBranchCode(b.id) === code
         );
         setClient((prev) => ({
           ...prev,
@@ -386,7 +423,7 @@ export default function AgendarCitaPage() {
     fetchAvailableTimes(
       String(client.duracion),
       client.branchCode,
-      formatISODate(date),
+      formatISODate(date)
     )
       .then((raw) => {
         if (cancelled) return;
@@ -398,7 +435,7 @@ export default function AgendarCitaPage() {
         setErrorMessage(
           error instanceof Error
             ? error.message
-            : "Error al obtener horarios disponibles",
+            : "Error al obtener horarios disponibles"
         );
       })
       .finally(() => {
@@ -418,12 +455,18 @@ export default function AgendarCitaPage() {
   const time =
     hour !== null && minute !== null ? `${pad(hour)}:${pad(minute)}` : null;
   const clientLoaded = Boolean(
-    client.nombre &&
-      client.telefono &&
-      client.branchCode &&
-      client.duracion,
+    client.nombre && client.telefono && client.branchCode && client.duracion
   );
   const ready = !!date && !!time && clientLoaded;
+
+  const missingFields = {
+    nombre: !client.nombre,
+    telefono: !client.telefono || client.telefono.length < 10,
+    sucursal: !client.branchCode,
+    date: !date,
+    time: !time,
+  };
+  const showErrors = attempted && !ready;
 
   async function handleChangePhone(raw: string) {
     const digits = raw.replace(/\D/g, "").slice(0, 10);
@@ -448,6 +491,21 @@ export default function AgendarCitaPage() {
     }
   }
 
+  function handleCtaClick() {
+    if (ready) {
+      handleConfirm();
+      return;
+    }
+    setAttempted(true);
+    const missing: string[] = [];
+    if (missingFields.nombre) missing.push("Nombre");
+    if (missingFields.telefono) missing.push("Teléfono");
+    if (missingFields.sucursal) missing.push("Sucursal");
+    if (missingFields.date) missing.push("Día");
+    if (missingFields.time) missing.push("Hora");
+    setSnackbar(missing.join(" · "));
+  }
+
   async function handleConfirm() {
     if (!date || hour === null || minute === null) return;
     setStep("confirming");
@@ -470,10 +528,12 @@ export default function AgendarCitaPage() {
         unit_price: unit,
         total_price: total,
         currency: line.cost?.totalAmount?.currencyCode,
-        selected_options: (line.merchandise?.selectedOptions || []).map((o) => ({
-          name: o.name,
-          value: o.value,
-        })),
+        selected_options: (line.merchandise?.selectedOptions || []).map(
+          (o) => ({
+            name: o.name,
+            value: o.value,
+          })
+        ),
       };
     });
 
@@ -488,9 +548,7 @@ export default function AgendarCitaPage() {
         // When the quote already exists (paid), items live in the DB from
         // the orders/paid webhook — do not overwrite them. Only the legacy
         // "schedule first, pay later" flow sends items.
-        ...(quoteIdFromQuery
-          ? { quote_id: quoteIdFromQuery }
-          : { items }),
+        ...(quoteIdFromQuery ? { quote_id: quoteIdFromQuery } : { items }),
       });
 
       const quoteId = extractQuoteId(response);
@@ -508,14 +566,14 @@ export default function AgendarCitaPage() {
       }
 
       setConfirmId(
-        quoteId ?? `YT-${Math.floor(100000 + Math.random() * 900000)}`,
+        quoteId ?? `YT-${Math.floor(100000 + Math.random() * 900000)}`
       );
       setStep("success");
     } catch (error) {
       setErrorMessage(
         error instanceof Error
           ? error.message
-          : "Error al confirmar la cita. Intenta de nuevo.",
+          : "Error al confirmar la cita. Intenta de nuevo."
       );
       setStep("form");
     }
@@ -596,8 +654,22 @@ export default function AgendarCitaPage() {
             client={client}
             onChangeBranch={handleChangeBranch}
             onChangePhone={handleChangePhone}
+            errors={
+              showErrors
+                ? {
+                    nombre: missingFields.nombre,
+                    telefono: missingFields.telefono,
+                    sucursal: missingFields.sucursal,
+                  }
+                : undefined
+            }
           />
-          <DateCard today={today} date={date} setDate={setDate} />
+          <DateCard
+            today={today}
+            date={date}
+            setDate={setDate}
+            error={showErrors && missingFields.date}
+          />
           <TimeCard
             hour={hour}
             setHour={setHour}
@@ -606,14 +678,17 @@ export default function AgendarCitaPage() {
             disabled={!date}
             availableTimes={availableTimes}
             timesLoading={timesLoading}
+            error={showErrors && missingFields.time}
           />
           <Footer
             date={date}
             time={time}
             ready={ready}
-            onConfirm={handleConfirm}
+            onConfirm={handleCtaClick}
             isConfirming={step === "confirming"}
             errorMessage={errorMessage}
+            alertMessage={snackbar}
+            onDismissAlert={() => setSnackbar(null)}
           />
         </main>
       ) : (
@@ -634,7 +709,9 @@ function Header() {
     <div className="page-head">
       <p className="eyebrow">PASO 3 DE 4</p>
       <h1 className="display-title">AGENDA TU CITA</h1>
-      <p className="lead">Elige el día y la hora en que pasarás a tu sucursal.</p>
+      <p className="lead">
+        Elige el día y la hora en que pasarás a tu sucursal.
+      </p>
     </div>
   );
 }
@@ -674,15 +751,18 @@ function SummaryStrip({
   client,
   onChangeBranch,
   onChangePhone,
+  errors,
 }: {
   client: ClientData;
   onChangeBranch: (name: string) => void;
   onChangePhone: (phone: string) => void;
+  errors?: { nombre: boolean; telefono: boolean; sucursal: boolean };
 }) {
   const { nombre, telefono, sucursal, articulos, servicios, duracion } = client;
   const dash = "—";
   const [editingPhone, setEditingPhone] = useState(false);
   const [editingBranch, setEditingBranch] = useState(false);
+  const errorClass = (flag?: boolean) => (flag ? "cell--error" : "");
   return (
     <div className="strip-card">
       <div className="strip-card__head">
@@ -703,7 +783,9 @@ function SummaryStrip({
         <span className="strip-card__title">DATOS REGISTRADOS</span>
       </div>
       <div className="strip-card__grid">
-        <div className="cell">
+        <div
+          className={`cell ${errorClass(errors?.nombre || errors?.telefono)}`}
+        >
           <p className="cell__label">Cliente</p>
           <p className="cell__value">{nombre || dash}</p>
           {editingPhone ? (
@@ -737,7 +819,7 @@ function SummaryStrip({
             </div>
           )}
         </div>
-        <div className="cell">
+        <div className={`cell ${errorClass(errors?.sucursal)}`}>
           <p className="cell__label">Sucursal</p>
           {editingBranch ? (
             <select
@@ -802,13 +884,15 @@ function DateCard({
   today,
   date,
   setDate,
+  error,
 }: {
   today: Date;
   date: Date | null;
   setDate: (d: Date) => void;
+  error?: boolean;
 }) {
   const [view, setView] = useState(
-    new Date(today.getFullYear(), today.getMonth(), 1),
+    new Date(today.getFullYear(), today.getMonth(), 1)
   );
   const year = view.getFullYear();
   const month = view.getMonth();
@@ -824,7 +908,7 @@ function DateCard({
   const canPrev = view > minMonth;
 
   return (
-    <section className="card">
+    <section className={`card ${error ? "card--error" : ""}`}>
       <div className="card__head">
         <p className="card__step">01</p>
         <div>
@@ -889,9 +973,7 @@ function DateCard({
         <div className="cal__grid">
           {cells.map((d, i) => {
             if (!d)
-              return (
-                <div key={i} className="cal__cell cal__cell--empty" />
-              );
+              return <div key={i} className="cal__cell cal__cell--empty" />;
             const past = d < today;
             const closed = isSunday(d);
             const dis = past || closed;
@@ -926,6 +1008,7 @@ function TimeCard({
   disabled,
   availableTimes,
   timesLoading,
+  error,
 }: {
   hour: number | null;
   setHour: (n: number) => void;
@@ -934,6 +1017,7 @@ function TimeCard({
   disabled: boolean;
   availableTimes: string[];
   timesLoading: boolean;
+  error?: boolean;
 }) {
   const value: Dayjs | null =
     hour !== null && minute !== null
@@ -946,15 +1030,19 @@ function TimeCard({
       new Set(
         availableTimes
           .map((t) => Number(t.split(":")[0]))
-          .filter((n) => !Number.isNaN(n)),
+          .filter((n) => !Number.isNaN(n))
       ),
-    [availableTimes],
+    [availableTimes]
   );
 
   const noSlots = !timesLoading && !disabled && availableTimes.length === 0;
 
   return (
-    <section className={`card ${disabled ? "card--locked" : ""}`}>
+    <section
+      className={`card ${disabled ? "card--locked" : ""} ${
+        error ? "card--error" : ""
+      }`}
+    >
       <div className="card__head">
         <p className="card__step">02</p>
         <div>
@@ -975,10 +1063,10 @@ function TimeCard({
         <TimePicker
           label="Hora de inicio"
           ampm={false}
-          minutesStep={5}
+          minutesStep={30}
           disabled={disabled || timesLoading || noSlots}
           value={value}
-          onAccept={(v) => {
+          onChange={(v) => {
             if (!v) return;
             setHour(v.hour());
             setMinute(v.minute());
@@ -992,14 +1080,22 @@ function TimeCard({
             return false;
           }}
           viewRenderers={{
-            hours: renderMultiSectionDigitalClockTimeView,
-            minutes: renderMultiSectionDigitalClockTimeView,
+            hours: (props) =>
+              renderMultiSectionDigitalClockTimeView({
+                ...props,
+                skipDisabled: true,
+              }),
+            minutes: (props) =>
+              renderMultiSectionDigitalClockTimeView({
+                ...props,
+                skipDisabled: true,
+              }),
             seconds: null,
           }}
           slotProps={{
             textField: { fullWidth: true, className: "yt-time-field" },
             popper: { className: "yt-time-popper" },
-            actionBar: { actions: ["accept"] },
+            actionBar: { actions: [] },
           }}
         />
       </LocalizationProvider>
@@ -1014,6 +1110,8 @@ function Footer({
   onConfirm,
   isConfirming,
   errorMessage,
+  alertMessage,
+  onDismissAlert,
 }: {
   date: Date | null;
   time: string | null;
@@ -1021,9 +1119,54 @@ function Footer({
   onConfirm: () => void;
   isConfirming: boolean;
   errorMessage: string | null;
+  alertMessage: string | null;
+  onDismissAlert: () => void;
 }) {
   return (
-    <div className="yt-footer">
+    <>
+      {alertMessage ? (
+        <div
+          role="alert"
+          aria-live="polite"
+          className="fixed bottom-[88px] left-1/2 z-50 flex w-[min(calc(100vw-32px),520px)] -translate-x-1/2 items-start gap-3 rounded-lg border border-[#ffc600] bg-[#fffaeb] px-3 py-2 shadow-[0_4px_12px_rgba(0,0,0,0.06)]"
+        >
+          <span
+            aria-hidden
+            className="mt-[2px] flex h-4 w-4 flex-none items-center justify-center rounded-full bg-[#ffc600] text-[10px] font-bold leading-none text-[#0f0f0f]"
+          >
+            !
+          </span>
+          <div className="flex min-w-0 flex-1 flex-col">
+            <p className="m-0 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#0f0f0f]">
+              Faltan datos
+            </p>
+            <p className="m-0 break-words text-sm leading-snug text-[#1a1a1a]">
+              {alertMessage}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onDismissAlert}
+            aria-label="Cerrar aviso"
+            className="-mr-1 ml-2 flex h-5 w-5 flex-none items-center justify-center rounded-full text-[#0f0f0f]/60 hover:text-[#0f0f0f]"
+          >
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        </div>
+      ) : null}
+      <div className="yt-footer">
       <div className="yt-footer__info">
         {errorMessage ? (
           <>
@@ -1048,21 +1191,17 @@ function Footer({
           <>
             <span className="yt-footer__eyebrow">PENDIENTE</span>
             <span className="yt-footer__main yt-footer__main--mute">
-              {!date
-                ? "Selecciona un día"
-                : !time
-                ? "Selecciona una hora"
-                : ""}
+              {!date ? "Selecciona un día" : !time ? "Selecciona una hora" : ""}
             </span>
           </>
         )}
       </div>
       <button
         type="button"
-        className={`cta ${ready ? "" : "cta--dis"} ${
+        className={`cta ${ready ? "" : "cta--idle"} ${
           isConfirming ? "cta--loading" : ""
         }`}
-        disabled={!ready || isConfirming}
+        disabled={isConfirming}
         onClick={onConfirm}
       >
         {isConfirming ? (
@@ -1074,6 +1213,7 @@ function Footer({
         )}
       </button>
     </div>
+    </>
   );
 }
 
@@ -1193,8 +1333,8 @@ function SuccessScreen({
         <p className="success__eyebrow">CITA CONFIRMADA</p>
         <h1 className="success__title">¡NOS VEMOS PRONTO!</h1>
         <p className="success__lead">
-          Te enviamos los detalles a{" "}
-          <strong>{client.telefono}</strong> por WhatsApp.
+          Te enviamos los detalles a <strong>{client.telefono}</strong> por
+          WhatsApp.
         </p>
 
         <div className="success__detail">

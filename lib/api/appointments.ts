@@ -137,12 +137,11 @@ export async function fetchAvailableTimes(
     { cache: "no-store" }
   );
   // console.log("Fetching times with params:", { mins, suc, date });
-  // const data = await res.clone().json();
-  // console.log("Response data:", data);
+  const data = await res.clone().json();
   if (!res.ok) {
     throw new Error("Error al obtener horarios disponibles");
   }
-  return res.json();
+  return data;
 }
 
 export async function fetchServices() {
