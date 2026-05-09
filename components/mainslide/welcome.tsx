@@ -28,6 +28,12 @@ export default function Welcome() {
   const [videoDurations, setVideoDurations] = useState<number[]>([]);
   const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
   const { isOpen: isModalOpen, open: openModal, close: closeModal } = useModal();
+  const [modalTab, setModalTab] = useState<"measure" | "vehicle">("measure");
+
+  const openModalWithTab = (tab: "measure" | "vehicle") => {
+    setModalTab(tab);
+    openModal();
+  };
 
   const totalVideos = VIDEO_SOURCES.length;
   const activeDurationMs = Math.max(
@@ -231,22 +237,30 @@ export default function Welcome() {
             <div className="pointer-events-auto flex w-full px-6 pt-2 md:px-40 lg:px-60">
               <div className="flex h-15 p-2 md:h-20 w-full items-center justify-between rounded-full border border-white/25 bg-white/95">
                 <div className="hidden md:flex items-center justify-end bg-black p-4 rounded-full flex gap-4 ">
-                <div className="flex items-center gap-4 group ">
-                <span className="ml-2 text-sm font-medium text-white group-hover:text-[#FFC600] ">Buscar por Modelo de Auto</span>
-                <DirectionsCarFilled fontSize="large" className="text-white group-hover:text-[#FFC600] "/ >
-                </div>
+                <button
+                  type="button"
+                  onClick={() => openModalWithTab("vehicle")}
+                  className="flex items-center gap-4 group cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-yellow-300 rounded-full"
+                >
+                  <span className="ml-2 text-sm font-medium text-white group-hover:text-[#FFC600] ">Buscar por Modelo de Auto</span>
+                  <DirectionsCarFilled fontSize="large" className="text-white group-hover:text-[#FFC600] "/ >
+                </button>
                 <div className="border-r-2 border-white h-7"></div>
-                <div className="flex items-center gap-4 group">
-                <span className="ml-2 text-sm font-medium text-white group-hover:text-[#FFC600]">Buscar por tamaño de llanta</span>
-                <LlantaLupaIcon
-                  aria-label="Buscar por medida"
-                  className="h-6 w-6 text-white group-hover:text-[#FFC600]"
-                />
-                </div>
+                <button
+                  type="button"
+                  onClick={() => openModalWithTab("measure")}
+                  className="flex items-center gap-4 group cursor-pointer focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-yellow-300 rounded-full"
+                >
+                  <span className="ml-2 text-sm font-medium text-white group-hover:text-[#FFC600]">Buscar por tamaño de llanta</span>
+                  <LlantaLupaIcon
+                    aria-label="Buscar por medida"
+                    className="h-6 w-6 text-white group-hover:text-[#FFC600]"
+                  />
+                </button>
                 </div>
                 <button
                   type="button"
-                  onClick={openModal}
+                  onClick={() => openModalWithTab("measure")}
                   className="flex items-center justify-center h-full rounded-full border border-black bg-black p-5 text-sm font-semibold text-white transition hover:bg-white hover:text-black focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2"
                 >
                   Buscar →
@@ -258,7 +272,7 @@ export default function Welcome() {
         </div>
       </section>
       <FullscreenModal open={isModalOpen} onClose={closeModal}>
-        <WelcomeModalContent />
+        <WelcomeModalContent initialTab={modalTab} />
       </FullscreenModal>
     </>
   );
