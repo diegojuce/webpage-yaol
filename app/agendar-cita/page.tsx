@@ -282,10 +282,15 @@ function buildStartAtInCdmx(date: string, hhmm: string): string {
 type Step = "form" | "confirming" | "success";
 type QuoteStatus =
   | "loading"
+  | "syncing"
   | "ok"
   | "not_found"
   | "unpaid"
   | "already_scheduled";
+
+// Backoff schedule for the registered-client poll while the Shopify webhook
+// catches up. Cumulative ~31s before we give up and show not_found.
+const REGISTERED_CLIENT_RETRY_DELAYS_MS = [1000, 2000, 4000, 8000, 16000];
 
 export default function AgendarCitaPage() {
   const searchParams = useSearchParams();
@@ -309,6 +314,7 @@ export default function AgendarCitaPage() {
   const [rescheduling, setRescheduling] = useState(false);
   const [attempted, setAttempted] = useState(false);
   const [snackbar, setSnackbar] = useState<string | null>(null);
+  const [retryNonce, setRetryNonce] = useState(0);
 
   useEffect(() => {
     if (!snackbar) return;
@@ -345,50 +351,69 @@ export default function AgendarCitaPage() {
 
   // Fetch registered client data + quote status. Drives the invalid-state
   // screens (not found / unpaid / already scheduled).
+  //
+  // Si el webhook orders/paid todavia no ha creado la quote en BD (race
+  // entre el redirect post-pago y el procesamiento del webhook), exists
+  // viene false. Reintentamos con backoff antes de declarar not_found para
+  // que el usuario no tenga que recargar manualmente.
   useEffect(() => {
     if (!quoteIdFromQuery) {
       setQuoteStatus("ok");
       return;
     }
     let cancelled = false;
+    let retryTimer: ReturnType<typeof setTimeout> | null = null;
     setQuoteStatus("loading");
-    fetchRegisteredClient(quoteIdFromQuery)
-      .then((data) => {
-        if (cancelled) return;
-        if (!data.exists) {
-          setQuoteStatus("not_found");
-          return;
-        }
-        if (!data.paid) {
-          setQuoteStatus("unpaid");
-          return;
-        }
-        const code = data.branch_code || data.sucursal;
-        const branch = CART_BRANCHES.find(
-          (b) => backendBranchCode(b.id) === code
-        );
-        setClient((prev) => ({
-          ...prev,
-          nombre: data.client_name,
-          telefono: data.phone,
-          sucursal: branch?.name ?? data.sucursal,
-          branchCode: code,
-        }));
-        if (data.scheduled) {
-          setScheduledAt(data.scheduled_at ?? null);
-          setQuoteStatus("already_scheduled");
-        } else {
-          setQuoteStatus("ok");
-        }
-      })
-      .catch((error) => {
-        console.warn("[agendar-cita] fetchRegisteredClient", error);
-        if (!cancelled) setQuoteStatus("ok");
-      });
+
+    const attempt = (retryIdx: number) => {
+      fetchRegisteredClient(quoteIdFromQuery)
+        .then((data) => {
+          if (cancelled) return;
+          if (!data.exists) {
+            const delay = REGISTERED_CLIENT_RETRY_DELAYS_MS[retryIdx];
+            if (delay !== undefined) {
+              setQuoteStatus("syncing");
+              retryTimer = setTimeout(() => attempt(retryIdx + 1), delay);
+              return;
+            }
+            setQuoteStatus("not_found");
+            return;
+          }
+          if (!data.paid) {
+            setQuoteStatus("unpaid");
+            return;
+          }
+          const code = data.branch_code || data.sucursal;
+          const branch = CART_BRANCHES.find(
+            (b) => backendBranchCode(b.id) === code
+          );
+          setClient((prev) => ({
+            ...prev,
+            nombre: data.client_name,
+            telefono: data.phone,
+            sucursal: branch?.name ?? data.sucursal,
+            branchCode: code,
+          }));
+          if (data.scheduled) {
+            setScheduledAt(data.scheduled_at ?? null);
+            setQuoteStatus("already_scheduled");
+          } else {
+            setQuoteStatus("ok");
+          }
+        })
+        .catch((error) => {
+          console.warn("[agendar-cita] fetchRegisteredClient", error);
+          if (!cancelled) setQuoteStatus("ok");
+        });
+    };
+
+    attempt(0);
+
     return () => {
       cancelled = true;
+      if (retryTimer) clearTimeout(retryTimer);
     };
-  }, [quoteIdFromQuery]);
+  }, [quoteIdFromQuery, retryNonce]);
 
   // Fetch the client's service + items (duration drives availability lookup).
   useEffect(() => {
@@ -604,6 +629,21 @@ export default function AgendarCitaPage() {
     );
   }
 
+  if (quoteStatus === "syncing") {
+    return (
+      <div
+        className="yt-agendar-page"
+        style={{ paddingTop: "7rem", minHeight: "100vh" }}
+      >
+        <main className="layout">
+          <p className="lead">
+            Estamos confirmando tu pago. Esto suele tomar unos segundos…
+          </p>
+        </main>
+      </div>
+    );
+  }
+
   if (quoteStatus === "not_found") {
     return (
       <div className="yt-agendar-page" style={{ paddingTop: "7rem" }}>
@@ -612,6 +652,15 @@ export default function AgendarCitaPage() {
           title="No encontramos esta cotización"
           message={
             "Verifica el enlace que te llegó por WhatsApp o escríbenos para ayudarte."
+          }
+          actions={
+            <button
+              type="button"
+              className="success__cta"
+              onClick={() => setRetryNonce((n) => n + 1)}
+            >
+              Reintentar
+            </button>
           }
         />
       </div>
