@@ -78,17 +78,52 @@ export default function MobileMenu({ menu }: { menu: Menu[] }) {
                 </div>
 
                 <div className="flex flex-col gap-4 mt-10 w-full">
-                  <h1 className="mx-5">Llantas</h1>
+                  <Link href="/search" onClick={closeMobileMenu}>
+                    <h1 className="mx-5">Llantas</h1>
+                  </Link>
+                  <ul className="mx-5 -mt-2 flex flex-wrap gap-x-3 gap-y-1 text-sm text-neutral-600">
+                    {[
+                      { label: "SUV", href: "/search?kind=vehiculo&value=suv" },
+                      { label: "Sedan", href: "/search?kind=vehiculo&value=sedan" },
+                      { label: "Jeep", href: "/search?kind=vehiculo&value=jeep" },
+                      { label: "Pick-up", href: "/search?kind=vehiculo&value=pickup" },
+                      { label: "Runflat", href: "/search?kind=tipo&value=runflat" },
+                      { label: "Off-road", href: "/search?kind=tipo&value=off-road" },
+                      { label: "Sport", href: "/search?kind=tipo&value=sport" },
+                      { label: "Carga", href: "/search?kind=tipo&value=carga" },
+                      { label: "Gama Alta", href: "/search?kind=gama&value=alta" },
+                      { label: "Gama Media", href: "/search?kind=gama&value=media" },
+                      { label: "Económica", href: "/search?kind=gama&value=economica" },
+                    ].map((item) => (
+                      <li key={item.href}>
+                        <Link
+                          href={item.href}
+                          onClick={closeMobileMenu}
+                          className="hover:text-black"
+                        >
+                          {item.label}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
                   <div className="w-full border-b-2 border-white"></div>
-                  <Link href="/ubicaciones"> <h1 className="mx-5">Ubicaciones</h1> </Link>
+                  <Link href="/ubicaciones" onClick={closeMobileMenu}>
+                    <h1 className="mx-5">Ubicaciones</h1>
+                  </Link>
                   <div className="w-full border-b-2 border-white"></div>
-                  <h1 className="mx-5">Servicios</h1>
+                  <Link href="/agendar-cita" onClick={closeMobileMenu}>
+                    <h1 className="mx-5">Servicios</h1>
+                  </Link>
                   <div className="w-full border-b-2 border-white"></div>
-                  <Link href="/contacto"></Link><h1 className="mx-5">Asistencia</h1>
+                  <Link href="/contacto" onClick={closeMobileMenu}>
+                    <h1 className="mx-5">Asistencia</h1>
+                  </Link>
                   <div className="w-full border-b-2 border-white"></div>
-                  <Link href="/nosotros"><h1 className="mx-5">¿Por qué Yantissimo?</h1></Link>
+                  <Link href="/nosotros" onClick={closeMobileMenu}>
+                    <h1 className="mx-5">¿Por qué Yantissimo?</h1>
+                  </Link>
                   <div className="w-full border-b-2 border-white"></div>
-                </div> 
+                </div>
 
                 {menu.length ? (
                   <ul className="flex w-full flex-col">

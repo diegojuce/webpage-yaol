@@ -65,7 +65,7 @@ export async function Navbar() {
         </div>
        <div className="flex flex-none justify-center gap-4">
         <div className="relative group ">
-        <Link href="" className="text-black text-s ">Llantas</Link>
+        <Link href="/search" prefetch={true} className="text-black text-s ">Llantas</Link>
         <span className="absolute left-0 top-full h-10 w-full bg-transparent" aria-hidden="true" />
         <span className="absolute left-0 -bottom-7 h-1 w-full bg-yellow-500 scale-x-0 origin-middle transition-transform duration-300 ease-out group-hover:scale-x-100 z-100"/>
         <div className="fixed left-0 right-0 top-[113px]  hidden group-hover:block  bg-white  p-8 z-30">
@@ -73,27 +73,63 @@ export async function Navbar() {
             <div>
               <h4 className="text-neutral-600 text-xs">Buscar por Vehiculo</h4>
               <ul className="mt-5 space-y-2 text-sm text-black">
-                <li className="hover:text-blue-500 font-semibold cursor-pointer">SUV</li>
-                <li className="hover:text-blue-500 font-semibold cursor-pointer">Sedan</li>
-                <li className="hover:text-blue-500 font-semibold cursor-pointer">Jeep</li>
-                <li className="hover:text-blue-500 font-semibold cursor-pointer">Pick-up</li>
+                {[
+                  { label: "SUV", value: "suv" },
+                  { label: "Sedan", value: "sedan" },
+                  { label: "Jeep", value: "jeep" },
+                  { label: "Pick-up", value: "pickup" },
+                ].map((item) => (
+                  <li key={item.value} className="font-semibold">
+                    <Link
+                      href={`/search?kind=vehiculo&value=${item.value}`}
+                      prefetch={true}
+                      className="block hover:text-blue-500"
+                    >
+                      {item.label}
+                    </Link>
+                  </li>
+                ))}
               </ul>
             </div>
             <div>
               <h4 className="text-neutral-600 text-xs">Buscar por Tipo</h4>
               <ul className="mt-5 space-y-2 text-sm text-black">
-                <li className="hover:text-blue-500 font-semibold cursor-pointer">Runflat</li>
-                <li className="hover:text-blue-500 font-semibold cursor-pointer">Off-road</li>
-                <li className="hover:text-blue-500 font-semibold cursor-pointer">Sport</li>
-                <li className="hover:text-blue-500 font-semibold cursor-pointer">Carga</li>
+                {[
+                  { label: "Runflat", value: "runflat" },
+                  { label: "Off-road", value: "off-road" },
+                  { label: "Sport", value: "sport" },
+                  { label: "Carga", value: "carga" },
+                ].map((item) => (
+                  <li key={item.value} className="font-semibold">
+                    <Link
+                      href={`/search?kind=tipo&value=${item.value}`}
+                      prefetch={true}
+                      className="block hover:text-blue-500"
+                    >
+                      {item.label}
+                    </Link>
+                  </li>
+                ))}
               </ul>
             </div>
             <div>
               <h4 className="text-neutral-600 text-xs">Buscar por Gama</h4>
               <ul className="mt-5 space-y-2 text-sm text-black">
-                <li className="hover:text-blue-500 font-semibold cursor-pointer">Alta</li>
-                <li className="hover:text-blue-500 font-semibold cursor-pointer">Media</li>
-                <li className="hover:text-blue-500 font-semibold cursor-pointer">Económica</li>
+                {[
+                  { label: "Alta", value: "alta" },
+                  { label: "Media", value: "media" },
+                  { label: "Económica", value: "economica" },
+                ].map((item) => (
+                  <li key={item.value} className="font-semibold">
+                    <Link
+                      href={`/search?kind=gama&value=${item.value}`}
+                      prefetch={true}
+                      className="block hover:text-blue-500"
+                    >
+                      {item.label}
+                    </Link>
+                  </li>
+                ))}
               </ul>
             </div>
 
@@ -102,21 +138,45 @@ export async function Navbar() {
 
         </div>
         <div className="relative group">
-        <Link href="/ubicaciones" className="text-black text-s">Ubicaciones</Link>
+        <Link href="/ubicaciones" prefetch={true} className="text-black text-s">Ubicaciones</Link>
         <span className="absolute left-0 -bottom-7 h-1 w-full bg-yellow-500 scale-x-0 origin-middle transition-transform duration-300 ease-out group-hover:scale-x-100 z-100"/>
         </div>
 
        <div className="relative group">
-       <Link href="" className="text-black text-s ">Servicios</Link>
+       <Link href="/agendar-cita" prefetch={true} className="text-black text-s ">Servicios</Link>
+       <span className="absolute left-0 top-full h-10 w-full bg-transparent" aria-hidden="true" />
+       <span className="absolute left-0 -bottom-7 h-1 w-full bg-yellow-500 scale-x-0 origin-middle transition-transform duration-300 ease-out group-hover:scale-x-100 z-100"/>
+       <div className="fixed left-0 right-0 top-[113px] hidden group-hover:block bg-white p-8 z-30">
+         <div className="grid grid-cols-1 gap-2 w-1/4 mx-auto">
+           <h4 className="text-neutral-600 text-xs">Agendar servicio</h4>
+           <ul className="mt-3 space-y-2 text-sm text-black">
+             {[
+               { label: "Cambio de llantas", value: "cambio-llantas" },
+               { label: "Alineación", value: "alineacion" },
+               { label: "Balanceo", value: "balanceo" },
+               { label: "Rotación", value: "rotacion" },
+             ].map((item) => (
+               <li key={item.value} className="font-semibold">
+                 <Link
+                   href={`/agendar-cita?service=${item.value}`}
+                   prefetch={true}
+                   className="block hover:text-blue-500"
+                 >
+                   {item.label}
+                 </Link>
+               </li>
+             ))}
+           </ul>
+         </div>
+       </div>
+       </div>
+
+       <div className="relative group">
+       <Link href="/contacto" prefetch={true} className="text-black text-s ">Asistencia</Link>
        <span className="absolute left-0 -bottom-7 h-1 w-full bg-yellow-500 scale-x-0 origin-middle transition-transform duration-300 ease-out group-hover:scale-x-100 z-100"/>
        </div>
-       
        <div className="relative group">
-       <Link href="/contacto" className="text-black text-s ">Asistencia</Link>
-       <span className="absolute left-0 -bottom-7 h-1 w-full bg-yellow-500 scale-x-0 origin-middle transition-transform duration-300 ease-out group-hover:scale-x-100 z-100"/>
-       </div>
-       <div className="relative group">
-       <Link href="/nosotros" className="text-black text-s ">¿Por que Yantissimo?</Link>
+       <Link href="/nosotros" prefetch={true} className="text-black text-s ">¿Por que Yantissimo?</Link>
        <span className="absolute left-0 -bottom-7 h-1 w-full bg-yellow-500 scale-x-0 origin-middle transition-transform duration-300 ease-out group-hover:scale-x-100 z-100"/>
        </div>
        </div>

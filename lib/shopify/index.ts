@@ -42,6 +42,7 @@ import {
   ShopifyCart,
   ShopifyCartAttributesUpdateOperation,
   ShopifyCartOperation,
+  ShopifyCategoryProductsOperation,
   ShopifyCollection,
   ShopifyCollectionOperation,
   ShopifyCollectionProductsOperation,
@@ -691,6 +692,33 @@ export async function getProductRecommendations(
     return reshapeProducts(res.body.data.productRecommendations);
   } catch (e) {
     // Do not fail the product page if recommendations are unavailable.
+    return [];
+  }
+}
+
+export async function getCategoryProducts({
+  kind,
+  value,
+  reverse,
+  sortKey,
+}: ShopifyCategoryProductsOperation["variables"]): Promise<Product[]> {
+  "use cache";
+  cacheTag(TAGS.products, TAGS.collections);
+  cacheLife("days");
+
+  try {
+    const res = await backendFetch<ShopifyCategoryProductsOperation>({
+      endpoint: "/get/category",
+      variables: { kind, value, reverse, sortKey },
+    });
+
+    if (!res.body?.data?.products) {
+      return [];
+    }
+
+    return reshapeProducts(removeEdgesAndNodes(res.body.data.products));
+  } catch (e) {
+    console.error(`getCategoryProducts(${kind}/${value}) failed`, e);
     return [];
   }
 }

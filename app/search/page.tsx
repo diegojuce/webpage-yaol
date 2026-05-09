@@ -5,8 +5,31 @@ import FilterList from "components/layout/search/filter";
 import PanelSearchForm from "components/layout/search/panel-search-form";
 import SizeChipsSelector from "components/layout/search/size-chips-selector";
 import { defaultSort, sorting } from "lib/constants";
-import { getProducts } from "lib/shopify";
-import { Product } from "lib/shopify/types";
+import { getCategoryProducts, getProducts } from "lib/shopify";
+import { CategoryKind, Product } from "lib/shopify/types";
+
+const CATEGORY_LABELS: Record<CategoryKind, Record<string, string>> = {
+  vehiculo: {
+    suv: "SUV",
+    sedan: "Sedán",
+    jeep: "Jeep",
+    pickup: "Pick-up",
+  },
+  tipo: {
+    runflat: "Runflat",
+    "off-road": "Off-road",
+    sport: "Sport",
+    carga: "Carga",
+  },
+  gama: {
+    alta: "Gama Alta",
+    media: "Gama Media",
+    economica: "Gama Económica",
+  },
+};
+
+const isCategoryKind = (value: string | undefined): value is CategoryKind =>
+  value === "vehiculo" || value === "tipo" || value === "gama";
 
 export const metadata = {
   title: "Buscar",
@@ -177,6 +200,10 @@ export default async function SearchPage(props: {
   const searchParams = await props.searchParams;
   const sort = parseFirstParam(searchParams?.sort);
   const searchValue = parseFirstParam(searchParams?.q);
+  const categoryKindRaw = parseFirstParam(searchParams?.kind);
+  const categoryValue = parseFirstParam(searchParams?.value);
+  const categoryKind = isCategoryKind(categoryKindRaw) ? categoryKindRaw : null;
+  const isCategorySearch = Boolean(categoryKind && categoryValue);
   const normalizedSearchMeasure = normalizeVehicleSize(searchValue);
   const searchMode = parseFirstParam(searchParams?.by);
   const vehicleMake = parseFirstParam(searchParams?.make);
@@ -257,14 +284,30 @@ export default async function SearchPage(props: {
   const { sortKey, reverse } =
     sorting.find((item) => item.slug === sort) || defaultSort;
 
-  const queriesToRun =
-    selectedSizes.length > 0 ? selectedSizes : searchValue ? [searchValue] : [];
+  let products: Product[] = [];
+  if (isCategorySearch && categoryKind && categoryValue) {
+    const fetched = await getCategoryProducts({
+      kind: categoryKind,
+      value: categoryValue,
+      sortKey,
+      reverse,
+    });
+    products = dedupeProducts(fetched);
+  } else {
+    const queriesToRun =
+      selectedSizes.length > 0
+        ? selectedSizes
+        : searchValue
+          ? [searchValue]
+          : [];
 
-  const productGroups = await Promise.all(
-    queriesToRun.map((query) => getProducts({ sortKey, reverse, query })),
-  );
+    const productGroups = await Promise.all(
+      queriesToRun.map((query) => getProducts({ sortKey, reverse, query })),
+    );
 
-  const products = dedupeProducts(productGroups.flat());
+    products = dedupeProducts(productGroups.flat());
+  }
+
   const resultsText = products.length > 1 ? "resultados" : "resultado";
   const hasProducts = products.length > 0;
   const isVehicleSearch = sizeSearchMode === "vehicle";
@@ -272,6 +315,11 @@ export default async function SearchPage(props: {
   const vehicleLabel =
     `${humanizeSlug(vehicleMake)} ${humanizeSlug(vehicleModel)} ${vehicleYear || ""}`.trim();
   const primaryMeasureLabel = selectedSizes[0] ?? normalizedSearchMeasure ?? "";
+  const categoryLabel =
+    isCategorySearch && categoryKind && categoryValue
+      ? CATEGORY_LABELS[categoryKind][categoryValue] ??
+        humanizeSlug(categoryValue)
+      : "";
 
   return (
     <div className="mx-auto w-full max-w-(--breakpoint-2xl) px-4 pb-10 text-black dark:text-white mt-35">
@@ -288,7 +336,14 @@ export default async function SearchPage(props: {
           </div>
         </aside>
         <div className="flex-1">
-          {isVehicleSearch ? (
+          {isCategorySearch ? (
+            <p className="mb-4 text-sm md:text-base">
+              {hasProducts
+                ? `Mostrando ${products.length} ${resultsText} en `
+                : "No hay productos en "}
+              <span className="font-semibold">&quot;{categoryLabel}&quot;</span>
+            </p>
+          ) : isVehicleSearch ? (
             <p className="mb-4 text-sm md:text-base">
               {hasProducts
                 ? `Mostrando ${products.length} ${resultsText} para `

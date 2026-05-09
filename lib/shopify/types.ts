@@ -321,3 +321,17 @@ export type ShopifyProductsOperation = {
     sortKey?: string;
   };
 };
+
+export type CategoryKind = "vehiculo" | "tipo" | "gama";
+
+export type ShopifyCategoryProductsOperation = {
+  data: {
+    products: Connection<ShopifyProduct>;
+  };
+  variables: {
+    kind: CategoryKind;
+    value: string;
+    reverse?: boolean;
+    sortKey?: string;
+  };
+};
