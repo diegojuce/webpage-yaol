@@ -30,17 +30,25 @@ type SelectOption = {
   label: string;
 };
 
-const createRange = (start: number, end: number, step: number): string[] =>
-  Array.from({ length: Math.floor((end - start) / step) + 1 }, (_, index) =>
-    String(start + index * step),
-  );
+const toSelectOptions = (values: readonly (number | string)[]): SelectOption[] =>
+  values.map((value) => ({ value: String(value), label: String(value) }));
 
-const toSelectOptions = (values: string[]): SelectOption[] =>
-  values.map((value) => ({ value, label: value }));
+const REAL_TIRE_WIDTHS = [
+  135, 145, 155, 165, 175, 185, 195, 205, 215, 225, 235, 245, 255, 265, 275,
+  285, 295, 305, 315, 325,
+] as const;
 
-const MEASURE_WIDTH_OPTIONS = toSelectOptions(createRange(135, 325, 10));
-const MEASURE_HEIGHT_OPTIONS = toSelectOptions(createRange(30, 90, 5));
-const MEASURE_RIM_OPTIONS = toSelectOptions(createRange(13, 25, 1));
+const REAL_TIRE_ASPECT_RATIOS = [
+  25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85,
+] as const;
+
+const REAL_TIRE_RIM_SIZES = [
+  13, 14, 15, 16, 17, 18, 19, 20, 21, 22,
+] as const;
+
+const MEASURE_WIDTH_OPTIONS = toSelectOptions(REAL_TIRE_WIDTHS);
+const MEASURE_HEIGHT_OPTIONS = toSelectOptions(REAL_TIRE_ASPECT_RATIOS);
+const MEASURE_RIM_OPTIONS = toSelectOptions(REAL_TIRE_RIM_SIZES);
 const COMBOBOX_DEFAULT_MAX_HEIGHT = 256;
 const VIEWPORT_EDGE_PADDING = 12;
 
