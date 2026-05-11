@@ -327,11 +327,14 @@ export default function AgendarCitaPage() {
   const cartAttributes = cart?.attributes ?? [];
   const phoneFromCart =
     cartAttributes.find((a) => a.key === "telefono")?.value?.trim() ?? "";
+  const branchCodeFromCart =
+    cartAttributes
+      .find((a) => a.key === "sucursal")
+      ?.value?.trim()
+      .toUpperCase() ?? "";
   const branchNameFromCart =
-    cartAttributes.find((a) => a.key === "sucursal")?.value?.trim() ?? "";
-  const branchCodeFromCart = branchNameFromCart
-    ? codeFromBranchName(branchNameFromCart)
-    : "";
+    CART_BRANCHES.find((b) => backendBranchCode(b.id) === branchCodeFromCart)
+      ?.name ?? "";
 
   useEffect(() => {
     setToday(startOfDay(new Date()));

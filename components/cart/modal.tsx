@@ -224,16 +224,13 @@ type MerchandiseSearchParams = {
 const PRE_CART_EVENT = "cart:item-added";
 const CART_ICON_BUMP_EVENT = "cart:icon-bump";
 
-const normalizeBranchLabel = (value: string) => value.trim().toLowerCase();
-
-const findBranchByName = (branchName: string) => {
-  const normalizedBranchName = normalizeBranchLabel(branchName);
-  if (!normalizedBranchName) {
-    return undefined;
-  }
-
+const findBranchByCode = (branchCode: string) => {
+  const normalized = String(branchCode || "")
+    .trim()
+    .toUpperCase();
+  if (!normalized) return undefined;
   return CART_BRANCHES.find(
-    (branch) => normalizeBranchLabel(branch.name) === normalizedBranchName,
+    (branch) => backendBranchCode(branch.id) === normalized,
   );
 };
 
@@ -627,16 +624,15 @@ export default function CartModal({ isWhite = false }) {
     cartAttributes
       .find((attribute) => attribute.key === "telefono")
       ?.value?.trim() ?? "";
-  const branchNameFromAttributes =
+  const branchCodeFromAttributes =
     cartAttributes
       .find((attribute) => attribute.key === "sucursal")
       ?.value?.trim() ?? "";
-  const branchFromAttributes = findBranchByName(branchNameFromAttributes);
+  const branchFromAttributes = findBranchByCode(branchCodeFromAttributes);
   const branchIdFromAttributes = branchFromAttributes?.id ?? "";
   const branchForDisplay = selectedBranch ?? branchFromAttributes;
   const displayedPhone = preCartPhone || phoneFromAttributes;
-  const displayedBranchName =
-    branchForDisplay?.name || branchNameFromAttributes || "Pendiente";
+  const displayedBranchName = branchForDisplay?.name || "Pendiente";
   const shouldShowBranchContact = (cart?.lines ?? []).some(isPickupCartLine);
 
   const bumpCartTrigger = useCallback(() => {

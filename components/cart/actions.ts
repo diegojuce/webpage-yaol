@@ -42,14 +42,17 @@ export async function setCartAttributes(payload: {
     payload.quoteId !== undefined && payload.quoteId !== null
       ? String(payload.quoteId).trim()
       : "";
-  const sucursal =
-    payload.sucursal !== undefined && payload.sucursal !== null
-      ? String(payload.sucursal).trim()
-      : "";
-  const sucursalCode =
+  // The cart attribute `sucursal` always travels as the uppercase 3-letter
+  // backend code (e.g. "CON", "TEC"). Prefer `sucursalCode` when provided;
+  // fall back to `sucursal` (assumed to already be a code, since UI callers
+  // resolve via backendBranchCode).
+  const rawSucursalCode =
     payload.sucursalCode !== undefined && payload.sucursalCode !== null
       ? String(payload.sucursalCode).trim()
-      : "";
+      : payload.sucursal !== undefined && payload.sucursal !== null
+        ? String(payload.sucursal).trim()
+        : "";
+  const sucursal = rawSucursalCode.toUpperCase();
   const phone =
     payload.phone !== undefined && payload.phone !== null
       ? String(payload.phone).trim()
@@ -58,7 +61,6 @@ export async function setCartAttributes(payload: {
   const attributes = [
     ...(quoteId ? [{ key: "quote_id", value: quoteId }] : []),
     ...(sucursal ? [{ key: "sucursal", value: sucursal }] : []),
-    ...(sucursalCode ? [{ key: "sucursal_code", value: sucursalCode }] : []),
     ...(phone ? [{ key: "telefono", value: phone }] : []),
   ];
 
