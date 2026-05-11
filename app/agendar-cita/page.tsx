@@ -12,10 +12,11 @@ import "dayjs/locale/es";
 import {
   fetchAvailableTimes,
   fetchClientServiceAndItems,
+  fetchQuoteByShopifyOrder,
   fetchRegisteredClient,
   saveAndSchedule,
 } from "lib/api/appointments";
-import { useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import "./agendar-cita.css";
 
@@ -294,7 +295,11 @@ const REGISTERED_CLIENT_RETRY_DELAYS_MS = [1000, 2000, 4000, 8000, 16000];
 
 export default function AgendarCitaPage() {
   const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
   const quoteIdFromQuery = searchParams.get("quote_id") ?? undefined;
+  const shopifyOrderIdFromQuery =
+    searchParams.get("shopify_order_id") ?? undefined;
   const { cart } = useCart();
 
   const [today, setToday] = useState<Date | null>(null);
@@ -308,7 +313,7 @@ export default function AgendarCitaPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [client, setClient] = useState<ClientData>(EMPTY_CLIENT);
   const [quoteStatus, setQuoteStatus] = useState<QuoteStatus>(
-    quoteIdFromQuery ? "loading" : "ok"
+    quoteIdFromQuery || shopifyOrderIdFromQuery ? "loading" : "ok"
   );
   const [scheduledAt, setScheduledAt] = useState<string | null>(null);
   const [rescheduling, setRescheduling] = useState(false);
@@ -352,6 +357,60 @@ export default function AgendarCitaPage() {
     }));
   }, [phoneFromCart, branchNameFromCart, branchCodeFromCart]);
 
+  // Exchange `?shopify_order_id=` for `?quote_id=` via the shopify_orders
+  // bridge table. Triggered when the Shopify Order Status Page redirects
+  // post-payment carrying only the Shopify order id. The webhook may not
+  // have inserted the bridge row yet, so retry with the same backoff used
+  // by the registered-client poll below.
+  useEffect(() => {
+    if (quoteIdFromQuery) return;
+    if (!shopifyOrderIdFromQuery) return;
+
+    let cancelled = false;
+    let retryTimer: ReturnType<typeof setTimeout> | null = null;
+    setQuoteStatus("syncing");
+
+    const attempt = (retryIdx: number) => {
+      fetchQuoteByShopifyOrder(shopifyOrderIdFromQuery)
+        .then((data) => {
+          if (cancelled) return;
+          if (data.exists && data.quote_id) {
+            const nextParams = new URLSearchParams(searchParams.toString());
+            nextParams.delete("shopify_order_id");
+            nextParams.set("quote_id", data.quote_id);
+            router.replace(`${pathname}?${nextParams.toString()}`, {
+              scroll: false,
+            });
+            return;
+          }
+          const delay = REGISTERED_CLIENT_RETRY_DELAYS_MS[retryIdx];
+          if (delay !== undefined) {
+            retryTimer = setTimeout(() => attempt(retryIdx + 1), delay);
+          } else {
+            setQuoteStatus("not_found");
+          }
+        })
+        .catch((error) => {
+          if (cancelled) return;
+          console.warn("[agendar-cita] fetchQuoteByShopifyOrder", error);
+          setQuoteStatus("not_found");
+        });
+    };
+
+    attempt(0);
+
+    return () => {
+      cancelled = true;
+      if (retryTimer) clearTimeout(retryTimer);
+    };
+  }, [
+    shopifyOrderIdFromQuery,
+    quoteIdFromQuery,
+    pathname,
+    router,
+    searchParams,
+  ]);
+
   // Fetch registered client data + quote status. Drives the invalid-state
   // screens (not found / unpaid / already scheduled).
   //
@@ -361,7 +420,7 @@ export default function AgendarCitaPage() {
   // que el usuario no tenga que recargar manualmente.
   useEffect(() => {
     if (!quoteIdFromQuery) {
-      setQuoteStatus("ok");
+      if (!shopifyOrderIdFromQuery) setQuoteStatus("ok");
       return;
     }
     let cancelled = false;

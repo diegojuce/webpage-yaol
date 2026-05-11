@@ -79,6 +79,32 @@ export async function fetchRegisteredClient(
   };
 }
 
+// Lookup quote_id by Shopify order_id. Backed by the shopify_orders bridge
+// table populated by the orders/paid webhook. Used by /agendar-cita to
+// resolve `?shopify_order_id=` from the Order Status Page redirect.
+export type ShopifyOrderLookup = { exists: boolean; quote_id?: string };
+
+export async function fetchQuoteByShopifyOrder(
+  shopifyOrderId: string
+): Promise<ShopifyOrderLookup> {
+  const res = await fetch(
+    buildUrl(
+      `/bypass/yaol/quote-by-shopify-order?shopify_order_id=${encodeURIComponent(
+        shopifyOrderId
+      )}`
+    ),
+    { cache: "no-store" }
+  );
+  if (!res.ok) {
+    throw new Error("Error al resolver la orden Shopify");
+  }
+  const data = await res.json();
+  return {
+    exists: Boolean(data.exists),
+    quote_id: data.quote_id ? String(data.quote_id) : undefined,
+  };
+}
+
 export type RegisteredQuote = {
   articulos: string;
   servicios: string;

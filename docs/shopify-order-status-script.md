@@ -1,10 +1,11 @@
 # Shopify thank-you → /agendar-cita auto-redirect
 
 After the customer completes checkout, redirect them automatically to
-`/agendar-cita?quote_id=X` so they can pick a time slot for the service they
-just paid for. WhatsApp also gets the same link via the
-`confirmacion_pedido` template, so this script is a UX shortcut, not the
-single point of failure.
+`/agendar-cita?shopify_order_id=X`. The frontend exchanges that Shopify
+order id for the internal `quote_id` via the `shopify_orders` bridge table
+populated by the `/orders/paid` webhook. WhatsApp also gets a direct
+`quote_id` link via the `confirmacion_pedido` template, so this script is
+a UX shortcut, not the single point of failure.
 
 ## Where to paste
 
@@ -17,18 +18,13 @@ Shopify admin → **Settings** → **Checkout** → **Order status page** →
 <script>
   (function () {
     try {
-      var attrs =
-        (window.Shopify && Shopify.checkout && Shopify.checkout.note_attributes) ||
-        [];
-      var entry = attrs.find(function (a) {
-        return a.name === 'quote_id' || a.name === '_quote_id';
-      });
-      var quoteId = entry && entry.value;
-      if (!quoteId) return;
+      var orderId =
+        window.Shopify && Shopify.checkout && Shopify.checkout.order_id;
+      if (!orderId) return;
 
       var url =
-        'https://shop.yantissimo.com/agendar-cita?quote_id=' +
-        encodeURIComponent(quoteId);
+        'https://shop.yantissimo.com/agendar-cita?shopify_order_id=' +
+        encodeURIComponent(orderId);
 
       // Small delay so analytics/pixels still fire before navigation.
       setTimeout(function () {
@@ -41,37 +37,29 @@ Shopify admin → **Settings** → **Checkout** → **Order status page** →
 </script>
 ```
 
-## How `quote_id` lands on `note_attributes`
+## How the exchange works
 
-The webhook `bypassYaol.post('/orders/paid')` creates the quote and writes
-`yssm.quote_id` as a metafield on the order. But the metafield is **not**
-exposed to the order status page JS — Shopify only surfaces
-`Shopify.checkout.note_attributes`. To get `quote_id` onto note_attributes, we
-have two paths:
-
-1. **Webhook callback into Shopify (recommended once observed in prod):**
-   inside `/orders/paid` handler, after creating the quote, call
-   `orderUpdate` mutation and set `note_attributes` to include
-   `{ name: 'quote_id', value: quote.id }`. This is the durable answer but
-   adds another Shopify GraphQL call and depends on webhook latency.
-2. **Pre-checkout seed (current behavior):** the storefront sets a
-   `quote_id` cart attribute when one already exists (for example, after a
-   quote was created elsewhere and the customer is closing it through the
-   shop). For greenfield orders coming straight from the storefront, the
-   webhook is the only writer, so the script above will silently no-op the
-   first ~1-2s after checkout completes — WhatsApp covers that gap.
-
-If the metafield write happens before the customer reaches the order status
-page, an alternative is to fetch the metafield via the Storefront API from
-the script. That requires an unauthenticated metafield read access scope and
-is left as a follow-up.
+1. `Shopify.checkout.order_id` is always populated on the order status
+   page (it's the Shopify numeric order id), so the redirect never
+   silently no-ops the way the previous `note_attributes`-based script
+   did for greenfield orders.
+2. `/agendar-cita` reads `?shopify_order_id=` and calls
+   `GET /bypass/yaol/quote-by-shopify-order?shopify_order_id=<id>`.
+3. That endpoint queries the `shopify_orders` bridge table
+   (`shopify_order_id TEXT PK → quote_id BIGINT FK`) populated inside the
+   `/orders/paid` webhook transaction.
+4. On hit, the page rewrites the URL to `?quote_id=<id>` and continues
+   with the normal registered-client flow.
+5. If the webhook hasn't inserted yet (Shopify webhook latency), the page
+   retries with the same backoff used elsewhere (1s, 2s, 4s, 8s, 16s —
+   ~31s total) before surfacing `not_found`.
 
 ## Acceptance check
 
-1. Place a sandbox order with the storefront. Set the `note_attributes` of
-   the order in Shopify admin → Orders → \[order\] → Edit → "Additional
-   details" → add `quote_id` with a real id.
-2. Open the order status page (the link in the order admin sidebar).
-3. After ~1.5s the page should redirect to
-   `https://shop.yantissimo.com/agendar-cita?quote_id=<id>`.
-4. Remove the attribute and confirm the page no longer redirects.
+1. Place a real (or sandbox) order from the storefront.
+2. After ~1.5s on the order status page, the browser should redirect to
+   `https://shop.yantissimo.com/agendar-cita?shopify_order_id=<id>`.
+3. The page should briefly show the `syncing` state and then settle on
+   the registered-client form (URL rewrites to `?quote_id=<id>`).
+4. If you reload the page while the webhook is still processing, the
+   exchange retries automatically.
