@@ -17,6 +17,21 @@ import { redirect } from "next/navigation";
 const isValidCartId = (id?: string) =>
   !!id && id.startsWith("gid://shopify/Cart/") && id.includes("?key=");
 
+// cartId cookie: persistente para que el cart sobreviva refreshes y entre
+// sesiones del mismo navegador. El path post-pago para resolver quote_id
+// NO depende de esta cookie (la sobrescribe el useEffect de cart/modal.tsx
+// cuando Shopify devuelve null para el cart completed); el cart_token
+// viaja por localStorage. Las opciones siguen aquí porque son buena
+// práctica per-se (sin maxAge la cookie es de sesión y se descarta al
+// cerrar el navegador).
+const CART_COOKIE_OPTIONS = {
+  maxAge: 60 * 60 * 24 * 30, // 30 days
+  sameSite: "lax" as const,
+  secure: process.env.NODE_ENV === "production",
+  path: "/",
+  httpOnly: true,
+};
+
 export async function setCartIdFromParam(rawCartId?: string | null) {
   const cartId =
     rawCartId !== undefined && rawCartId !== null
@@ -27,7 +42,7 @@ export async function setCartIdFromParam(rawCartId?: string | null) {
     return { ok: false as const, error: "invalid_cart_id" as const };
   }
 
-  (await cookies()).set("cartId", cartId);
+  (await cookies()).set("cartId", cartId, CART_COOKIE_OPTIONS);
   revalidateTag(TAGS.cart, { expire: 0 });
   return { ok: true as const };
 }
@@ -82,7 +97,7 @@ export async function setCartAttributes(payload: {
     );
     const newCart = await createCart(attributes);
     cartId = newCart.id!;
-    (await cookies()).set("cartId", cartId);
+    (await cookies()).set("cartId", cartId, CART_COOKIE_OPTIONS);
   } else {
     console.debug(
       "[actions][setCartAttributes] Updating cart attributes for cartId:",
@@ -128,7 +143,7 @@ export async function addItem(
       );
       const newCart = await createCart();
       cartId = newCart.id!; // Keep full id with ?key
-      (await cookies()).set("cartId", cartId);
+      (await cookies()).set("cartId", cartId, CART_COOKIE_OPTIONS);
       console.debug("[actions][addItem] Created cart:", cartId);
       cart = newCart;
     } else {
@@ -407,7 +422,7 @@ export async function validateCartAvailability(): Promise<ValidateCartAvailabili
 
 export async function createCartAndSetCookie() {
   let cart = await createCart();
-  (await cookies()).set("cartId", cart.id!);
+  (await cookies()).set("cartId", cart.id!, CART_COOKIE_OPTIONS);
 }
 
 // switch (sucursal) {

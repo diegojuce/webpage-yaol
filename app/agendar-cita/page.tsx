@@ -12,6 +12,7 @@ import "dayjs/locale/es";
 import {
   fetchAvailableTimes,
   fetchClientServiceAndItems,
+  fetchQuoteByCartToken,
   fetchQuoteByShopifyOrder,
   fetchRegisteredClient,
   saveAndSchedule,
@@ -312,9 +313,10 @@ export default function AgendarCitaPage() {
   const [timesLoading, setTimesLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [client, setClient] = useState<ClientData>(EMPTY_CLIENT);
-  const [quoteStatus, setQuoteStatus] = useState<QuoteStatus>(
-    quoteIdFromQuery || shopifyOrderIdFromQuery ? "loading" : "ok"
-  );
+  // Empezamos en "loading" siempre: el useEffect de cart_token corre apenas
+  // monta el componente y resuelve a "ok" si no hay cookie, o avanza a
+  // "syncing"/redirect si encuentra una quote pagada.
+  const [quoteStatus, setQuoteStatus] = useState<QuoteStatus>("loading");
   const [scheduledAt, setScheduledAt] = useState<string | null>(null);
   const [rescheduling, setRescheduling] = useState(false);
   const [attempted, setAttempted] = useState(false);
@@ -411,6 +413,77 @@ export default function AgendarCitaPage() {
     searchParams,
   ]);
 
+  // Fallback final cuando no hay quote_id ni shopify_order_id en la URL:
+  // el redirect post-checkout de Shopify Basic no acepta query params, así
+  // que el CheckoutButton escribe el cart_token a localStorage antes del
+  // redirect. Aquí lo leemos y resolvemos quote_id contra el bridge table
+  // shopify_orders.cart_token que pobla el webhook orders/paid. Usamos
+  // localStorage (no cookie) porque la cookie cartId la sobrescribe el
+  // useEffect de cart/modal.tsx cuando Shopify devuelve null para el cart
+  // completed. Limpiamos localStorage al resolver para que el siguiente
+  // visit a /agendar-cita sin params no reintente.
+  useEffect(() => {
+    if (quoteIdFromQuery) return;
+    if (shopifyOrderIdFromQuery) return;
+
+    let token: string | null = null;
+    try {
+      token = localStorage.getItem("yaol_pending_cart_token");
+    } catch (storageErr) {
+      console.warn("[agendar-cita] localStorage read failed", storageErr);
+    }
+    if (!token) {
+      setQuoteStatus("ok");
+      return;
+    }
+
+    let cancelled = false;
+    let retryTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const attempt = (retryIdx: number) => {
+      fetchQuoteByCartToken(token!)
+        .then((data) => {
+          if (cancelled) return;
+          if (data.exists && data.quote_id) {
+            try {
+              localStorage.removeItem("yaol_pending_cart_token");
+            } catch {
+              /* no-op */
+            }
+            const nextParams = new URLSearchParams(searchParams.toString());
+            nextParams.set("quote_id", data.quote_id);
+            router.replace(`${pathname}?${nextParams.toString()}`, {
+              scroll: false,
+            });
+            return;
+          }
+          const delay = REGISTERED_CLIENT_RETRY_DELAYS_MS[retryIdx];
+          if (delay !== undefined) {
+            setQuoteStatus("syncing");
+            retryTimer = setTimeout(() => attempt(retryIdx + 1), delay);
+          } else {
+            // No se resolvió tras todos los reintentos: caemos al flujo
+            // manual y dejamos el token en localStorage por si un refresh
+            // posterior lo encuentra (el webhook puede haberse retrasado
+            // más de 31s).
+            setQuoteStatus("ok");
+          }
+        })
+        .catch((error) => {
+          if (cancelled) return;
+          console.warn("[agendar-cita] fetchQuoteByCartToken", error);
+          setQuoteStatus("ok");
+        });
+    };
+
+    attempt(0);
+
+    return () => {
+      cancelled = true;
+      if (retryTimer) clearTimeout(retryTimer);
+    };
+  }, [quoteIdFromQuery, shopifyOrderIdFromQuery, pathname, router, searchParams]);
+
   // Fetch registered client data + quote status. Drives the invalid-state
   // screens (not found / unpaid / already scheduled).
   //
@@ -420,7 +493,6 @@ export default function AgendarCitaPage() {
   // que el usuario no tenga que recargar manualmente.
   useEffect(() => {
     if (!quoteIdFromQuery) {
-      if (!shopifyOrderIdFromQuery) setQuoteStatus("ok");
       return;
     }
     let cancelled = false;

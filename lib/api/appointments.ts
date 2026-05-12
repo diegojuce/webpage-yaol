@@ -79,6 +79,34 @@ export async function fetchRegisteredClient(
   };
 }
 
+// Lookup quote_id by Shopify cart_token. The orders/paid webhook stores
+// payload.cart_token in shopify_orders.cart_token; the cartId cookie on
+// shop-yaol contains that same token inside the cart GID. Used by
+// /agendar-cita to resolve quote_id post-payment when the Order Status
+// Page redirect can't carry query params (Shopify Basic plan).
+export type CartTokenLookup = { exists: boolean; quote_id?: string };
+
+export async function fetchQuoteByCartToken(
+  cartToken: string
+): Promise<CartTokenLookup> {
+  const res = await fetch(
+    buildUrl(
+      `/bypass/yaol/quote-by-cart-token?cart_token=${encodeURIComponent(
+        cartToken
+      )}`
+    ),
+    { cache: "no-store" }
+  );
+  if (!res.ok) {
+    throw new Error("Error al resolver el cart_token");
+  }
+  const data = await res.json();
+  return {
+    exists: Boolean(data.exists),
+    quote_id: data.quote_id ? String(data.quote_id) : undefined,
+  };
+}
+
 // Lookup quote_id by Shopify order_id. Backed by the shopify_orders bridge
 // table populated by the orders/paid webhook. Used by /agendar-cita to
 // resolve `?shopify_order_id=` from the Order Status Page redirect.

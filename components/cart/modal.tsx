@@ -1258,6 +1258,7 @@ function CloseCart({ className }: { className?: string }) {
 
 function CheckoutButton() {
   const [pending, setPending] = useState(false);
+  const { cart } = useCart();
 
   const handleCheckout = async () => {
     if (pending) return;
@@ -1285,6 +1286,24 @@ function CheckoutButton() {
         }
         setPending(false);
         return;
+      }
+
+      // Persiste el cart_token en localStorage antes de redirigir al checkout
+      // de Shopify. Post-pago, Shopify marca el cart como completed y la
+      // Storefront API empieza a devolver null para ese cart id, lo cual
+      // dispara la auto-creacion de un cart nuevo (modal.tsx useEffect ~800)
+      // que sobrescribe la cookie cartId. localStorage no se ve afectado por
+      // esa logica y /agendar-cita lo usa para resolver quote_id via
+      // /bypass/yaol/quote-by-cart-token (que matchea contra el cart_token
+      // que el webhook orders/paid guarda en shopify_orders).
+      try {
+        const cartId = cart?.id ?? "";
+        const tokenMatch = cartId.match(/^gid:\/\/shopify\/Cart\/([^?]+)/);
+        if (tokenMatch?.[1]) {
+          localStorage.setItem("yaol_pending_cart_token", tokenMatch[1]);
+        }
+      } catch (storageErr) {
+        console.warn("[CheckoutButton] localStorage write failed", storageErr);
       }
 
       window.location.href = result.checkoutUrl;
