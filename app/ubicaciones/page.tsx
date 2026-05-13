@@ -1,235 +1,336 @@
 import { ScrollToTopOnMount } from "components/scroll-to-top-on-mount";
-import Image from "next/image";
+import {
+  ArrowIcon,
+  ClockIcon,
+  PhoneIcon,
+  PinIcon,
+  WhatsappIcon,
+} from "components/yantissimo/icons";
+import { PhotoPlaceholder } from "components/yantissimo/photo-placeholder";
+import {
+  BRANCHES,
+  COMPANY,
+  HOURS,
+  SERVICES,
+  WHATSAPP_DISPLAY,
+  telHref,
+  whatsappHref,
+} from "lib/company";
+import type { Branch } from "lib/company";
 
 export const metadata = {
-  title: "Ubicaciones",
-  description: "Encuentra nuestras sucursales y horarios de atención.",
+  title: "Sucursales en Colima y Manzanillo | Yantissimo",
+  description:
+    "Encuentra tu Yantissimo: 6 sucursales en Colima, Villa de Álvarez y Manzanillo. Llantas, alineación, frenos y afinación. Horarios, teléfonos y direcciones reales.",
+  alternates: { canonical: "/ubicaciones" },
+  openGraph: {
+    title: "Sucursales Yantissimo · Colima y Manzanillo",
+    description:
+      "6 talleres certificados en Colima, Villa de Álvarez y Manzanillo. Mismos horarios, misma garantía. WhatsApp central 312 222 0099.",
+    url: "https://yantissimo.com/ubicaciones",
+    type: "website",
+  },
 };
 
-const LOCATIONS = [
+const CITIES: { name: string; ids: Branch["id"][] }[] = [
   {
-    name: "Sucursal Tecnologico",
-    address: "Av. Lorem Ipsum 123, Col. Dolor Sit, Ciudad",
-    schedule: "Lun - Sáb: 8:00 - 20:00",
-    phone: "(000) 123 4567",
-    image: "/images/ubicaciones/sucursal-centro.jpg", // cámbiala por tu foto
+    name: "Colima",
+    ids: ["constitucion", "ninos-heroes", "colinas-del-rey"],
   },
   {
-    name: "Sucursal Benito Juarez",
-    address: "Calle Amet 456, Parque Consectetur, Ciudad",
-    schedule: "Lun - Vie: 9:00 - 19:00 | Sáb: 9:00 - 15:00",
-    phone: "(000) 987 6543",
-    image: "/images/ubicaciones/sucursal-norte.jpg", // cámbiala por tu foto
+    name: "Villa de Álvarez",
+    ids: ["tecnologico", "benito-juarez"],
   },
   {
-    name: "Sucursal Constitución",
-    address: "Blvd. Adipiscing 789, Plaza Elit, Ciudad",
-    schedule: "Lun - Dom: 7:00 - 22:00",
-    phone: "(000) 555 0000",
-    image: "/images/ubicaciones/sucursal-express.jpg", // cámbiala por tu foto
-  },
-  {
-    name: "Sucursal Niños Heroes",
-    address: "Blvd. Adipiscing 789, Plaza Elit, Ciudad",
-    schedule: "Lun - Dom: 7:00 - 22:00",
-    phone: "(000) 555 0000",
-    image: "/images/ubicaciones/sucursal-express.jpg", // cámbiala por tu foto
-  },
-  {
-    name: "Sucursal Comala",
-    address: "Blvd. Adipiscing 789, Plaza Elit, Ciudad",
-    schedule: "Lun - Dom: 7:00 - 22:00",
-    phone: "(000) 555 0000",
-    image: "/images/ubicaciones/sucursal-express.jpg", // cámbiala por tu foto
-  },
-  {
-    name: "Sucursal Manzanillo BLVD",
-    address: "Blvd. Adipiscing 789, Plaza Elit, Ciudad",
-    schedule: "Lun - Dom: 7:00 - 22:00",
-    phone: "(000) 555 0000",
-    image: "/images/ubicaciones/sucursal-express.jpg", // cámbiala por tu foto
-  },
-  {
-    name: "Sucursal Manzanillo Tapeixtles",
-    address: "Blvd. Adipiscing 789, Plaza Elit, Ciudad",
-    schedule: "Lun - Dom: 7:00 - 22:00",
-    phone: "(000) 555 0000",
-    image: "/images/ubicaciones/sucursal-express.jpg", // cámbiala por tu foto
+    name: "Manzanillo",
+    ids: ["manzanillo"],
   },
 ];
 
+function buildLocalBusinessJsonLd() {
+  return BRANCHES.map((b) => ({
+    "@context": "https://schema.org",
+    "@type": "AutoRepair",
+    "@id": `${COMPANY.website}/ubicaciones#${b.id}`,
+    name: `Yantissimo ${b.name}`,
+    image: `${COMPANY.website}/opengraph-image`,
+    url: `${COMPANY.website}/ubicaciones#${b.id}`,
+    telephone: `+52${b.phone.replace(/\s/g, "")}`,
+    address: {
+      "@type": "PostalAddress",
+      streetAddress: b.address,
+      addressLocality: b.city,
+      addressRegion: b.state,
+      postalCode: b.zip,
+      addressCountry: "MX",
+    },
+    openingHoursSpecification: [
+      {
+        "@type": "OpeningHoursSpecification",
+        dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+        opens: "09:00",
+        closes: "19:00",
+      },
+      {
+        "@type": "OpeningHoursSpecification",
+        dayOfWeek: "Saturday",
+        opens: "09:00",
+        closes: "14:00",
+      },
+    ],
+    priceRange: "$$",
+    parentOrganization: { "@type": "Organization", name: "Yantissimo" },
+  }));
+}
+
 export default function UbicacionesPage() {
+  const jsonLd = buildLocalBusinessJsonLd();
+
   return (
-    <div className="mt-28 min-h-screen bg-[#0f0f10] text-white">
+    <div className="mt-28 min-h-screen bg-white text-[#0F0F0F]">
       <ScrollToTopOnMount behavior="auto" />
-      <section className="relative overflow-hidden  px-6 py-16 md:px-12">
-        <div className="mx-auto flex max-w-6xl flex-col gap-10 md:flex-row md:items-center">
-          <div className="flex-1 space-y-4">
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-yellow-400">
-              Estamos cerca de ti
-            </p>
-            <h1 className="text-4xl font-bold leading-tight md:text-5xl">
-              Ubicaciones y centros de servicio
-            </h1>
-            <p className="max-w-2xl text-lg text-neutral-300">
-              Conoce nuestras sucursales, Hablanos o agenda una cita en linea en cuestión de segundos.
-            </p>
-            <div className="flex flex-wrap gap-3">
-              <a
-                className="rounded-full bg-yellow-400 px-5 py-3 text-black transition hover:-translate-y-0.5 hover:bg-yellow-300"
-                href="#sucursales"
-              >
-                Ver sucursales
-              </a>
-              <a
-                className="rounded-full border border-white/20 px-5 py-3 text-white transition hover:-translate-y-0.5 hover:border-white/40"
-                href="#contacto"
-              >
-                Agendar cita
-              </a>
-            </div>
-          </div>
-          <div className="relative h-64 w-full overflow-hidden rounded-2xl bg-white/5 shadow-xl md:h-80 md:w-1/2">
-            <Image
-              src="/images/ubicaciones/hero.jpg" // cámbiala por tu foto
-              alt="Taller y sala de espera"
-              fill
-              className="object-cover"
-              priority
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#0f0f10] via-transparent to-transparent" />
-            <div className="absolute bottom-4 left-4 rounded-full bg-white/80 px-4 py-2 text-sm font-semibold text-black">
-              Sucursales certificadas
-            </div>
-          </div>
-        </div>
-      </section>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
 
-      <section
-        id="sucursales"
-        className="mx-auto max-w-6xl space-y-8 px-6 py-16 md:px-12"
-      >
-        <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+      {/* HERO */}
+      <section className="bg-[#0F0F0F] px-6 py-16 text-white md:px-12 md:py-20">
+        <div className="mx-auto grid max-w-7xl items-end gap-10 md:grid-cols-[1.2fr,1fr] md:gap-16">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-yellow-400">
-              Todas nuestras sucursales
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#FFD34A] md:text-sm">
+              Ubicaciones · Colima y Manzanillo
             </p>
-            <h2 className="text-3xl font-bold md:text-4xl">
-              Elige la más conveniente
-            </h2>
-            <p className="mt-2 max-w-2xl text-neutral-400">
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed
-              pharetra, arcu quis consequat luctus, mi libero aliquet felis,
-              vitae luctus arcu lorem a mi.
-            </p>
+            <h1 className="mt-4 font-staatliches text-5xl font-black uppercase leading-[0.9] tracking-[0.02em] md:text-7xl lg:text-[96px]">
+              Seis
+              <br />
+              <span className="text-[#FFC600]">talleres</span>
+              <br />
+              cerca de ti.
+            </h1>
           </div>
-          <a
-            className="inline-flex items-center gap-2 rounded-full border border-white/20 px-4 py-2 text-sm text-white transition hover:border-white/40"
-            href="#mapa"
-          >
-            Ver mapa
-            <span aria-hidden>→</span>
-          </a>
+          <div className="flex flex-col gap-4">
+            <p className="text-base leading-relaxed text-white/75 md:text-lg">
+              Operamos en{" "}
+              <strong className="text-white">tres ciudades del estado de Colima</strong>.
+              Mismos horarios, misma garantía, técnicos certificados en cada
+              sucursal. ¿Apuro? Cotiza por WhatsApp en segundos con nuestro
+              agente o llama directo al taller.
+            </p>
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="inline-flex items-center gap-2.5 rounded-full border border-green-500/40 bg-green-500/10 px-4 py-2.5">
+                <span className="h-2 w-2 rounded-full bg-green-500" />
+                <span className="text-xs font-bold uppercase tracking-[0.06em] text-green-500">
+                  Abierto hoy · 9:00 — 19:00
+                </span>
+              </div>
+              <span className="text-xs text-[#9EA0A3]">Domingo cerrado</span>
+            </div>
+            <a
+              href={whatsappHref("Hola, quiero cotizar llantas")}
+              className="mt-2 inline-flex max-w-fit items-center gap-3.5 rounded-2xl border border-green-500/40 bg-green-500/10 p-3.5 text-white transition hover:bg-green-500/20"
+            >
+              <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-[#25D366] text-[#0F2F1A]">
+                <WhatsappIcon className="h-[18px] w-[18px]" />
+              </span>
+              <span className="flex flex-col gap-0.5">
+                <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#25D366]">
+                  WhatsApp único para las 6 sucursales
+                </span>
+                <span className="font-staatliches text-2xl leading-none tracking-[0.04em]">
+                  {WHATSAPP_DISPLAY}
+                </span>
+              </span>
+            </a>
+          </div>
         </div>
 
-        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-          {LOCATIONS.map((location) => (
-            <article
-              key={location.name}
-              className="group rounded-2xl border border-white/10 bg-white/5 shadow-lg transition hover:-translate-y-1 hover:border-white/25"
+        {/* Anchor links */}
+        <div className="mx-auto mt-10 grid max-w-7xl gap-0 border-t border-white/10 pt-6 md:grid-cols-3">
+          {CITIES.map((c, i) => (
+            <a
+              key={c.name}
+              href={`#${c.name.replace(/\s/g, "-")}`}
+              className={`flex items-center gap-4 px-4 py-4 text-white transition hover:bg-white/5 md:px-6 md:py-5 ${
+                i < CITIES.length - 1 ? "md:border-r md:border-white/10" : ""
+              }`}
             >
-              <div className="relative h-48 overflow-hidden rounded-t-2xl">
-                <Image
-                  src={location.image}
-                  alt={location.name}
-                  fill
-                  className="object-cover transition duration-500 group-hover:scale-105"
-                />
-              </div>
-              <div className="space-y-2 p-5">
-                <h3 className="text-xl font-semibold">{location.name}</h3>
-                <p className="text-sm text-neutral-300">{location.address}</p>
-                <p className="text-sm text-neutral-400">{location.schedule}</p>
-                <div className="flex items-center justify-between pt-2">
-                  <span className="text-sm font-semibold text-yellow-400">
-                    {location.phone}
-                  </span>
-                  <button className="rounded-full border border-white/15 px-4 py-2 text-sm text-white transition hover:border-white/40 hover:bg-white/5">
-                    Ver detalles
-                  </button>
-                </div>
-              </div>
-            </article>
+              <span className="font-staatliches text-4xl font-black leading-none tracking-[0.02em] text-[#FFC600] md:text-5xl">
+                0{i + 1}
+              </span>
+              <span className="flex flex-col gap-1">
+                <span className="text-base font-extrabold uppercase tracking-[0.02em] md:text-lg">
+                  {c.name}
+                </span>
+                <span className="text-xs text-[#9EA0A3]">
+                  {c.ids.length} {c.ids.length === 1 ? "sucursal" : "sucursales"}
+                </span>
+              </span>
+            </a>
           ))}
         </div>
       </section>
 
-      <section
-        id="mapa"
-        className="bg-white/5 px-6 py-16 shadow-inner backdrop-blur md:px-12"
-      >
-        <div className="mx-auto flex max-w-6xl flex-col gap-8 md:flex-row md:items-center">
-          <div className="flex-1 space-y-3">
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-yellow-400">
-              Cómo llegar
-            </p>
-            <h2 className="text-3xl font-bold md:text-4xl">
-              Mapa y rutas sugeridas
-            </h2>
-            <p className="text-neutral-300">
-              Elige o compara las mejores rutas para llegar a nuestras sucursales
-            </p>
-            <ul className="space-y-2 text-neutral-300">
-              <li>• Estacionamiento gratis en todas las sucursales.</li>
-              <li>• Ubicación ideal.</li>
-              <li>• Áreas de espera con Aire acondicionado, Wi-Fi y café.</li>
-            </ul>
-          </div>
-          <div className="relative h-[320px] w-full flex-1 overflow-hidden rounded-2xl border border-white/10 bg-black/40 shadow-lg">
-            {/* Reemplaza este div por un iframe de mapa (Google Maps, Mapbox, etc.) */}
-            <div className="absolute inset-0 flex items-center justify-center text-center text-neutral-400">
-              Inserta aquí tu mapa embebido
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* CITY BLOCKS */}
+      {CITIES.map((city) => (
+        <CityBlock key={city.name} city={city} />
+      ))}
 
-      <section
-        id="contacto"
-        className="mx-auto max-w-6xl px-6 py-16 md:px-12"
-      >
-        <div className="rounded-3xl border border-white/10 bg-gradient-to-r from-yellow-400/20 via-white/10 to-blue-500/20 px-8 py-10 shadow-xl md:px-12 md:py-12">
-          <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-            <div className="space-y-3">
-              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-yellow-400">
-                Agenda una visita
-              </p>
-              <h3 className="text-2xl font-bold md:text-3xl">
-                ¿Necesitas soporte inmediato?
-              </h3>
-              <p className="max-w-2xl text-neutral-200">
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Duis
-                suscipit, nibh non volutpat sagittis, justo velit mattis ante,
-                nec convallis ex ipsum sit amet purus.
-              </p>
-            </div>
-            <div className="flex flex-col gap-3 md:flex-row md:items-center">
-              <a
-                className="rounded-full bg-yellow-400 px-5 py-3 text-center font-semibold text-black transition hover:-translate-y-0.5 hover:bg-yellow-300"
-                href="tel:0001234567"
+      {/* SERVICES PROMISE */}
+      <section className="bg-[#FFC600] px-6 py-16 md:px-12 md:py-20">
+        <div className="mx-auto grid max-w-7xl items-center gap-10 md:grid-cols-[1.2fr,1fr] md:gap-12">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-black/70 md:text-sm">
+              En cada sucursal
+            </p>
+            <h2 className="mt-4 font-staatliches text-5xl font-black uppercase leading-[0.95] tracking-[0.04em] text-[#0F0F0F] md:text-6xl lg:text-[64px]">
+              El mismo
+              <br />
+              compromiso.
+            </h2>
+            <p className="mt-4 max-w-md text-base leading-relaxed text-[#0F0F0F] md:text-lg">
+              No importa a qué Yantissimo entres. Los mismos procesos, los
+              mismos técnicos certificados, las mismas marcas oficiales. Tu
+              garantía vale en las seis sucursales.
+            </p>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            {SERVICES.slice(0, 6).map((s) => (
+              <div
+                key={s.id}
+                className="flex items-center gap-3.5 rounded-2xl bg-[#0F0F0F] p-4 text-white md:p-[18px]"
               >
-                Llamar ahora
-              </a>
-              <a
-                className="rounded-full border border-white/20 px-5 py-3 text-center text-white transition hover:border-white/40"
-                href="mailto:contacto@taller.com"
-              >
-                Enviar correo
-              </a>
-            </div>
+                <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#FFC600] text-[#0F0F0F]">
+                  <PhoneIcon className="h-5 w-5" />
+                </span>
+                <span className="text-sm font-extrabold uppercase tracking-[0.04em]">
+                  {s.label}
+                </span>
+              </div>
+            ))}
           </div>
         </div>
       </section>
     </div>
   );
 }
+
+function CityBlock({ city }: { city: (typeof CITIES)[number] }) {
+  const branches = city.ids
+    .map((id) => BRANCHES.find((b) => b.id === id))
+    .filter(Boolean) as Branch[];
+
+  return (
+    <section
+      id={city.name.replace(/\s/g, "-")}
+      className="border-b border-neutral-200 px-6 py-16 md:px-12 md:py-20"
+    >
+      <div className="mx-auto max-w-7xl">
+        <div className="mb-9 flex flex-wrap items-baseline gap-x-6 gap-y-3">
+          <h2 className="font-staatliches text-5xl font-black uppercase leading-none tracking-[0.04em] md:text-6xl lg:text-[64px]">
+            {city.name}
+          </h2>
+          <span className="text-sm font-semibold tracking-[0.04em] text-[#9EA0A3]">
+            {city.ids.length} {city.ids.length === 1 ? "sucursal" : "sucursales"} · Colima, México
+          </span>
+          <span className="ml-auto inline-flex items-center gap-2.5 rounded-full bg-[#0F0F0F] px-4 py-2.5 text-xs font-bold uppercase tracking-[0.1em] text-[#FFC600]">
+            <ClockIcon className="h-3.5 w-3.5" /> L-V 9-19 · Sáb 9-14
+          </span>
+        </div>
+        <div className="flex flex-col gap-3.5">
+          {branches.map((b, i) => (
+            <BranchRow key={b.id} branch={b} num={i + 1} />
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function BranchRow({ branch, num }: { branch: Branch; num: number }) {
+  return (
+    <article className="grid items-stretch gap-0 overflow-hidden rounded-2xl border border-neutral-200 bg-neutral-50 md:grid-cols-[220px,1fr,320px,220px]">
+      <div className="relative min-h-[200px] md:min-h-[220px]">
+        <PhotoPlaceholder hue={branch.photoHue} label={branch.name} />
+      </div>
+
+      <div className="flex flex-col gap-3.5 px-6 py-6 md:p-7">
+        <div className="flex items-baseline gap-3.5">
+          <span className="font-staatliches text-2xl tracking-[0.04em] text-[#9EA0A3]">
+            0{num}
+          </span>
+          <h3 className="font-staatliches text-3xl font-black uppercase leading-none tracking-[0.03em] md:text-[36px]">
+            {branch.name}
+          </h3>
+        </div>
+        <p className="max-w-xl text-sm leading-relaxed text-neutral-600 md:text-[15px]">
+          {branch.address}, {branch.city}, CP {branch.zip}.
+        </p>
+        <div className="flex flex-wrap gap-1.5">
+          {branch.badges.map((b) => (
+            <span
+              key={b}
+              className="inline-flex items-center gap-1.5 rounded-full border border-neutral-200 bg-white px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-neutral-600"
+            >
+              {b}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-2 border-y border-neutral-200 px-6 py-6 md:border-x md:border-y-0 md:px-6">
+        <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#9EA0A3]">
+          Contacto
+        </span>
+        <a
+          href={telHref(branch.phone)}
+          className="font-staatliches text-3xl tracking-[0.04em] text-[#0F0F0F] hover:text-[#D19D00]"
+        >
+          {branch.phone}
+        </a>
+        <span className="text-[13px] text-neutral-600">
+          Atención directa, sin menús.
+        </span>
+        <div className="mt-auto flex flex-col gap-1 border-t border-dashed border-neutral-300 pt-2">
+          {HOURS.map((h) => (
+            <span
+              key={h.d}
+              className={`flex justify-between text-xs ${
+                h.closed ? "text-[#9EA0A3]" : "text-neutral-600"
+              }`}
+            >
+              <span>{h.d}</span>
+              <span className={`font-bold ${h.closed ? "text-[#9EA0A3]" : "text-[#0F0F0F]"}`}>
+                {h.h}
+              </span>
+            </span>
+          ))}
+        </div>
+      </div>
+
+      <div className="flex flex-col justify-center gap-2.5 px-6 py-6 md:p-7 md:pl-0">
+        <a
+          href={telHref(branch.phone)}
+          className="flex items-center justify-center gap-2.5 rounded-xl bg-[#FFC600] px-4 py-3.5 text-sm font-extrabold text-[#0F0F0F] transition hover:bg-[#FFD34A]"
+        >
+          <PhoneIcon className="h-4 w-4" /> Llamar al taller
+        </a>
+        <a
+          href={branch.maps}
+          target="_blank"
+          rel="noreferrer"
+          className="flex items-center justify-center gap-2.5 rounded-xl bg-[#0F0F0F] px-4 py-3.5 text-sm font-extrabold text-white transition hover:bg-neutral-800"
+        >
+          <PinIcon className="h-4 w-4" /> Cómo llegar
+        </a>
+        <a
+          href="/agendar"
+          className="flex items-center justify-center gap-2.5 rounded-xl border border-neutral-300 bg-transparent px-4 py-3.5 text-sm font-bold text-[#0F0F0F] transition hover:bg-neutral-100"
+        >
+          Agendar cita <ArrowIcon className="h-3.5 w-3.5" />
+        </a>
+      </div>
+    </article>
+  );
+}
+

@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Política de garantía y devoluciones | yaol_commerce",
   description:
-    "Conoce las políticas de garantía y devoluciones de yaol_commerce.",
+    "Conoce las políticas de garantía y devoluciones de Yantissimo.",
 };
 
 export default function ReturnPolicyPage() {

@@ -1,256 +1,375 @@
 import { ScrollToTopOnMount } from "components/scroll-to-top-on-mount";
-import Image from "next/image";
+import {
+  ArrowIcon,
+  FacebookIcon,
+  InstagramIcon,
+  MailIcon,
+  PhoneIcon,
+  ShieldIcon,
+  TiktokIcon,
+  WhatsappIcon,
+} from "components/yantissimo/icons";
+import {
+  BRANCHES,
+  COMPANY,
+  HOURS,
+  SOCIALS,
+  WHATSAPP_DISPLAY,
+  telHref,
+  whatsappHref,
+} from "lib/company";
+import type { ComponentType, SVGProps } from "react";
 
 export const metadata = {
-  title: "Contacto",
-  description: "Ponte en contacto con nuestro equipo para agendar, cotizar o resolver dudas.",
+  title: "Contacto · WhatsApp y teléfonos por sucursal | Yantissimo",
+  description:
+    "Cotiza llantas en segundos por WhatsApp con nuestro agente, agenda servicios o llama directo a cualquiera de nuestras 6 sucursales en Colima y Manzanillo.",
+  alternates: { canonical: "/contacto" },
+  openGraph: {
+    title: "Contacto Yantissimo · Cotiza en segundos",
+    description:
+      "WhatsApp central 312 222 0099, teléfonos directos por sucursal, formulario y horarios. L-V 9-19, Sáb 9-14.",
+    url: "https://yantissimo.com/contacto",
+    type: "website",
+  },
 };
 
-const CONTACT_METHODS = [
+type IntentCardProps = {
+  tag: string;
+  title: string;
+  body: string;
+  cta: { label: string; href: string; icon: ComponentType<SVGProps<SVGSVGElement>> };
+  secondary: string;
+  accent?: boolean;
+};
+
+const INTENTS: IntentCardProps[] = [
   {
-    title: "Llamada en horarios laborales",
-    value: "(312) 222 0099",
-    href: "tel:3122220099",
-    note: "Lun - Vie · 9:00 a 19:00, Sab · 9:00 a 14:00",
+    tag: "01 · Inmediato",
+    title: "Cotizar llantas",
+    body: "Mándanos foto del costado, marca y modelo de auto.",
+    cta: {
+      label: "WhatsApp ahora",
+      href: whatsappHref("Hola, quiero cotizar llantas"),
+      icon: WhatsappIcon,
+    },
+    secondary: "Cotización al instante con nuestro agente",
+    accent: true,
   },
   {
-    title: "Correo",
-    value: "marketing@yantissimo.com",
-    href: "mailto:marketing@yantissimo.com",
-    note: "Respondemos en menos de 24 h",
+    tag: "02 · Cita",
+    title: "Agendar servicio",
+    body: "Alineación, frenos, afinación o balanceo. Te confirmamos hora.",
+    cta: { label: "Agendar en línea", href: "/agendar", icon: ArrowIcon },
+    secondary: "Confirmación por SMS y WhatsApp",
   },
   {
-    title: "WhatsApp y Chatbot",
-    value: "+52 312 222 0099",
-    href: "https://wa.me/523122220099",
-    note: "Contesta al instante las 24 horas del dia",
+    tag: "03 · B2B",
+    title: "Flotillas",
+    body: "Mantenimiento programado para empresas y rentadoras.",
+    cta: {
+      label: "Hablar con ventas",
+      href: `mailto:${COMPANY.fleetEmail}?subject=Flotillas`,
+      icon: MailIcon,
+    },
+    secondary: COMPANY.fleetEmail,
+  },
+  {
+    tag: "04 · Seguimiento",
+    title: "Garantía o post-venta",
+    body: "¿Algo no quedó bien? Lo resolvemos en la misma sucursal.",
+    cta: {
+      label: "Reportar caso",
+      href: whatsappHref("Hola, tengo un caso de garantía / post-venta"),
+      icon: ShieldIcon,
+    },
+    secondary: "Cobertura escrita en cada nota",
   },
 ];
 
-const FAQS = [
-  {
-    q: "¿Necesito cita previa?",
-    a: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer eget metus vitae orci tristique efficitur.",
-  },
-  {
-    q: "¿Aceptan pagos en línea?",
-    a: "Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam.",
-  },
-  {
-    q: "¿Tienen garantía en servicios?",
-    a: "Quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.",
-  },
-];
+const SOCIAL_ICONS: Record<string, ComponentType<SVGProps<SVGSVGElement>>> = {
+  fb: FacebookIcon,
+  ig: InstagramIcon,
+  tk: TiktokIcon,
+};
+
+function buildContactJsonLd() {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: COMPANY.legalName,
+    url: COMPANY.website,
+    email: COMPANY.email,
+    contactPoint: [
+      {
+        "@type": "ContactPoint",
+        contactType: "customer service",
+        availableLanguage: ["es-MX"],
+        telephone: `+52${WHATSAPP_DISPLAY.replace(/\s/g, "")}`,
+        contactOption: "WhatsApp",
+        areaServed: "MX",
+      },
+      ...BRANCHES.map((b) => ({
+        "@type": "ContactPoint",
+        contactType: "branch",
+        name: `Yantissimo ${b.name}`,
+        telephone: `+52${b.phone.replace(/\s/g, "")}`,
+        areaServed: b.city,
+      })),
+    ],
+  };
+}
 
 export default function ContactoPage() {
   return (
-    <div className="mt-28 min-h-screen bg-[#0f0f10] text-white">
-      <ScrollToTopOnMount />
+    <div className="mt-28 min-h-screen bg-white text-[#0F0F0F]">
+      <ScrollToTopOnMount behavior="auto" />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(buildContactJsonLd()) }}
+      />
 
-      <section className="relative overflow-hidden px-6 py-16 md:px-12">
-        <div className="mx-auto flex max-w-6xl flex-col gap-10 md:flex-row md:items-center">
-          <div className="flex-1 space-y-4">
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-yellow-400">
-              Hablemos
-            </p>
-            <h1 className="text-4xl font-bold leading-tight md:text-5xl">
-              Estamos listos para ayudarte
-            </h1>
-            <p className="max-w-2xl text-lg text-neutral-300">
-            Nuestros expertos te atenderan con gusto, dentro de nuestros horarios. Lunes a Viernes de 9am-7pm y Sábados de 9am-2pm.
-            </p>
-            <div className="flex flex-wrap gap-3">
-              <a
-                className="rounded-full bg-yellow-400 px-5 py-3 text-black transition hover:-translate-y-0.5 hover:bg-yellow-300"
-                href="#formulario"
-              >
-                Enviar mensaje
-              </a>
-              <a
-                className="rounded-full border border-white/20 px-5 py-3 text-white transition hover:-translate-y-0.5 hover:border-white/40"
-                href="#info"
-              >
-                Ver datos de contacto
-              </a>
-            </div>
-          </div>
-          <div className="relative h-64 w-full overflow-hidden rounded-2xl bg-white/5 shadow-xl md:h-80 md:w-1/2">
-            <Image
-              src="/images/contacto/hero.jpg" // reemplaza con tu imagen
-              alt="Equipo de atención al cliente"
-              fill
-              className="object-cover"
-              priority
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#0f0f10] via-transparent to-transparent" />
-            <div className="absolute bottom-4 left-4 rounded-full bg-white/80 px-4 py-2 text-sm font-semibold text-black">
-              Respuesta rápida
-            </div>
-          </div>
+      {/* HERO */}
+      <section className="px-6 pt-16 pb-8 md:px-12 md:pt-20">
+        <div className="mx-auto max-w-4xl text-center">
+          <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#D19D00] md:text-sm">
+            Hablemos
+          </p>
+          <h1 className="mt-4 mb-6 font-staatliches text-5xl font-black uppercase leading-[0.95] tracking-[0.03em] md:text-7xl lg:text-[88px]">
+            ¿Cómo te
+            <br />
+            ayudamos hoy?
+          </h1>
+          <p className="mx-auto max-w-2xl text-base leading-relaxed text-neutral-600 md:text-lg">
+            Elige el canal y te llevamos directo con quien resuelve. Cotizamos
+            llantas en segundos por WhatsApp; en el taller te atiende una persona.
+          </p>
         </div>
       </section>
 
-      <section
-        id="info"
-        className="mx-auto max-w-6xl space-y-8 px-6 py-16 md:px-12"
-      >
-        <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-yellow-400">
-              Contacto directo
-            </p>
-            <h2 className="text-3xl font-bold md:text-4xl">Escríbenos o llama</h2>
-            <p className="mt-2 max-w-2xl text-neutral-300">
-              Habla con uno de nosotros, o cotiza y resuelve tus dudas en segundos con nuestro chatbot de WhatsApp inteligente
-            </p>
-          </div>
-        </div>
-        <div className="grid gap-6 md:grid-cols-3">
-          {CONTACT_METHODS.map((method) => (
-            <article
-              key={method.title}
-              className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-lg transition hover:-translate-y-1 hover:border-white/25"
-            >
-              <p className="text-sm font-semibold uppercase tracking-wide text-yellow-400">
-                {method.title}
-              </p>
-              <a
-                className="mt-2 block text-xl font-semibold text-white hover:underline"
-                href={method.href}
-              >
-                {method.value}
-              </a>
-              <p className="mt-1 text-sm text-neutral-400">{method.note}</p>
-            </article>
+      {/* INTENT GRID */}
+      <section className="px-6 py-8 md:px-12 md:py-12">
+        <div className="mx-auto grid max-w-7xl gap-3.5 md:grid-cols-2 lg:grid-cols-4">
+          {INTENTS.map((it) => (
+            <IntentCard key={it.tag} {...it} />
           ))}
         </div>
       </section>
 
-      <section
-        id="formulario"
-        className="bg-white/5 px-6 py-16 shadow-inner backdrop-blur md:px-12"
-      >
-        <div className="mx-auto grid max-w-6xl gap-10 lg:grid-cols-[1.1fr,0.9fr]">
-          <div className="space-y-4">
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-yellow-400">
-              Envíanos un mensaje
+      {/* PHONE DIRECTORY BAND */}
+      <section className="bg-[#0F0F0F] px-6 py-14 text-white md:px-12 md:py-16">
+        <div className="mx-auto grid max-w-7xl gap-10 md:grid-cols-[320px,1fr] md:gap-12">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#FFD34A]">
+              O llama directo
             </p>
-            <h2 className="text-3xl font-bold md:text-4xl">
-              Cuéntanos qué necesitas
+            <h2 className="mt-3 mb-4 font-staatliches text-4xl font-black uppercase leading-none tracking-[0.04em] md:text-5xl">
+              Contesta
+              <br />
+              una persona.
             </h2>
-            <p className="text-neutral-300">
-              Quis autem vel eum iure reprehenderit qui in ea voluptate velit
-              esse quam nihil molestiae consequatur.
+            <p className="text-sm leading-relaxed text-[#9EA0A3] md:text-[15px]">
+              Llama a la sucursal que más te quede; te atiende el equipo del taller.
             </p>
-            <form className="space-y-4">
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <label className="text-sm text-neutral-300">Nombre completo</label>
-                  <input
-                    className="w-full rounded-xl border border-white/10 bg-[#0f0f10] px-4 py-3 text-white outline-none transition focus:border-yellow-400/60"
-                    placeholder="Jane Doe"
-                    type="text"
-                    name="nombre"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm text-neutral-300">Correo</label>
-                  <input
-                    className="w-full rounded-xl border border-white/10 bg-[#0f0f10] px-4 py-3 text-white outline-none transition focus:border-yellow-400/60"
-                    placeholder="correo@ejemplo.com"
-                    type="email"
-                    name="correo"
-                  />
-                </div>
-              </div>
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <label className="text-sm text-neutral-300">Teléfono</label>
-                  <input
-                    className="w-full rounded-xl border border-white/10 bg-[#0f0f10] px-4 py-3 text-white outline-none transition focus:border-yellow-400/60"
-                    placeholder="+52 00 0000 0000"
-                    type="tel"
-                    name="telefono"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm text-neutral-300">Asunto</label>
-                  <input
-                    className="w-full rounded-xl border border-white/10 bg-[#0f0f10] px-4 py-3 text-white outline-none transition focus:border-yellow-400/60"
-                    placeholder="Cotización, cita, soporte..."
-                    type="text"
-                    name="asunto"
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm text-neutral-300">Mensaje</label>
-                <textarea
-                  className="h-32 w-full rounded-xl border border-white/10 bg-[#0f0f10] px-4 py-3 text-white outline-none transition focus:border-yellow-400/60"
-                  placeholder="Cuéntanos los detalles de tu solicitud."
-                  name="mensaje"
-                />
-              </div>
-              <button
-                className="rounded-full bg-yellow-400 px-6 py-3 font-semibold text-black transition hover:-translate-y-0.5 hover:bg-yellow-300"
-                type="submit"
+            <p className="mt-3.5 inline-flex items-start gap-2 text-xs leading-relaxed text-[#9EA0A3]">
+              <PhoneIcon className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#FFD34A]" />
+              <span>
+                Las líneas de sucursal son{" "}
+                <strong className="text-white">solo para llamadas</strong>.
+                <br />
+                WhatsApp se atiende desde el número central{" "}
+                <strong className="text-[#FFC600]">{WHATSAPP_DISPLAY}</strong>.
+              </span>
+            </p>
+          </div>
+          <div className="grid gap-0 md:grid-cols-3">
+            {BRANCHES.map((b, i) => (
+              <a
+                key={b.id}
+                href={telHref(b.phone)}
+                className={`flex flex-col gap-1.5 px-5 py-5 text-white transition hover:bg-white/5 ${
+                  (i + 1) % 3 === 0 ? "" : "md:border-r md:border-white/10"
+                } ${i < 3 ? "md:border-b md:border-white/10" : ""}`}
               >
-                Enviar mensaje
-              </button>
-            </form>
+                <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#9EA0A3]">
+                  {b.city}
+                </span>
+                <span className="font-staatliches text-lg font-extrabold uppercase tracking-[0.02em]">
+                  {b.name}
+                </span>
+                <span className="font-staatliches text-2xl tracking-[0.04em] text-[#FFC600] md:text-[26px]">
+                  {b.phone}
+                </span>
+              </a>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* HORARIOS · OFICINAS · SOCIAL */}
+      <section className="px-6 pt-16 pb-8 md:px-12 md:pt-20">
+        <div className="mx-auto grid max-w-7xl gap-6 md:grid-cols-3">
+          <div className="border-t-2 border-[#FFC600] p-6">
+            <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#9EA0A3]">
+              Horario general
+            </p>
+            <h3 className="mt-3.5 mb-4 font-staatliches text-2xl font-black uppercase tracking-[0.02em]">
+              De lunes a sábado
+            </h3>
+            <ul className="flex flex-col gap-2">
+              {HOURS.map((h) => (
+                <li
+                  key={h.d}
+                  className={`flex justify-between text-sm ${
+                    h.closed ? "text-[#9EA0A3]" : "text-[#0F0F0F]"
+                  }`}
+                >
+                  <span className="font-medium">{h.d}</span>
+                  <span className="font-bold">{h.h}</span>
+                </li>
+              ))}
+            </ul>
           </div>
 
-          <div className="space-y-6">
-            <div className="rounded-2xl border border-white/10 bg-[#0f0f10] p-6 shadow-lg">
-              <p className="text-sm font-semibold uppercase tracking-[0.2em] text-yellow-400">
-                Sucursales
-              </p>
-              <h3 className="mt-2 text-xl font-semibold">Encuéntranos</h3>
-              <p className="mt-2 text-sm text-neutral-300">
-                Blvd. Lorem 123, Col. Ipsum, Ciudad · Lun - Sáb: 8:00 - 20:00
-              </p>
-              <p className="mt-1 text-sm text-neutral-300">
-                Calle Dolor 456, Plaza Sit, Ciudad · Lun - Vie: 9:00 - 19:00
-              </p>
-            </div>
+          <div className="border-t-2 border-[#FFC600] p-6">
+            <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#9EA0A3]">
+              Oficinas centrales
+            </p>
+            <h3 className="mt-3.5 mb-4 font-staatliches text-2xl font-black uppercase tracking-[0.02em]">
+              Villa de Álvarez
+            </h3>
+            <p className="text-sm leading-relaxed text-neutral-600">
+              {COMPANY.hqAddress.street}
+              <br />
+              {COMPANY.hqAddress.postalCode} {COMPANY.hqAddress.city},{" "}
+              {COMPANY.hqAddress.state}
+              <br />
+              <a
+                href={`mailto:${COMPANY.email}`}
+                className="font-bold text-[#0F0F0F] hover:text-[#D19D00]"
+              >
+                {COMPANY.email}
+              </a>
+            </p>
+          </div>
 
-            <div className="relative h-64 overflow-hidden rounded-2xl border border-white/10 bg-black/40 shadow-lg">
-              {/* Reemplaza este bloque por un iframe de tu mapa */}
-              <div className="absolute inset-0 flex items-center justify-center text-center text-neutral-400">
-                Inserta aquí tu mapa embebido
-              </div>
+          <div className="border-t-2 border-[#FFC600] p-6">
+            <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#9EA0A3]">
+              Redes sociales
+            </p>
+            <h3 className="mt-3.5 mb-4 font-staatliches text-2xl font-black uppercase tracking-[0.02em]">
+              Síguenos
+            </h3>
+            <div className="flex flex-col gap-2.5">
+              {SOCIALS.map((s) => {
+                const Icon = SOCIAL_ICONS[s.id]!;
+                return (
+                  <a
+                    key={s.id}
+                    href={s.href}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center gap-2.5 text-sm font-semibold text-[#0F0F0F] transition hover:text-[#D19D00]"
+                  >
+                    <Icon className="h-4.5 w-4.5" />
+                    {s.name}{" "}
+                    <span className="font-medium text-[#9EA0A3]">· {s.handle}</span>
+                  </a>
+                );
+              })}
             </div>
           </div>
         </div>
       </section>
 
-      <section className="mx-auto max-w-6xl px-6 py-16 md:px-12">
-        <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+      {/* FINAL CTA */}
+      <section className="px-6 pt-12 pb-24 md:px-12">
+        <div className="mx-auto grid max-w-7xl items-center gap-8 rounded-3xl bg-[#FFC600] p-8 text-[#0F0F0F] md:grid-cols-[1.4fr,1fr] md:gap-10 md:p-12">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.2em] text-yellow-400">
-              FAQ
-            </p>
-            <h2 className="text-3xl font-bold md:text-4xl">
-              Preguntas frecuentes
-            </h2>
-            <p className="mt-2 max-w-2xl text-neutral-300">
-              Temporibus autem quibusdam et aut officiis debitis aut rerum
-              necessitatibus saepe eveniet.
+            <h3 className="font-staatliches text-4xl font-black uppercase leading-none tracking-[0.04em] md:text-5xl">
+              ¿Llanta ponchada
+              <br />
+              ahora mismo?
+            </h3>
+            <p className="mt-3.5 max-w-lg text-base text-black/75">
+              Llámanos a la sucursal más cercana; si está abierta te recibimos
+              sin cita. Sábados atendemos hasta las 14:00.
             </p>
           </div>
-        </div>
-        <div className="mt-6 grid gap-6 md:grid-cols-3">
-          {FAQS.map((faq) => (
-            <article
-              key={faq.q}
-              className="rounded-2xl border border-white/10 bg-white/5 p-6 shadow-lg"
+          <div className="flex flex-col gap-2.5">
+            <a
+              href={whatsappHref("Hola, necesito ayuda urgente")}
+              className="flex items-center justify-between rounded-2xl bg-[#25D366] px-5 py-4 text-base font-extrabold text-[#0a2e15] transition hover:bg-[#22c55e]"
             >
-              <h3 className="text-lg font-semibold">{faq.q}</h3>
-              <p className="mt-2 text-sm text-neutral-300">{faq.a}</p>
-            </article>
-          ))}
+              <span className="inline-flex items-center gap-2">
+                <WhatsappIcon className="h-4 w-4" /> WhatsApp · {WHATSAPP_DISPLAY}
+              </span>
+              <ArrowIcon className="h-4 w-4" />
+            </a>
+            <a
+              href="#contacto-directorio"
+              className="flex items-center justify-between rounded-2xl bg-[#0F0F0F] px-5 py-4 text-base font-extrabold text-white transition hover:bg-neutral-800"
+            >
+              <span className="inline-flex items-center gap-2">
+                <PhoneIcon className="h-4 w-4" /> Llamar a tu sucursal
+              </span>
+              <ArrowIcon className="h-4 w-4" />
+            </a>
+          </div>
         </div>
       </section>
     </div>
+  );
+}
+
+function IntentCard({ tag, title, body, cta, secondary, accent }: IntentCardProps) {
+  const Icon = cta.icon;
+  return (
+    <article
+      className={`flex min-h-[280px] flex-col gap-3.5 rounded-2xl border p-7 ${
+        accent
+          ? "border-[#0F0F0F] bg-[#0F0F0F] text-white"
+          : "border-neutral-200 bg-white text-[#0F0F0F]"
+      }`}
+    >
+      <span
+        className={`text-[11px] font-bold uppercase tracking-[0.16em] ${
+          accent ? "text-[#FFD34A]" : "text-[#9EA0A3]"
+        }`}
+      >
+        {tag}
+      </span>
+      <h3 className="font-staatliches text-2xl font-black uppercase leading-none tracking-[0.03em] md:text-[28px]">
+        {title}
+      </h3>
+      <p
+        className={`text-sm leading-relaxed ${
+          accent ? "text-white/70" : "text-neutral-600"
+        }`}
+      >
+        {body}
+      </p>
+      <div className="mt-auto flex flex-col gap-2.5">
+        <a
+          href={cta.href}
+          target={cta.href.startsWith("http") ? "_blank" : undefined}
+          rel={cta.href.startsWith("http") ? "noreferrer" : undefined}
+          className={`inline-flex items-center gap-2 self-start rounded-full px-4 py-3 text-[13px] font-extrabold tracking-[0.04em] transition ${
+            accent
+              ? "bg-[#FFC600] text-[#0F0F0F] hover:bg-[#FFD34A]"
+              : "bg-[#0F0F0F] text-white hover:bg-neutral-800"
+          }`}
+        >
+          <Icon className="h-3.5 w-3.5" /> {cta.label}
+        </a>
+        <span
+          className={`text-[11px] tracking-[0.04em] ${
+            accent ? "text-white/50" : "text-[#9EA0A3]"
+          }`}
+        >
+          {secondary}
+        </span>
+      </div>
+    </article>
   );
 }
