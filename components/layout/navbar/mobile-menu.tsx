@@ -111,7 +111,7 @@ export default function MobileMenu({ menu }: { menu: Menu[] }) {
                     <h1 className="mx-5">Ubicaciones</h1>
                   </Link>
                   <div className="w-full border-b-2 border-white"></div>
-                  <Link href="/agendar-cita" onClick={closeMobileMenu}>
+                  <Link href="/servicios" onClick={closeMobileMenu}>
                     <h1 className="mx-5">Servicios</h1>
                   </Link>
                   <div className="w-full border-b-2 border-white"></div>

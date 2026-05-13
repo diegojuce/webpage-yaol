@@ -511,8 +511,8 @@ export function WelcomeModalContent({
       : "Ingresa los tres números grabados en el costado de tu llanta.";
 
   return (
-    <div className="flex h-full w-full flex-col bg-black px-6 py-12 text-white md:px-12 md:py-16">
-      <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col">
+    <div className="flex min-h-full w-full flex-col bg-black px-6 py-12 text-white md:px-12 md:py-16">
+      <div className="mx-auto flex w-full max-w-2xl flex-col">
         <header className="text-center">
           <p
             className="text-[11px] font-bold uppercase tracking-[0.32em]"

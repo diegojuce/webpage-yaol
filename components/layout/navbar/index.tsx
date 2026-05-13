@@ -143,22 +143,24 @@ export async function Navbar() {
         </div>
 
        <div className="relative group">
-       <Link href="/agendar-cita" prefetch={true} className="text-black text-s ">Servicios</Link>
+       <Link href="/servicios" prefetch={true} className="text-black text-s ">Servicios</Link>
        <span className="absolute left-0 top-full h-10 w-full bg-transparent" aria-hidden="true" />
        <span className="absolute left-0 -bottom-7 h-1 w-full bg-yellow-500 scale-x-0 origin-middle transition-transform duration-300 ease-out group-hover:scale-x-100 z-100"/>
        <div className="fixed left-0 right-0 top-[113px] hidden group-hover:block bg-white p-8 z-30">
          <div className="grid grid-cols-1 gap-2 w-1/4 mx-auto">
-           <h4 className="text-neutral-600 text-xs">Agendar servicio</h4>
+           <h4 className="text-neutral-600 text-xs">Líneas de servicio</h4>
            <ul className="mt-3 space-y-2 text-sm text-black">
              {[
-               { label: "Cambio de llantas", value: "cambio-llantas" },
-               { label: "Alineación", value: "alineacion" },
-               { label: "Balanceo", value: "balanceo" },
-               { label: "Rotación", value: "rotacion" },
+               { label: "Afinación", anchor: "afinacion" },
+               { label: "Alineación 3D", anchor: "alineacion" },
+               { label: "Montaje de llantas", anchor: "montaje" },
+               { label: "Suspensión", anchor: "suspension" },
+               { label: "Frenos", anchor: "frenos" },
+               { label: "Balanceo y nitrógeno", anchor: "balanceo" },
              ].map((item) => (
-               <li key={item.value} className="font-semibold">
+               <li key={item.anchor} className="font-semibold">
                  <Link
-                   href={`/agendar-cita?service=${item.value}`}
+                   href={`/servicios#${item.anchor}`}
                    prefetch={true}
                    className="block hover:text-blue-500"
                  >

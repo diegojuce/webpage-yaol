@@ -166,7 +166,7 @@ export function FullscreenModal({
         </button>
         <div
           className={clsx(
-            "relative z-10 flex h-full w-full flex-col overflow-auto bg-white shadow-2xl",
+            "relative z-10 h-full w-full overflow-auto shadow-2xl",
             className,
           )}
         >
