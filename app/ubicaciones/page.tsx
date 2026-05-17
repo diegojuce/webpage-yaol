@@ -7,6 +7,7 @@ import {
   WhatsappIcon,
 } from "components/yantissimo/icons";
 import { PhotoPlaceholder } from "components/yantissimo/photo-placeholder";
+import type { Branch } from "lib/company";
 import {
   BRANCHES,
   COMPANY,
@@ -16,7 +17,6 @@ import {
   telHref,
   whatsappHref,
 } from "lib/company";
-import type { Branch } from "lib/company";
 
 export const metadata = {
   title: "Sucursales en Colima y Manzanillo | Yantissimo",
@@ -26,7 +26,7 @@ export const metadata = {
   openGraph: {
     title: "Sucursales Yantissimo · Colima y Manzanillo",
     description:
-      "6 talleres certificados en Colima, Villa de Álvarez y Manzanillo. Mismos horarios, misma garantía. WhatsApp central 312 222 0099.",
+      "7 talleres certificados en Colima, Villa de Álvarez y Manzanillo. Mismos horarios, misma garantía. WhatsApp central 312 222 0099.",
     url: "https://yantissimo.com/ubicaciones",
     type: "website",
   },
@@ -43,7 +43,7 @@ const CITIES: { name: string; ids: Branch["id"][] }[] = [
   },
   {
     name: "Manzanillo",
-    ids: ["manzanillo"],
+    ids: ["manzanillo", "manzanillo-tap"],
   },
 ];
 
@@ -102,7 +102,7 @@ export default function UbicacionesPage() {
               Ubicaciones · Colima y Manzanillo
             </p>
             <h1 className="mt-4 font-staatliches text-5xl font-black uppercase leading-[0.9] tracking-[0.02em] md:text-7xl lg:text-[96px]">
-              Seis
+              Siete
               <br />
               <span className="text-[#FFC600]">talleres</span>
               <br />
@@ -135,7 +135,7 @@ export default function UbicacionesPage() {
               </span>
               <span className="flex flex-col gap-0.5">
                 <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-[#25D366]">
-                  WhatsApp único para las 6 sucursales
+                  WhatsApp único para las 7 sucursales
                 </span>
                 <span className="font-staatliches text-2xl leading-none tracking-[0.04em]">
                   {WHATSAPP_DISPLAY}

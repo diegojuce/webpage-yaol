@@ -3,7 +3,7 @@
 import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import clsx from "clsx";
 import { useRouter, useSearchParams } from "next/navigation";
-import { FormEvent, MouseEvent, useEffect, useRef, useState } from "react";
+import { FormEvent, useEffect, useRef } from "react";
 
 type SearchProps = {
   className?: string;
@@ -13,89 +13,65 @@ export default function Search({ className }: SearchProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const inputRef = useRef<HTMLInputElement>(null);
-  const [expanded, setExpanded] = useState(
-    () => Boolean(searchParams?.get("q")),
-  );
+  const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
-    if (searchParams?.get("q")) {
-      setExpanded(true);
-    }
-  }, [searchParams]);
-
-  const handleIconClick = (event: MouseEvent<HTMLButtonElement>) => {
-    if (!expanded) {
-      event.preventDefault();
-      setExpanded(true);
-      requestAnimationFrame(() => inputRef.current?.focus());
-    }
-  };
-
-  const handleBlur = () => {
-    const query = inputRef.current?.value.trim();
-
-    if (!query) {
-      setExpanded(false);
-    }
-  };
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        inputRef.current?.focus();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-
     const formData = new FormData(event.currentTarget);
     const value = formData.get("q");
     const query = typeof value === "string" ? value.trim() : "";
-
     if (!query) {
       router.push("/search");
       return;
     }
-
     router.push(`/search?q=${encodeURIComponent(query)}`);
   };
 
   return (
     <form
+      ref={formRef}
       onSubmit={handleSubmit}
-      className={clsx(
-        "relative w-full lg:w-80 xl:w-full",
-        className,
-      )}
+      className={clsx("relative", className)}
     >
-      <div
-        className={clsx(
-          "hidden md:flex relative ml-auto  h-10 items-center overflow-hidden rounded-lg border-2 bg-white transition-[width] duration-200 dark:border-neutral-800 dark:bg-transparent",
-          expanded ? "w-full" : "w-10",
-        )}
+      <label
+        className="group flex h-11 w-full cursor-text items-center gap-2.5 rounded-full border border-transparent bg-[#F5F5F5] pl-4.5 pr-2 transition-colors focus-within:border-[#0F0F0F] focus-within:bg-white hover:border-[#E5E5E5] md:w-[300px]"
       >
+        <button
+          type="submit"
+          aria-label="Buscar"
+          className="flex h-7 w-7 shrink-0 items-center justify-center text-[#9EA0A3]"
+        >
+          <MagnifyingGlassIcon className="h-4 w-4" />
+        </button>
         <input
           key={searchParams?.get("q")}
+          ref={inputRef}
           type="text"
           name="q"
           placeholder="Escribe tu medida"
           autoComplete="off"
           enterKeyHint="search"
           defaultValue={searchParams?.get("q") || ""}
-          ref={inputRef}
-          onBlur={handleBlur}
-          onFocus={() => setExpanded(true)}
-          className={clsx(
-            "h-full bg-transparent text-sm text-black placeholder:text-neutral-500 md:text-sm border-none appearance-none focus:outline-none focus:ring-0 transition-[width,opacity,padding] duration-200 dark:text-black dark:placeholder:text-black",
-            expanded
-              ? "w-full px-4 pr-10 opacity-100"
-              : "pointer-events-none w-0 px-0 opacity-0",
-          )}
+          className="yt-search-input h-full w-full appearance-none border-none bg-transparent text-[13px] text-[#0F0F0F] placeholder:text-[#525252]"
         />
-        <button
-          type="submit"
-          aria-label="Buscar"
-          onClick={handleIconClick}
-          className="absolute right-0 top-0 flex h-full w-10 items-center justify-center rounded-r-lg text-neutral-700 hover:text-neutral-900 dark:text-neutral-300 dark:hover:text-white"
-          aria-expanded={expanded}
+        <kbd
+          aria-hidden="true"
+          className="hidden shrink-0 items-center rounded-md border border-[#E5E5E5] bg-white px-2 py-1 text-[10px] font-bold tracking-[0.08em] text-[#9EA0A3] md:inline-flex"
         >
-          <MagnifyingGlassIcon className="text-black h-4" />
-        </button>
-      </div>
+          ⌘ K
+        </kbd>
+      </label>
     </form>
   );
 }
@@ -106,17 +82,11 @@ type SearchSkeletonProps = {
 
 export function SearchSkeleton({ className }: SearchSkeletonProps) {
   return (
-    <form
+    <div
       className={clsx(
-        "relative w-full lg:w-80 xl:w-full",
+        "relative h-11 w-full animate-pulse rounded-full bg-[#F5F5F5] md:w-[300px]",
         className,
       )}
-    >
-      <div className="relative ml-auto flex h-10 w-10 items-center rounded-lg border-2 bg-white opacity-70 dark:border-neutral-800 dark:bg-transparent">
-        <div className="absolute right-0 top-0 flex h-full w-10 items-center justify-center">
-          <MagnifyingGlassIcon className="h-4" />
-        </div>
-      </div>
-    </form>
+    />
   );
 }

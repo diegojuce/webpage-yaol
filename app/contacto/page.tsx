@@ -166,7 +166,7 @@ export default function ContactoPage() {
             <h2 className="mt-3 mb-4 font-staatliches text-4xl font-black uppercase leading-none tracking-[0.04em] md:text-5xl">
               Contesta
               <br />
-              una persona.
+              un asesor.
             </h2>
             <p className="text-sm leading-relaxed text-[#9EA0A3] md:text-[15px]">
               Llama a la sucursal que más te quede; te atiende el equipo del taller.
@@ -236,7 +236,7 @@ export default function ContactoPage() {
               Oficinas centrales
             </p>
             <h3 className="mt-3.5 mb-4 font-staatliches text-2xl font-black uppercase tracking-[0.02em]">
-              Villa de Álvarez
+              Colima, México
             </h3>
             <p className="text-sm leading-relaxed text-neutral-600">
               {COMPANY.hqAddress.street}

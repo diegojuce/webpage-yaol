@@ -14,7 +14,7 @@ import type { ReactNode } from "react";
 export const metadata = {
   title: "Nosotros · Llantera colimense desde 2016 | Yantissimo",
   description:
-    "Yantissimo nace en octubre 2016 en Villa de Álvarez, Colima. Hoy 6 sucursales, 40 técnicos certificados y 25,000+ servicios al año. Distribuidores oficiales Michelin, Bridgestone, Continental y más.",
+    "Yantissimo nace en octubre 2016 en Villa de Álvarez, Colima. Hoy 7 sucursales, 40 técnicos certificados y 25,000+ servicios al año. Distribuidores oficiales Michelin, Bridgestone, Continental y más.",
   alternates: { canonical: "/nosotros" },
   openGraph: {
     title: "Nosotros · Yantissimo, llantera colimense desde 2016",
@@ -104,7 +104,7 @@ export default function NosotrosPage() {
             <p className="text-base leading-relaxed text-neutral-600 md:text-lg">
               Empezamos el primer taller en{" "}
               <strong className="text-[#0F0F0F]">octubre de 2016</strong> en
-              Villa de Álvarez, con un compresor y muchas ganas. Hoy somos seis
+              Villa de Álvarez, con un compresor y muchas ganas. Hoy somos siete
               sucursales y un equipo de cuarenta personas que{" "}
               <strong className="text-[#0F0F0F]">
                 conoce a cada cliente por nombre
@@ -175,7 +175,7 @@ export default function NosotrosPage() {
           {/* Stat 6 */}
           <BentoTile span={[1, 1]} bg="#0F0F0F" color="#fff">
             <span className="font-staatliches text-5xl leading-none tracking-[0.02em] text-[#FFC600] md:text-6xl">
-              6
+              7
             </span>
             <span className="mt-1.5 block text-[11px] font-bold uppercase tracking-[0.12em]">
               Sucursales en operación
@@ -201,10 +201,10 @@ export default function NosotrosPage() {
           >
             <div className="absolute bottom-4 left-4 right-4">
               <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#FFD34A]">
-                Costa · 2022
+                desde 2022
               </p>
               <h3 className="mt-1.5 font-staatliches text-xl font-black uppercase tracking-[0.02em] text-white md:text-[22px]">
-                Sucursal Manzanillo
+                Sucursal Manzanillo Blvd
               </h3>
             </div>
           </BentoTile>
@@ -212,7 +212,7 @@ export default function NosotrosPage() {
           {/* Horarios uniformes */}
           <BentoTile span={[3, 1]} bg="#fff" border>
             <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#9EA0A3]">
-              Mismos horarios en las 6 sucursales
+              Mismos horarios en las 7 sucursales
             </p>
             <div className="mt-3.5 grid grid-cols-3 gap-3.5">
               {HOURS.map((h, idx) => (
@@ -306,7 +306,7 @@ export default function NosotrosPage() {
               href="/ubicaciones"
               className="flex items-center justify-between rounded-2xl bg-[#FFC600] px-5 py-4 text-[15px] font-extrabold text-[#0F0F0F] transition hover:bg-[#FFD34A]"
             >
-              <span>Ver las 6 sucursales</span>
+              <span>Ver las 7 sucursales</span>
               <ArrowIcon className="h-4 w-4" />
             </a>
             <a

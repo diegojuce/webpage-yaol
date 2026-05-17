@@ -1,0 +1,11 @@
+export { Bento } from "./bento";
+export { Brands } from "./brands";
+export { CtaBand } from "./cta-band";
+export { FeaturedTires } from "./featured-tires";
+export { Hero } from "./hero";
+export { Locations } from "./locations";
+export { Paquetes } from "./paquetes";
+export { QuickAccess } from "./quick-access";
+export { Services } from "./services";
+export { Stats } from "./stats";
+export { Testimonials } from "./testimonials";

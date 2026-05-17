@@ -13,10 +13,10 @@ export const COMPANY = {
   fleetEmail: "marketing@yantissimo.com",
   website: "https://yantissimo.com",
   hqAddress: {
-    street: "Av. Tecnológico 3, La Frontera",
-    city: "Villa de Álvarez",
+    street: "Av. de los Diamantes 144, Esmeralda Nte",
+    city: "Colima",
     state: "Colima",
-    postalCode: "28978",
+    postalCode: "28017",
     country: "MX",
   },
 };
@@ -107,6 +107,18 @@ export const BRANCHES: Branch[] = [
     badges: ["Zona costera", "Especialistas en SUV"],
     photoHue: 14,
   },
+  {
+    id: "manzanillo-tap",
+    name: "Manzanillo Tapeixtles",
+    city: "Manzanillo",
+    state: "Colima",
+    phone: "312 181 5518",
+    address: "Libramiento Tapeixtles - Colima S/N 150 mts antes de las vías del tren",
+    zip: "28975",
+    maps: "https://maps.app.goo.gl/gt3EG1SaNkvGigo19",
+    badges: ["Zona portuaria", "Llantas de Camion"],
+    photoHue: 14,
+  },
 ];
 
 export const HOURS = [
@@ -139,20 +151,20 @@ export const SOCIALS = [
   {
     id: "fb",
     name: "Facebook",
-    handle: "/yantissimollantas",
-    href: "https://facebook.com/yantissimollantas",
+    handle: "/Yantissimo",
+    href: "https://www.facebook.com/Yantissimo",
   },
   {
     id: "ig",
     name: "Instagram",
-    handle: "@yantissimo",
-    href: "https://instagram.com/yantissimo",
+    handle: "@yantisimomkt",
+    href: "https://www.instagram.com/yantisimomkt/",
   },
   {
     id: "tk",
     name: "TikTok",
-    handle: "@yantissimo",
-    href: "https://tiktok.com/@yantissimo",
+    handle: "@yantissimo_oficial",
+    href: "https://www.tiktok.com/@yantissimo_oficial",
   },
 ];
 
