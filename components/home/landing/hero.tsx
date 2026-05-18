@@ -8,9 +8,7 @@ import { useEffect, useState } from "react";
 import { ArrowRightIcon, BoltIcon, SearchIcon } from "./icons";
 import { PhotoSlot } from "./photo-slot";
 
-// To use a real photo, drop the file at public/images/home/hero/hero-bg.jpg
-// and set HERO_BG to "/images/home/hero/hero-bg.jpg".
-const HERO_BG: string | undefined = undefined;
+const HERO_BG: string | undefined = "/images/home/hero/hero-bg.jpg";
 
 const POPULAR_SIZES = [
   "185/65 R15",

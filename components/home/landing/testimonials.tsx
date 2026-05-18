@@ -11,7 +11,7 @@ type Review = {
 
 const REVIEWS: Review[] = [
   {
-    name: "Juan Ivan Adame Gonzalez",
+    name: "Juan Adame Gonzalez",
     city: "Tecnologico",
     text: "Compre 4 llantas bf goodrich y me salio en una promoción y más baratas que en guadalajara. Además el servicio y trato de los trabajadores fue muy bueno. Cada que voy a checar mis llantas siempre me atienden con muy buen servicio",
     rating: 5,
