@@ -74,7 +74,7 @@ export default function ProductCardImages({ images, alt }: ProductCardImagesProp
             type="button"
             onClick={step(-1)}
             aria-label="Imagen anterior"
-            className="pointer-events-auto absolute left-2 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-black/55 text-white opacity-0 transition-opacity duration-150 ease-out hover:bg-black/75 focus:opacity-100 focus:outline-none group-hover:opacity-100"
+            className="pointer-events-auto absolute left-2 top-1/2 z-20 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-black/55 text-white opacity-0 transition-opacity duration-150 ease-out hover:bg-black/75 focus:opacity-100 focus:outline-none group-hover:opacity-100"
           >
             <ChevronIcon direction="left" />
           </button>
@@ -82,12 +82,12 @@ export default function ProductCardImages({ images, alt }: ProductCardImagesProp
             type="button"
             onClick={step(1)}
             aria-label="Imagen siguiente"
-            className="pointer-events-auto absolute right-2 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-black/55 text-white opacity-0 transition-opacity duration-150 ease-out hover:bg-black/75 focus:opacity-100 focus:outline-none group-hover:opacity-100"
+            className="pointer-events-auto absolute right-2 top-1/2 z-20 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full bg-black/55 text-white opacity-0 transition-opacity duration-150 ease-out hover:bg-black/75 focus:opacity-100 focus:outline-none group-hover:opacity-100"
           >
             <ChevronIcon direction="right" />
           </button>
 
-          <div className="pointer-events-none absolute bottom-2 left-1/2 flex -translate-x-1/2 gap-1 opacity-0 transition-opacity duration-150 group-hover:opacity-100">
+          <div className="pointer-events-none absolute bottom-2 left-1/2 z-20 flex -translate-x-1/2 gap-1 opacity-0 transition-opacity duration-150 group-hover:opacity-100">
             {images.map((img, i) => (
               <button
                 key={`${img.url}-${i}`}

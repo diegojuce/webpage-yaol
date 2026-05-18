@@ -98,30 +98,33 @@ export default function ProductCard({ product, className }: ProductCardProps) {
   const currencyCode = product.priceRange.minVariantPrice.currencyCode;
 
   return (
-    <Link
+    <article
       className={clsx(
-        "group relative block h-full w-full transition-transform duration-200 ease-out hover:-translate-y-[3px]",
+        "group relative flex h-full w-full flex-col overflow-hidden rounded-2xl border border-[#222] bg-[#171717] transition-[transform,border-color,box-shadow] duration-200 ease-out hover:-translate-y-[3px] hover:border-[#ffd34a] hover:shadow-[0_18px_60px_rgba(0,0,0,0.35)]",
         className,
       )}
-      href={`/product/${product.handle}`}
-      prefetch
     >
-      <article className="flex h-full flex-col overflow-hidden rounded-2xl border border-[#222] bg-[#171717] transition-[border-color,box-shadow] duration-200 group-hover:border-[#ffd34a] group-hover:shadow-[0_18px_60px_rgba(0,0,0,0.35)]">
-        <div className="relative flex min-h-[200px] w-full items-center justify-center overflow-hidden bg-white p-6">
-          {displayTag ? (
-            <span className="absolute left-3 top-3 rounded-full border border-[#3a3a3a] bg-[#1d1d1d] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-[#e5e5e5]">
-              {displayTag}
-            </span>
-          ) : null}
-          {discount > 0 ? (
-            <span className="absolute right-3 top-3 rounded bg-[#e53935] px-1.5 py-0.5 text-[10px] font-bold text-white">
-              -{discount}%
-            </span>
-          ) : null}
-          <ProductCardImages images={images} alt={product.title} />
-        </div>
+      <Link
+        href={`/product/${product.handle}`}
+        prefetch
+        aria-label={product.title}
+        className="absolute inset-0 z-10"
+      />
+      <div className="relative flex min-h-[200px] w-full items-center justify-center overflow-hidden bg-white p-6">
+        {displayTag ? (
+          <span className="pointer-events-none absolute left-3 top-3 z-20 rounded-full border border-[#3a3a3a] bg-[#1d1d1d] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-[#e5e5e5]">
+            {displayTag}
+          </span>
+        ) : null}
+        {discount > 0 ? (
+          <span className="pointer-events-none absolute right-3 top-3 z-20 rounded bg-[#e53935] px-1.5 py-0.5 text-[10px] font-bold text-white">
+            -{discount}%
+          </span>
+        ) : null}
+        <ProductCardImages images={images} alt={product.title} />
+      </div>
 
-        <div className="flex flex-1 flex-col px-[18px] pb-[18px] pt-4">
+      <div className="flex flex-1 flex-col px-[18px] pb-[18px] pt-4">
           <div className="mb-1 flex items-center justify-between gap-3">
             <span
               className="text-[11px] font-bold tracking-[0.08em] uppercase"
@@ -162,7 +165,6 @@ export default function ProductCard({ product, className }: ProductCardProps) {
             </span>
           </div>
         </div>
-      </article>
-    </Link>
+    </article>
   );
 }
