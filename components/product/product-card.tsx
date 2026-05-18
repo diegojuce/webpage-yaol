@@ -1,7 +1,7 @@
 import clsx from "clsx";
-import type { Product } from "lib/shopify/types";
-import Image from "next/image";
+import type { Image as ProductImage, Product } from "lib/shopify/types";
 import Link from "next/link";
+import ProductCardImages from "./product-card-images";
 
 interface ProductCardProps {
   product: Product;
@@ -62,8 +62,24 @@ function Stars({ rating }: { rating: number }) {
   );
 }
 
+function buildImageList(product: Product): ProductImage[] {
+  const seen = new Set<string>();
+  const out: ProductImage[] = [];
+  const candidates: ProductImage[] = [];
+  if (product.featuredImage?.url) candidates.push(product.featuredImage);
+  for (const img of product.images ?? []) {
+    if (img?.url) candidates.push(img);
+  }
+  for (const img of candidates) {
+    if (seen.has(img.url)) continue;
+    seen.add(img.url);
+    out.push(img);
+  }
+  return out;
+}
+
 export default function ProductCard({ product, className }: ProductCardProps) {
-  const image = product.featuredImage;
+  const images = buildImageList(product);
   const tags = product.tags ?? [];
   const brand = getBrand(tags, product.title);
   const displayTag = getTagValue(tags, "tag") ?? tags[0];
@@ -102,19 +118,7 @@ export default function ProductCard({ product, className }: ProductCardProps) {
               -{discount}%
             </span>
           ) : null}
-          {image?.url ? (
-            <Image
-              src={image.url}
-              alt={image.altText ?? product.title}
-              fill
-              sizes="(min-width: 1024px) 25vw, (min-width: 768px) 33vw, (min-width: 640px) 45vw, 100vw"
-              className="object-contain p-2 transition-transform duration-200 ease-out group-hover:scale-105"
-            />
-          ) : (
-            <span className="text-sm font-semibold uppercase tracking-[0.08em] text-[#707070]">
-              Sin imagen
-            </span>
-          )}
+          <ProductCardImages images={images} alt={product.title} />
         </div>
 
         <div className="flex flex-1 flex-col px-[18px] pb-[18px] pt-4">
