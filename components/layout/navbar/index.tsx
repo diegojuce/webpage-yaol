@@ -40,9 +40,9 @@ export async function Navbar() {
   await getMenu("next-js-frontend-header-menu");
 
   return (
-    <div className="fixed left-0 right-0 top-0 z-50">
+    <div className="fixed left-0 right-0 top-0 z-50 flex h-28 flex-col">
       <Header />
-      <nav className="flex flex-col gap-4 border-b border-[#ECECEC] bg-white p-3 shadow-md md:gap-0 md:p-0 md:px-10">
+      <nav className="flex flex-1 flex-col justify-center gap-4 border-b border-[#ECECEC] bg-white p-3 shadow-md md:gap-0 md:p-0 md:px-10">
         {/* Mobile bar */}
         <div className="flex items-center justify-between md:hidden">
           <div className="flex items-center gap-0">
@@ -187,7 +187,7 @@ function NavMegaMenu({
   narrow?: boolean;
 }) {
   return (
-    <div className="fixed left-0 right-0 top-[113px] z-30 hidden bg-white p-8 shadow-md group-hover:block">
+    <div className="fixed left-0 right-0 top-28 z-30 hidden bg-white p-8 shadow-md group-hover:block">
       <div
         className={`mx-auto grid gap-8 ${narrow ? "w-1/4 grid-cols-1" : "w-1/3 grid-cols-3"}`}
       >

@@ -3,9 +3,9 @@ import { ArrowRightIcon } from "./icons";
 
 const ITEMS = [
   { n: "10+", l: "AÑOS EN COLIMA", s: "Desde octubre de 2016, atendiendo Colima y Manzanillo." },
-  { n: "6", l: "SUCURSALES", s: "En Colima, Villa de Álvarez y Manzanillo. Misma garantía." },
+  { n: "7", l: "SUCURSALES", s: "En Colima, Villa de Álvarez y Manzanillo. Misma garantía." },
   { n: "25k+", l: "SERVICIOS / AÑO", s: "Citas y walk-in atendidos por técnicos certificados." },
-  { n: "4.8", l: "★ GOOGLE MAPS", s: "Promedio entre las 6 sucursales según reseñas reales." },
+  { n: "4.5", l: "★ GOOGLE MAPS", s: "Promedio entre las 6 sucursales según reseñas reales." },
 ];
 
 export function Stats() {

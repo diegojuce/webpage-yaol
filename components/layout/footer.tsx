@@ -91,7 +91,7 @@ export default async function Footer() {
           <h3 className="m-0 text-[24px] font-extrabold leading-[1.3] tracking-[-0.005em] text-white">
             Tienda oficial.
             <br />
-            Garantía válida en las 6 sucursales.
+            Garantía válida en las 7 sucursales.
           </h3>
           <div className="mt-3.5 flex gap-2.5">
             <a
