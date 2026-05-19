@@ -50,6 +50,7 @@ const COLS: Col[] = [
       { label: "Guía de llantas", href: "/contacto" },
       { label: "Garantías", href: "/contacto" },
       { label: "Política de privacidad", href: "/privacy-advice" },
+      { label: "Política de reembolso", href: "/return-policy" },
       { label: "Devoluciones", href: "/contacto" },
       { label: "FAQ", href: "/contacto" },
     ],
