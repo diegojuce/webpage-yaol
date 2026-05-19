@@ -5,6 +5,15 @@ export default function robots() {
     rules: [
       {
         userAgent: "*",
+        allow: "/",
+        disallow: [
+          "/api/",
+          "/status/",
+          "/modal/",
+          "/header/",
+          "/encuesta/",
+          "/search",
+        ],
       },
     ],
     sitemap: `${baseUrl}/sitemap.xml`,
