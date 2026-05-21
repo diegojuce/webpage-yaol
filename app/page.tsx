@@ -2,14 +2,13 @@ import {
   Bento,
   Brands,
   CtaBand,
-  FeaturedTires,
   Hero,
   Locations,
   Paquetes,
   QuickAccess,
   Services,
   Stats,
-  Testimonials,
+  Testimonials
 } from "components/home/landing";
 import Footer from "components/layout/footer";
 
@@ -50,7 +49,7 @@ export default async function HomePage() {
         <Hero />
         <QuickAccess />
         <Brands />
-        <FeaturedTires />
+        {/* <FeaturedTires /> */}
         <Paquetes />
         <Services />
         <Bento />
