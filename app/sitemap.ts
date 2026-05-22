@@ -7,7 +7,21 @@ type Route = {
   lastModified: string;
 };
 
-export const dynamic = "force-dynamic";
+export const revalidate = 3600;
+
+const SITEMAP_FETCH_TIMEOUT_MS = 8000;
+
+function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) =>
+      setTimeout(
+        () => reject(new Error(`[sitemap] ${label} timed out after ${ms}ms`)),
+        ms,
+      ),
+    ),
+  ]);
+}
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   validateEnvironmentVariables();
@@ -17,30 +31,35 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     lastModified: new Date().toISOString(),
   }));
 
-  const safe = async (fn: () => Promise<Route[]>): Promise<Route[]> => {
+  // Each source is isolated: a failing or slow source yields [] instead of
+  // taking down the whole sitemap (keeps the endpoint at 200 with the rest).
+  const safe = async (
+    label: string,
+    fn: () => Promise<Route[]>,
+  ): Promise<Route[]> => {
     try {
-      return await fn();
+      return await withTimeout(fn(), SITEMAP_FETCH_TIMEOUT_MS, label);
     } catch (error) {
       console.error("[sitemap] source failed:", error);
       return [];
     }
   };
 
-  const collectionsPromise = safe(async () =>
+  const collectionsPromise = safe("collections", async () =>
     (await getCollections()).map((collection) => ({
       url: `${baseUrl}${collection.path}`,
       lastModified: collection.updatedAt,
     })),
   );
 
-  const productsPromise = safe(async () =>
+  const productsPromise = safe("products", async () =>
     (await getProducts({})).map((product) => ({
       url: `${baseUrl}/product/${product.handle}`,
       lastModified: product.updatedAt,
     })),
   );
 
-  const pagesPromise = safe(async () =>
+  const pagesPromise = safe("pages", async () =>
     (await getPages()).map((page) => ({
       url: `${baseUrl}/${page.handle}`,
       lastModified: page.updatedAt,
