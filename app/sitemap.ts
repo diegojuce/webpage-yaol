@@ -23,6 +23,17 @@ function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise
   ]);
 }
 
+// Sitemap <lastmod> must be W3C Datetime / ISO 8601. Upstream sources sometimes
+// return localized strings (e.g. "23/05") which Google rejects — fall back to
+// "now" so the entry stays valid instead of poisoning the whole sitemap.
+function toIsoDate(value: unknown): string {
+  if (typeof value === "string" || value instanceof Date) {
+    const d = new Date(value);
+    if (!isNaN(d.getTime())) return d.toISOString();
+  }
+  return new Date().toISOString();
+}
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   validateEnvironmentVariables();
 
@@ -48,21 +59,21 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const collectionsPromise = safe("collections", async () =>
     (await getCollections()).map((collection) => ({
       url: `${baseUrl}${collection.path}`,
-      lastModified: collection.updatedAt,
+      lastModified: toIsoDate(collection.updatedAt),
     })),
   );
 
   const productsPromise = safe("products", async () =>
     (await getProducts({})).map((product) => ({
       url: `${baseUrl}/product/${product.handle}`,
-      lastModified: product.updatedAt,
+      lastModified: toIsoDate(product.updatedAt),
     })),
   );
 
   const pagesPromise = safe("pages", async () =>
     (await getPages()).map((page) => ({
       url: `${baseUrl}/${page.handle}`,
-      lastModified: page.updatedAt,
+      lastModified: toIsoDate(page.updatedAt),
     })),
   );
 
