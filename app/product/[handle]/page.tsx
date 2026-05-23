@@ -9,6 +9,7 @@ import { ProductDescription } from "components/product/product-description";
 import { HIDDEN_PRODUCT_TAG } from "lib/constants";
 import { getProduct, getProductRecommendations } from "lib/shopify";
 import { Image } from "lib/shopify/types";
+import { baseUrl } from "lib/utils";
 import Link from "next/link";
 import { Suspense } from "react";
 
@@ -57,22 +58,33 @@ export default async function ProductPage(props: {
 
   if (!product) return notFound();
 
+  const sku = product.variants?.[0]?.sku;
+  const brand = product.vendor || product.tags?.[0];
+  const images = product.featuredImage?.url
+    ? [product.featuredImage.url]
+    : product.images.map((image: Image) => image.url);
+  const description =
+    product.description?.trim() || product.seo?.description || product.title;
+
   const productJsonLd = {
     "@context": "https://schema.org",
     "@type": "Product",
     name: product.title,
-    description: product.description,
+    description,
+    image: images,
+    ...(sku ? { sku, mpn: sku } : {}),
+    ...(brand ? { brand: { "@type": "Brand", name: brand } } : {}),
     offers: {
-      "@type": "AggregateOffer",
+      "@type": "Offer",
+      url: `${baseUrl}/product/${product.handle}`,
+      priceCurrency: product.priceRange.minVariantPrice.currencyCode,
+      price: product.priceRange.minVariantPrice.amount,
       availability: product.availableForSale
         ? "https://schema.org/InStock"
         : "https://schema.org/OutOfStock",
-      priceCurrency: product.priceRange.minVariantPrice.currencyCode,
-      highPrice: product.priceRange.maxVariantPrice.amount,
-      lowPrice: product.priceRange.minVariantPrice.amount,
+      itemCondition: "https://schema.org/NewCondition",
     },
   };
-  // console.debug(productJsonLd.image);
 
   return (
     <ProductProvider>
