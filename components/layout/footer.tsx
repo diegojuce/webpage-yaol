@@ -51,6 +51,7 @@ const COLS: Col[] = [
       { label: "Garantías", href: "/contacto" },
       { label: "Política de privacidad", href: "/privacy-advice" },
       { label: "Política de reembolso", href: "/return-policy" },
+      { label: "Política de envío", href: "/shipping-policy" },
       { label: "Devoluciones", href: "/contacto" },
       { label: "FAQ", href: "/contacto" },
     ],
