@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import Image from "components/safe-image";
 import { useState, type MouseEvent } from "react";
 import type { Image as ProductImage } from "lib/shopify/types";
 

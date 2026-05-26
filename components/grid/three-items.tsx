@@ -4,7 +4,7 @@ import PromoBannerCarousel, {
 } from "components/grid/promo-banner-carousel";
 import { getCollectionProducts } from "lib/shopify";
 import type { Product } from "lib/shopify/types";
-import Image from "next/image";
+import Image from "components/safe-image";
 import SearchBox from "./search-box";
 
 const HERO_CTA_CLASSES =
