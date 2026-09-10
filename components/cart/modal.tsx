@@ -13,6 +13,7 @@ import {
 import clsx from "clsx";
 import LoadingDots from "components/loading-dots";
 import Price from "components/price";
+import { COMMERCE_ENABLED, COMMERCE_DISABLED_MESSAGE } from "lib/commerce-status";
 import { DEFAULT_OPTION } from "lib/constants";
 import { createUrl } from "lib/utils";
 import Image from "components/safe-image";
@@ -730,6 +731,10 @@ export default function CartModal({ isWhite = false }) {
   };
 
   const openCart = () => {
+    if (!COMMERCE_ENABLED) {
+      toast.info(COMMERCE_DISABLED_MESSAGE);
+      return;
+    }
     if (!isActive) {
       activateModal();
     }
@@ -797,6 +802,9 @@ export default function CartModal({ isWhite = false }) {
   };
 
   useEffect(() => {
+    if (!COMMERCE_ENABLED) {
+      return;
+    }
     if (!cart) {
       createCartAndSetCookie();
     }

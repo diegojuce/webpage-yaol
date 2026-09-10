@@ -1,3 +1,4 @@
+import { COMMERCE_ENABLED } from "lib/commerce-status";
 import {
   HIDDEN_PRODUCT_TAG,
   SHOPIFY_GRAPHQL_API_ENDPOINT,
@@ -77,6 +78,13 @@ function isValidCartId(id?: string): boolean {
   return !!id && id.startsWith("gid://shopify/Cart/") && id.includes("?key=");
 }
 
+export class ShopifyDisabledError extends Error {
+  constructor() {
+    super("commerce_disabled");
+    this.name = "ShopifyDisabledError";
+  }
+}
+
 export async function shopifyFetch<T>({
   headers,
   query,
@@ -86,6 +94,13 @@ export async function shopifyFetch<T>({
   query: string;
   variables?: ExtractVariables<T>;
 }): Promise<{ status: number; body: T } | never> {
+  // Cortafuegos: con el comercio deshabilitado no se emite ninguna petición a
+  // Shopify. Las lecturas usadas en render tienen fallback más abajo; lo que
+  // llegue aquí es una escritura (carrito/checkout) y se corta en seco.
+  if (!COMMERCE_ENABLED) {
+    throw new ShopifyDisabledError();
+  }
+
   try {
     const result = await fetch(endpoint, {
       method: "POST",
@@ -442,6 +457,10 @@ export async function updateCartAttributes(
 export async function getCart(): Promise<Cart | undefined> {
   const cartId = (await cookies()).get("cartId")?.value;
 
+  if (!COMMERCE_ENABLED) {
+    return undefined;
+  }
+
   if (!cartId && !isValidCartId(cartId)) {
     return undefined;
   }
@@ -466,6 +485,19 @@ export async function getCollection(
   "use cache";
   cacheTag(TAGS.collections);
   cacheLife("days");
+
+  if (!COMMERCE_ENABLED) {
+    // Los productos de la colección los sirve el backend propio; sólo el
+    // metadato vive en Shopify, así que devolvemos uno mínimo para no 404.
+    return {
+      handle,
+      title: handle,
+      description: "",
+      seo: { title: handle, description: "" },
+      path: `/search/${handle}`,
+      updatedAt: new Date().toISOString(),
+    };
+  }
 
   const res = await shopifyFetch<ShopifyCollectionOperation>({
     query: getCollectionQuery,
@@ -514,6 +546,19 @@ export async function getCollections(): Promise<Collection[]> {
   cacheTag(TAGS.collections);
   cacheLife("days");
 
+  if (!COMMERCE_ENABLED) {
+    return [
+      {
+        handle: "",
+        title: "All",
+        description: "All products",
+        seo: { title: "All", description: "All products" },
+        path: "/search",
+        updatedAt: new Date().toISOString(),
+      },
+    ];
+  }
+
   const res = await shopifyFetch<ShopifyCollectionsOperation>({
     query: getCollectionsQuery,
   });
@@ -545,6 +590,10 @@ export async function getMenu(handle: string): Promise<Menu[]> {
   cacheTag(TAGS.collections);
   cacheLife("days");
 
+  if (!COMMERCE_ENABLED) {
+    return [];
+  }
+
   const res = await shopifyFetch<ShopifyMenuOperation>({
     query: getMenuQuery,
     variables: {
@@ -563,7 +612,11 @@ export async function getMenu(handle: string): Promise<Menu[]> {
   );
 }
 
-export async function getPage(handle: string): Promise<Page> {
+export async function getPage(handle: string): Promise<Page | undefined> {
+  if (!COMMERCE_ENABLED) {
+    return undefined;
+  }
+
   const res = await shopifyFetch<ShopifyPageOperation>({
     query: getPageQuery,
     variables: { handle },
@@ -573,6 +626,10 @@ export async function getPage(handle: string): Promise<Page> {
 }
 
 export async function getPages(): Promise<Page[]> {
+  if (!COMMERCE_ENABLED) {
+    return [];
+  }
+
   const res = await shopifyFetch<ShopifyPagesOperation>({
     query: getPagesQuery,
   });
@@ -586,6 +643,10 @@ export async function _getProduct(
   "use cache";
   cacheTag(TAGS.products);
   cacheLife("days");
+
+  if (!COMMERCE_ENABLED) {
+    return undefined;
+  }
 
   const res = await shopifyFetch<ShopifyProductOperation>({
     query: getProductQuery,
@@ -677,7 +738,7 @@ export async function getProductRecommendations(
 
   // If the productId is not a Shopify GID, skip recommendations gracefully.
   // Backend returns IDs like "gid://yssm/Product/..." which are invalid for Shopify API.
-  if (!productId?.startsWith("gid://shopify/")) {
+  if (!COMMERCE_ENABLED || !productId?.startsWith("gid://shopify/")) {
     return [];
   }
 
