@@ -1,5 +1,5 @@
 import clsx from "clsx";
-import Image from "next/image";
+import Image from "components/safe-image";
 import Label from "../label";
 
 export function GridTileImage({

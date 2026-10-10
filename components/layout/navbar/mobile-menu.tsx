@@ -24,6 +24,7 @@ const LLANTAS_TAGS = [
 ];
 
 const PRIMARY_LINKS = [
+  { label: "Club Yantissimo", href: "/club" },
   { label: "Ubicaciones", href: "/ubicaciones" },
   { label: "Servicios", href: "/servicios" },
   { label: "Asistencia", href: "/contacto" },
@@ -205,9 +206,18 @@ export default function MobileMenu({ menu }: { menu: Menu[] }) {
                 ) : null}
 
                 <Link
-                  href="/agendar-cita"
+                  href="/club"
                   onClick={closeMobileMenu}
                   className="mt-8 inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#FFC600] px-6 py-4 text-sm font-bold uppercase tracking-wider text-black transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#FFD34A] hover:shadow-[0_18px_50px_rgba(255,211,74,0.35)]"
+                >
+                  Únete al Club
+                  <span aria-hidden="true">→</span>
+                </Link>
+
+                <Link
+                  href="/agendar-cita"
+                  onClick={closeMobileMenu}
+                  className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-full border border-white/15 px-6 py-4 text-sm font-bold uppercase tracking-wider text-white transition-colors hover:border-[#FFC600] hover:text-[#FFC600]"
                 >
                   Agendar cita
                   <span aria-hidden="true">→</span>

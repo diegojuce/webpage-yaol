@@ -58,7 +58,10 @@ export async function Navbar() {
               <LogoSquare />
             </Link>
           </div>
-          <CartModal />
+          <div className="flex items-center gap-2">
+            <ClubButton compact />
+            <CartModal />
+          </div>
         </div>
 
         {/* Desktop bar */}
@@ -133,6 +136,7 @@ export async function Navbar() {
           </ul>
 
           <div className="ml-auto flex items-center gap-3.5">
+            <ClubButton />
             <div className="py-5">
               <Suspense fallback={<SearchSkeleton />}>
                 <Search />
@@ -143,6 +147,25 @@ export async function Navbar() {
         </div>
       </nav>
     </div>
+  );
+}
+
+// CTA de alta al Club. Va fuera del <ul> a proposito: es una accion, no una
+// seccion mas del menu, y el amarillo de marca la separa de los links.
+function ClubButton({ compact }: { compact?: boolean }) {
+  return (
+    <Link
+      href="/club"
+      prefetch={true}
+      className={
+        compact
+          ? "inline-flex items-center rounded-full bg-[#FFC600] px-3.5 py-2 text-[12px] font-bold uppercase tracking-wider text-black transition-colors hover:bg-[#FFD34A]"
+          : "inline-flex items-center gap-1.5 rounded-full bg-[#FFC600] px-5 py-2.5 text-[13px] font-bold uppercase tracking-wider text-black transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#FFD34A] hover:shadow-[0_10px_28px_rgba(255,198,0,0.35)]"
+      }
+    >
+      Club
+      {compact ? null : <span aria-hidden="true">→</span>}
+    </Link>
   );
 }
 

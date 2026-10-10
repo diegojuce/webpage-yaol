@@ -1,5 +1,6 @@
 "use server";
 
+import { COMMERCE_ENABLED, COMMERCE_DISABLED_MESSAGE } from "lib/commerce-status";
 import { TAGS } from "lib/constants";
 import {
   addToCart,
@@ -33,6 +34,10 @@ const CART_COOKIE_OPTIONS = {
 };
 
 export async function setCartIdFromParam(rawCartId?: string | null) {
+  if (!COMMERCE_ENABLED) {
+    return { ok: false as const, error: "invalid_cart_id" as const };
+  }
+
   const cartId =
     rawCartId !== undefined && rawCartId !== null
       ? String(rawCartId).trim()
@@ -53,6 +58,10 @@ export async function setCartAttributes(payload: {
   sucursalCode?: string | null;
   phone?: string | null;
 }) {
+  if (!COMMERCE_ENABLED) {
+    return;
+  }
+
   const quoteId =
     payload.quoteId !== undefined && payload.quoteId !== null
       ? String(payload.quoteId).trim()
@@ -117,6 +126,10 @@ export async function addItem(
   prevState: any,
   payload: { selectedVariantId: string | undefined; quantity: number },
 ) {
+  if (!COMMERCE_ENABLED) {
+    return COMMERCE_DISABLED_MESSAGE;
+  }
+
   console.debug("[actions][addItem] Payload:", payload);
   const { selectedVariantId } = payload;
   let { quantity } = payload;
@@ -207,6 +220,10 @@ export async function addItem(
 }
 
 export async function removeItem(prevState: any, merchandiseId: string) {
+  if (!COMMERCE_ENABLED) {
+    return COMMERCE_DISABLED_MESSAGE;
+  }
+
   try {
     const cart = await getCart();
 
@@ -237,6 +254,10 @@ export async function updateItemQuantity(
     updateType: "plus" | "minus";
   },
 ) {
+  if (!COMMERCE_ENABLED) {
+    return COMMERCE_DISABLED_MESSAGE;
+  }
+
   const { lineId, merchandiseId, updateType } = payload;
 
   try {
@@ -306,6 +327,10 @@ export async function updateItemVariant(
     merchandiseId: string; // new variant id
   },
 ) {
+  if (!COMMERCE_ENABLED) {
+    return COMMERCE_DISABLED_MESSAGE;
+  }
+
   try {
     const cart = await getCart();
     if (!cart) {
@@ -333,6 +358,10 @@ export async function updateItemVariant(
 }
 
 export async function redirectToCheckout() {
+  if (!COMMERCE_ENABLED) {
+    return;
+  }
+
   let cart = await getCart();
   redirect(cart!.checkoutUrl);
 }
@@ -354,6 +383,10 @@ export type ValidateCartAvailabilityResult =
 // Last-mile validation before checkout: re-fetches each product in the cart
 // from the backend and verifies the binary sufficientStock flag.
 export async function validateCartAvailability(): Promise<ValidateCartAvailabilityResult> {
+  if (!COMMERCE_ENABLED) {
+    return { ok: false, error: "error", unavailableItems: [] };
+  }
+
   try {
     const cart = await getCart();
 
@@ -421,6 +454,10 @@ export async function validateCartAvailability(): Promise<ValidateCartAvailabili
 }
 
 export async function createCartAndSetCookie() {
+  if (!COMMERCE_ENABLED) {
+    return;
+  }
+
   let cart = await createCart();
   (await cookies()).set("cartId", cart.id!, CART_COOKIE_OPTIONS);
 }

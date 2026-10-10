@@ -2,7 +2,7 @@ import { ScrollToTopOnMount } from "components/scroll-to-top-on-mount";
 import { WhatsappIcon } from "components/yantissimo/icons";
 import { whatsappHref, WHATSAPP_DISPLAY } from "lib/company";
 import fs from "node:fs";
-import Image from "next/image";
+import Image from "components/safe-image";
 import path from "node:path";
 import type { CSSProperties } from "react";
 

@@ -2,7 +2,7 @@
 
 import { ArrowLeftIcon, ArrowRightIcon } from "@heroicons/react/24/outline";
 import { GridTileImage } from "components/grid/tile";
-import Image from "next/image";
+import Image from "components/safe-image";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 

@@ -5,9 +5,11 @@ import clsx from "clsx";
 import { addItem } from "components/cart/actions";
 import { AvailabilityTemperatureBar } from "components/product/availability-temperature-bar";
 import { useProduct } from "components/product/product-context";
+import { COMMERCE_ENABLED, COMMERCE_DISABLED_MESSAGE } from "lib/commerce-status";
 import { Product, ProductVariant } from "lib/shopify/types";
 import { normalizeVariantId } from "lib/shopify/variant-utils";
 import { useActionState, useEffect, useRef } from "react";
+import { toast } from "sonner";
 import type { RefObject } from "react";
 import { useCart } from "./cart-context";
 
@@ -60,6 +62,20 @@ function SubmitButton({
   const buttonClasses =
     "relative flex w-full items-center justify-center overflow-hidden rounded-full bg-yellow-500 p-4 text-black";
   const disabledClasses = "cursor-not-allowed opacity-60 hover:opacity-60";
+
+  // Con el comercio deshabilitado el botón queda activo a propósito: el submit
+  // no llega a Shopify, sólo dispara el aviso de "sitio en construcción".
+  if (!COMMERCE_ENABLED) {
+    return (
+      <button
+        type="submit"
+        aria-label="Agregar al carrito"
+        className={clsx(buttonClasses, "font-medium tracking-wide transition hover:opacity-90")}
+      >
+        Agregar al carrito
+      </button>
+    );
+  }
 
   if (!availableForSale) {
     return (
@@ -445,6 +461,11 @@ export function AddToCart({ product }: { product: Product }) {
   return (
     <form
       action={async () => {
+        if (!COMMERCE_ENABLED) {
+          toast.info(COMMERCE_DISABLED_MESSAGE);
+          return;
+        }
+
         if (!selectedVariantId || !finalVariant || quantity <= 0) {
           return;
         }
