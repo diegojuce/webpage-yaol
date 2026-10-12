@@ -1,4 +1,4 @@
-import { COMMERCE_ENABLED } from "lib/commerce-status";
+import { SHOPIFY_ENABLED } from "lib/commerce-status";
 import {
   HIDDEN_PRODUCT_TAG,
   SHOPIFY_GRAPHQL_API_ENDPOINT,
@@ -97,7 +97,7 @@ export async function shopifyFetch<T>({
   // Cortafuegos: con el comercio deshabilitado no se emite ninguna petición a
   // Shopify. Las lecturas usadas en render tienen fallback más abajo; lo que
   // llegue aquí es una escritura (carrito/checkout) y se corta en seco.
-  if (!COMMERCE_ENABLED) {
+  if (!SHOPIFY_ENABLED) {
     throw new ShopifyDisabledError();
   }
 
@@ -457,7 +457,7 @@ export async function updateCartAttributes(
 export async function getCart(): Promise<Cart | undefined> {
   const cartId = (await cookies()).get("cartId")?.value;
 
-  if (!COMMERCE_ENABLED) {
+  if (!SHOPIFY_ENABLED) {
     return undefined;
   }
 
@@ -486,7 +486,7 @@ export async function getCollection(
   cacheTag(TAGS.collections);
   cacheLife("days");
 
-  if (!COMMERCE_ENABLED) {
+  if (!SHOPIFY_ENABLED) {
     // Los productos de la colección los sirve el backend propio; sólo el
     // metadato vive en Shopify, así que devolvemos uno mínimo para no 404.
     return {
@@ -546,7 +546,7 @@ export async function getCollections(): Promise<Collection[]> {
   cacheTag(TAGS.collections);
   cacheLife("days");
 
-  if (!COMMERCE_ENABLED) {
+  if (!SHOPIFY_ENABLED) {
     return [
       {
         handle: "",
@@ -590,7 +590,7 @@ export async function getMenu(handle: string): Promise<Menu[]> {
   cacheTag(TAGS.collections);
   cacheLife("days");
 
-  if (!COMMERCE_ENABLED) {
+  if (!SHOPIFY_ENABLED) {
     return [];
   }
 
@@ -613,7 +613,7 @@ export async function getMenu(handle: string): Promise<Menu[]> {
 }
 
 export async function getPage(handle: string): Promise<Page | undefined> {
-  if (!COMMERCE_ENABLED) {
+  if (!SHOPIFY_ENABLED) {
     return undefined;
   }
 
@@ -626,7 +626,7 @@ export async function getPage(handle: string): Promise<Page | undefined> {
 }
 
 export async function getPages(): Promise<Page[]> {
-  if (!COMMERCE_ENABLED) {
+  if (!SHOPIFY_ENABLED) {
     return [];
   }
 
@@ -644,7 +644,7 @@ export async function _getProduct(
   cacheTag(TAGS.products);
   cacheLife("days");
 
-  if (!COMMERCE_ENABLED) {
+  if (!SHOPIFY_ENABLED) {
     return undefined;
   }
 
@@ -738,7 +738,7 @@ export async function getProductRecommendations(
 
   // If the productId is not a Shopify GID, skip recommendations gracefully.
   // Backend returns IDs like "gid://yssm/Product/..." which are invalid for Shopify API.
-  if (!COMMERCE_ENABLED || !productId?.startsWith("gid://shopify/")) {
+  if (!SHOPIFY_ENABLED || !productId?.startsWith("gid://shopify/")) {
     return [];
   }
 

@@ -55,16 +55,19 @@ Leyenda: ⬜ Pendiente · 🟨 En curso · ✅ Terminada · ⛔ Bloqueada
 - [x] Mover `X-Backend-bearer-token` a la variable de servidor
       `BACKEND_API_TOKEN`, sin prefijo `NEXT_PUBLIC_`
       (`lib/shopify/index.ts`, `lib/shopify/noCacheGetProduct.ts`).
-- [ ] Cambiar el token en el backend por uno nuevo (el actual sigue en el
+- [x] Cambiar el token en el backend por uno nuevo (el actual sigue en el
       historial de git).
-- [ ] Crear la cuenta de Stripe en México, verificar la empresa y conectar
-      la cuenta bancaria en MXN.
-- [ ] Activar el modo de prueba e instalar la Stripe CLI para recibir
+- [x] Crear la cuenta de Stripe en México, verificar la empresa y conectar
+      la cuenta bancaria en MXN. *(Cuenta creada; verificación y CLABE
+      pendientes, se necesitan hasta la Fase 6.)*
+- [x] Activar el modo de prueba e instalar la Stripe CLI para recibir
       webhooks en local.
 - [ ] Variables del backend: `STRIPE_SECRET_KEY` y `STRIPE_WEBHOOK_SECRET`.
-- [ ] Variable del frontend, solo si se usa el Payment Element:
+      *(En manos del programador del backend, staging.)*
+- [x] ~~Variable del frontend, solo si se usa el Payment Element:~~ No aplica
+      en el MVP (Stripe Checkout alojado).
       `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`.
-- [ ] Convertir `COMMERCE_ENABLED` en
+- [x] Convertir `COMMERCE_ENABLED` en
       `COMMERCE_PROVIDER = "off" | "shopify" | "native"`.
 
 **Regla:** la llave secreta de Stripe vive únicamente en el backend.
@@ -77,6 +80,12 @@ Leyenda: ⬜ Pendiente · 🟨 En curso · ✅ Terminada · ⛔ Bloqueada
 - Se reportó al backend: en el código compartido el middleware de auth está
   en `bypassInv` (no definido en ese archivo) y `bypassShopify` no tiene
   auth; además `getProducts` usa `res` fuera de alcance.
+- Interruptor: `NEXT_PUBLIC_COMMERCE_PROVIDER` (`off` por default). Si no
+  existe y `NEXT_PUBLIC_COMMERCE_ENABLED=true`, se toma `shopify`.
+  `COMMERCE_ENABLED` (UI) = proveedor ≠ off; `SHOPIFY_ENABLED` (llamadas a
+  Shopify en `lib/shopify`) = proveedor = shopify.
+- Se empieza con las llaves de prueba de Stripe sin esperar la verificación
+  de la cuenta (solo se necesita para cobrar en real, Fase 6).
 
 ---
 
@@ -402,3 +411,13 @@ Formato: `AAAA-MM-DD · Fase N · qué se hizo / qué se decidió / qué quedó 
 - 2026-10-12 · Fase 0 · Vercel: Node 20.x → 24.x; proyecto conectado al
   repo `diegojuce/webpage-yaol` (antes solo se desplegaba con la CLI). Se
   corrigió el autor de git del repo (tenía comillas tipográficas).
+- 2026-10-12 · Fase 0 · Deploy automático funcionando (601415d en
+  producción); catálogo y producto verificados con `BACKEND_API_TOKEN` =
+  `TOKEN_YAOL`. El token viejo del historial ya no lo valida el backend.
+  Pendiente backend: auth en `/bypass/shopify/*`. Detectado: `www.yantissimo.com`
+  da 525 (SSL Cloudflare↔origen).
+- 2026-10-12 · Fase 0 · Cuenta Stripe creada (sandbox "Yantissimo"),
+  verificación pendiente. Stripe CLI 1.53.1 instalada. `COMMERCE_PROVIDER`
+  implementado.
+- 2026-10-12 · Fase 0 · `stripe login` hecho (acct_1UPnVIRzetgpiCYb,
+  test, MXN). Falta: confirmar `STRIPE_SECRET_KEY` en el backend de staging.
