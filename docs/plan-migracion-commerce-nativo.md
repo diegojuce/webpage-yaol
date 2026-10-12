@@ -1,0 +1,398 @@
+# Plan de migración: Shopify → commerce nativo + Stripe
+
+> Documento vivo. Se actualiza conforme se ejecuta cada fase: marcar tareas
+> con `[x]`, registrar decisiones en la sección de cada fase y agregar
+> entradas en la **Bitácora** al final.
+
+- **Inicio del plan:** 2026-10-12
+- **Repos involucrados:** este frontend (`commerce-main`, Next.js 15) y el
+  backend (`backend-yssm`).
+- **Supuestos:** el backend es Node con base de datos SQL (la tabla
+  `shopify_orders` usa `TEXT PK → BIGINT FK`). Los tiempos asumen un
+  desarrollador de tiempo completo que conoce el código.
+
+## Estado general
+
+| Fase | Entregable | Tiempo aprox. | ¿Se puede vender? | Estado |
+|---|---|---|---|---|
+| 0 | Seguridad, cuenta Stripe e interruptor | 2–3 días | No | 🟨 En curso |
+| 1 | `lib/commerce` y sitio sin Shopify | 1 sem | No (catálogo sí) | ⬜ Pendiente |
+| 2 | Carrito propio | 1.5–2 sem | No | ⬜ Pendiente |
+| 3 | Checkout Stripe, webhook y cita | 2–3 sem | **Sí, con tarjeta** | ⬜ Pendiente |
+| 4 | CFDI 4.0 | 1.5–2 sem | Sí, con factura | ⬜ Pendiente |
+| 5 | MSI, OXXO, SPEI, reembolsos, carritos abandonados | 2–3 sem | Sí, completo | ⬜ Pendiente |
+| 6 | Producción y retiro de Shopify | 1 sem | — | ⬜ Pendiente |
+
+Leyenda: ⬜ Pendiente · 🟨 En curso · ✅ Terminada · ⛔ Bloqueada
+
+**Total aproximado: 9–13 semanas.** Al terminar la Fase 3 ya se puede vender.
+
+---
+
+## Punto de partida (2026-10-12)
+
+| Función | Fuente actual |
+|---|---|
+| Catálogo: `getProducts`, `getProduct`, `getCategoryProducts`, `getCollectionProducts` | Backend propio (`/bypass/shopify/...`), con el formato de Shopify |
+| Carrito: crear, agregar, actualizar, quitar, atributos (`lib/shopify/index.ts`) | Shopify Storefront API |
+| Checkout y pago (`checkoutUrl` en `components/cart/modal.tsx`) | Shopify |
+| Menús, páginas, colecciones, recomendaciones | Shopify |
+| Ligar el pago con la cita: webhook `orders/paid` → tabla `shopify_orders` → `quote_id` → `/agendar-cita` | Shopify y backend |
+
+- Shopify está suspendido. El carrito está apagado con
+  `NEXT_PUBLIC_COMMERCE_ENABLED` (`lib/commerce-status.ts`).
+- El token del backend está escrito directo en el código y subido al
+  repositorio (`lib/shopify/index.ts`, `lib/shopify/noCacheGetProduct.ts`).
+
+---
+
+## Fase 0 · Preparación (2–3 días)
+
+**Objetivo:** dejar lista la base sin tocar todavía el flujo de compra.
+
+### Tareas
+
+- [x] Mover `X-Backend-bearer-token` a la variable de servidor
+      `BACKEND_API_TOKEN`, sin prefijo `NEXT_PUBLIC_`
+      (`lib/shopify/index.ts`, `lib/shopify/noCacheGetProduct.ts`).
+- [ ] Cambiar el token en el backend por uno nuevo (el actual sigue en el
+      historial de git).
+- [ ] Crear la cuenta de Stripe en México, verificar la empresa y conectar
+      la cuenta bancaria en MXN.
+- [ ] Activar el modo de prueba e instalar la Stripe CLI para recibir
+      webhooks en local.
+- [ ] Variables del backend: `STRIPE_SECRET_KEY` y `STRIPE_WEBHOOK_SECRET`.
+- [ ] Variable del frontend, solo si se usa el Payment Element:
+      `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`.
+- [ ] Convertir `COMMERCE_ENABLED` en
+      `COMMERCE_PROVIDER = "off" | "shopify" | "native"`.
+
+**Regla:** la llave secreta de Stripe vive únicamente en el backend.
+
+### Notas y decisiones
+
+- El backend autentica con `Authorization: Bearer <TOKEN_YAOL>` (no con
+  `X-Backend-bearer-token`). El frontend manda ese header con el valor de
+  `BACKEND_API_TOKEN`, que es el mismo `TOKEN_YAOL` de producción.
+- Se reportó al backend: en el código compartido el middleware de auth está
+  en `bypassInv` (no definido en ese archivo) y `bypassShopify` no tiene
+  auth; además `getProducts` usa `res` fuera de alcance.
+
+---
+
+## Fase 1 · Separar el sitio de Shopify (1 semana)
+
+**Objetivo:** que ningún componente importe de `lib/shopify`.
+
+### Tareas: frontend
+
+- [ ] Crear `lib/commerce/types.ts` con `Product`, `Variant`, `Cart`,
+      `CartLine`, `Money` y `Order` propios, con IDs simples (SKU o UUID) y
+      precios en **centavos enteros**.
+- [ ] Crear `lib/commerce/index.ts` con el mismo contrato que hoy
+      (`getProduct`, `getProducts`, `getCart`, `addToCart`…). Por dentro
+      elige el adaptador según `COMMERCE_PROVIDER`.
+- [ ] `lib/commerce/providers/shopify.ts`: mover aquí el código actual
+      (temporal).
+- [ ] `lib/commerce/providers/native.ts`: adaptador que llama al backend.
+- [ ] Cambiar los ~30 imports de `lib/shopify` a `lib/commerce`.
+- [ ] `getMenu` en `components/layout/navbar/index.tsx` → menú fijo en
+      `lib/constants.ts`.
+- [ ] `getPage` en `app/[page]` → borrarlo o servirlo desde el backend (las
+      políticas ya viven en `app/(doc)`).
+- [ ] `getCollections`, `getCollection` y `getProductRecommendations` →
+      endpoints del backend.
+
+### Tareas: backend
+
+- [ ] Que `/get/products`, `/get/category` y `/get/product` respondan
+      **sin** el formato de Shopify (sin `edges/node` ni `gid://`). Mantener
+      `/bypass/shopify/*` un tiempo para no romper nada.
+
+### Listo cuando
+
+El sitio navega igual con `COMMERCE_PROVIDER=off` y
+`grep -r "lib/shopify" app components` no devuelve nada.
+
+### Notas y decisiones
+
+_(vacío)_
+
+---
+
+## Fase 2 · Carrito propio (1.5–2 semanas)
+
+### Modelo de datos (backend)
+
+```sql
+carts (
+  id UUID PK, status TEXT,            -- active | converted | abandoned
+  customer_phone TEXT NULL, branch_code TEXT NULL, quote_id BIGINT NULL,
+  created_at, updated_at, expires_at
+)
+cart_items (
+  id UUID PK, cart_id FK, sku TEXT, quantity INT,
+  UNIQUE(cart_id, sku)
+)
+```
+
+El carrito **no guarda precios**. Los precios se calculan al leerlo.
+
+### Endpoints
+
+| Método | Ruta | Qué hace |
+|---|---|---|
+| POST | `/shop/carts` | Crea un carrito y devuelve su `id` |
+| GET | `/shop/carts/:id` | Devuelve el carrito con precios y stock actuales y sus totales |
+| POST | `/shop/carts/:id/items` | `{sku, quantity}`; suma si el producto ya está, con tope según el stock |
+| PATCH | `/shop/carts/:id/items/:sku` | Cambia la cantidad; 0 quita el producto |
+| PATCH | `/shop/carts/:id` | Sucursal, teléfono, `quote_id` (sustituye a `updateCartAttributes`) |
+
+### Reglas
+
+- Precio e IVA se calculan **siempre en el servidor**, con el precio de
+  lista que ya incluye IVA del 16%. Guardar subtotal sin IVA, IVA y total
+  (se necesitan para facturar).
+- Stock disponible = stock de la sucursal o almacén − apartados vigentes
+  (Fase 3).
+
+### Tareas
+
+- [ ] Backend: migraciones de `carts` y `cart_items`.
+- [ ] Backend: endpoints `/shop/carts*`.
+- [ ] Frontend, `components/cart/actions.ts`: la cookie `cartId` pasa a ser
+      un UUID (sigue `httpOnly`), `isValidCartId` valida UUID y las acciones
+      llaman a `lib/commerce`.
+- [ ] Frontend, `components/cart/cart-context.tsx`: adaptar a los tipos
+      nuevos y mantener la actualización inmediata en pantalla.
+- [ ] Frontend, `add-to-cart.tsx` y `modal.tsx`: ajustar tipos (el
+      checkout se toca en la Fase 3).
+
+### Listo cuando
+
+Con `COMMERCE_PROVIDER=native` se puede agregar, editar y quitar productos,
+el carrito sobrevive a un refresh y no deja pasar del stock.
+
+### Notas y decisiones
+
+_(vacío)_
+
+---
+
+## Fase 3 · Checkout con Stripe: el MVP vendible (2–3 semanas)
+
+### Modelo de datos
+
+```sql
+orders (
+  id BIGSERIAL PK, cart_id FK, quote_id BIGINT NULL,
+  status TEXT,  -- pending_payment | paid | cancelled | expired | refunded | partially_refunded
+  customer_name, customer_phone, customer_email, branch_code,
+  subtotal_cents, tax_cents, total_cents, currency DEFAULT 'MXN',
+  stripe_checkout_session_id TEXT UNIQUE, stripe_payment_intent_id TEXT UNIQUE,
+  paid_at, created_at
+)
+order_items (
+  order_id FK, sku, title, quantity,
+  unit_price_cents, unit_tax_cents        -- precio congelado al comprar
+)
+stock_reservations (
+  id PK, order_id FK, sku, branch_code, quantity,
+  expires_at, status                       -- active | consumed | released
+)
+stripe_events (event_id TEXT PK, type, processed_at)   -- evita procesar un evento dos veces
+```
+
+### Flujo de pago
+
+```
+[Modal] "Completar pago"
+   → server action startCheckout()
+   → POST /shop/checkout { cart_id, nombre, teléfono, email, sucursal }
+        backend, dentro de una transacción:
+        1. Recalcula precios y valida stock (reemplaza validateCartAvailability)
+        2. Crea order (pending_payment) + order_items
+        3. Crea stock_reservations (expires_at = ahora + 30 min)
+        4. Crea la sesión de Stripe Checkout:
+             mode=payment, currency=mxn, line_items con unit_amount en centavos
+             metadata.order_id, client_reference_id=order_id
+             expires_at = ahora + 30 min
+             success_url = /agendar-cita?session_id={CHECKOUT_SESSION_ID}
+             cancel_url  = /?cart=open
+        5. Devuelve session.url
+   → window.location.href = url
+
+[Stripe] → POST /webhooks/stripe   (firma verificada con STRIPE_WEBHOOK_SECRET)
+   checkout.session.completed (payment_status=paid):
+        - Si el event_id ya está en stripe_events → responde 200 y no hace nada
+        - order → paid, reservas → consumed, se descuenta el stock
+        - Crea la cotización con sus partidas (lo que hoy hace orders/paid) → order.quote_id
+        - Carrito → converted
+        - Envía la plantilla de WhatsApp confirmacion_pedido
+   checkout.session.expired:
+        - order → expired, reservas → released
+
+[Regreso] /agendar-cita?session_id=cs_...
+   → GET /shop/orders/by-session/:session_id → { status, quote_id }
+   → Si sigue en pending_payment: reintentos cortos (el webhook suele tardar segundos)
+```
+
+### Decisiones tomadas
+
+- **Stripe Checkout (página alojada por Stripe)** para el MVP: menos
+  código, 3D Secure y obligaciones mínimas de seguridad de tarjetas. El
+  Payment Element embebido puede llegar después.
+- Un pedido **solo** se marca como pagado desde el webhook, nunca desde el
+  `success_url`.
+- Precios en centavos enteros en todo el sistema.
+
+### Tareas: backend
+
+- [ ] Migraciones de `orders`, `order_items`, `stock_reservations` y
+      `stripe_events`.
+- [ ] `POST /shop/checkout`.
+- [ ] `POST /webhooks/stripe` con verificación de firma y control de
+      eventos repetidos.
+- [ ] Crear la cotización desde el webhook (reutilizar la lógica actual de
+      `orders/paid`).
+- [ ] `GET /shop/orders/by-session/:session_id`.
+
+### Tareas: frontend
+
+- [ ] Server action `startCheckout()` y nuevo `handleCheckout` en
+      `components/cart/modal.tsx`. Quitar `yaol_pending_cart_token` y la
+      búsqueda del `gid`.
+- [ ] Captura de nombre, teléfono, email y sucursal antes de pagar.
+- [ ] `app/agendar-cita/page.tsx`: reemplazar la búsqueda por
+      `shopify_order_id` y `cart_token` con la búsqueda por `session_id`.
+- [ ] Decidir si se queda el flujo "agendar primero, pagar después". Si se
+      queda, el pedido se crea con el `quote_id` que ya existe.
+
+### Pruebas obligatorias
+
+- [ ] Tarjetas de prueba: éxito, rechazo, 3D Secure y fondos insuficientes.
+- [ ] `stripe trigger checkout.session.completed`.
+- [ ] Un evento repetido no duplica la cotización.
+- [ ] Dos clientes comprando la última llanta al mismo tiempo.
+- [ ] Un pago que expira y libera el stock.
+
+### Listo cuando
+
+En modo de prueba, un cliente compra, paga, aterriza en `/agendar-cita` con
+su `quote_id` y agenda; el stock y la cotización quedan bien en el backend.
+
+### Notas y decisiones
+
+_(vacío)_
+
+---
+
+## Fase 4 · Facturación CFDI 4.0 (1.5–2 semanas)
+
+### Tareas
+
+- [ ] Elegir un PAC (Facturapi, Facturama, SW Sapien…) o conectar el
+      sistema actual de facturación.
+- [ ] Casilla opcional "¿Requieres factura?", en el checkout o en
+      `/status/[id]` después de pagar. Pide RFC, razón social, régimen
+      fiscal, código postal fiscal y uso de CFDI.
+- [ ] Tabla `invoices (order_id, uuid_sat, status, xml_url, pdf_url, rfc, …)`.
+- [ ] Al recibir el pago con datos fiscales: timbrar un CFDI de pago en una
+      sola exhibición (PUE), con forma de pago según el método (04 tarjeta de
+      crédito, 28 débito, 03 transferencia, 01 efectivo/OXXO).
+- [ ] Sin datos fiscales: la venta entra a la **factura global** del
+      periodo, con un proceso automático diario o mensual.
+- [ ] Reembolsos: CFDI de egreso (nota de crédito) o cancelación, según
+      aplique.
+- [ ] Enviar PDF y XML por WhatsApp o correo.
+- [ ] Revisar con el contador las claves SAT de producto (llantas y servicio
+      de instalación) y los motivos de cancelación.
+
+### Notas y decisiones
+
+_(vacío)_
+
+---
+
+## Fase 5 · Métodos de pago mexicanos y operación (2–3 semanas)
+
+### Tareas: métodos de pago
+
+- [ ] **Meses sin intereses:** activar installments en la sesión de
+      Checkout y fijar un monto mínimo. Reescribir
+      `components/product/payment-options.tsx` con las comisiones reales de
+      Stripe (hoy muestra meses *con* intereses).
+- [ ] **OXXO:** usar `checkout.session.async_payment_succeeded` y
+      `async_payment_failed`, que el apartado dure lo mismo que el voucher
+      (1–3 días), estado `awaiting_payment` y aviso por WhatsApp.
+- [ ] **SPEI:** transferencia con `customer_balance`, mismo manejo de pago
+      tardío.
+
+### Tareas: operación
+
+- [ ] Reembolsos desde el CRM: `POST /admin/orders/:id/refund` que llama a
+      la API de reembolsos de Stripe, más el webhook `charge.refunded` para
+      cambiar el estado y emitir la nota de crédito.
+- [ ] Contracargos: webhook `charge.dispute.created` → alerta a
+      administración.
+- [ ] Conciliación: reporte de depósitos de Stripe vs pedidos pagados, con
+      comisiones por separado para contabilidad.
+- [ ] Carritos abandonados: proceso automático que busca carritos activos
+      con teléfono y más de 2 h sin cambios → plantilla de WhatsApp.
+- [ ] Píxeles: eventos de compra de Meta y Google en `/agendar-cita` al
+      confirmar la orden; idealmente desde el servidor (Conversions API).
+- [ ] Antifraude: reglas de Radar (por ejemplo, bloquear tarjetas
+      extranjeras en montos altos).
+
+### Notas y decisiones
+
+_(vacío)_
+
+---
+
+## Fase 6 · Salida a producción y retiro de Shopify (1 semana)
+
+### Tareas
+
+- [ ] Probar en staging con llaves de prueba durante una semana, con el
+      personal de sucursal.
+- [ ] Activar las llaves de producción y hacer una compra real de bajo
+      monto con reembolso.
+- [ ] Encender `COMMERCE_PROVIDER=native` en producción.
+- [ ] Vigilar durante 2 semanas los webhooks fallidos (panel de Stripe) y
+      los pedidos atorados en `pending_payment`.
+- [ ] Exportar de Shopify el historial de clientes y pedidos antes de
+      cerrar la cuenta.
+- [ ] Frontend: borrar `lib/commerce/providers/shopify.ts`, `lib/shopify/`,
+      `app/api/test-checkout`, el `revalidate` de Shopify,
+      `docs/shopify-order-status-script.md` y las variables `SHOPIFY_*`.
+- [ ] Backend: archivar la tabla `shopify_orders` y los endpoints
+      `quote-by-cart-token` y `quote-by-shopify-order`.
+- [ ] Actualizar el aviso de privacidad (Stripe y el PAC como encargados) y
+      los términos de venta.
+
+### Notas y decisiones
+
+_(vacío)_
+
+---
+
+## Riesgos principales
+
+- **Fase 3:** que el webhook procese dos veces el mismo evento y el apartado
+  de stock (ventas dobles de la última pieza). Es donde más conviene
+  invertir en pruebas.
+- **Comisiones:** confirmar las tarifas vigentes de Stripe en México
+  (tarjeta, MSI, OXXO, SPEI) antes de fijar precios y opciones de pago.
+
+---
+
+## Bitácora
+
+Formato: `AAAA-MM-DD · Fase N · qué se hizo / qué se decidió / qué quedó pendiente`.
+
+- 2026-10-12 · Plan · Se crea este documento a partir del análisis del
+  repositorio.
+- 2026-10-12 · Fase 0 · Token del backend movido a `BACKEND_API_TOKEN`
+  (solo servidor) en `lib/shopify/index.ts` y `noCacheGetProduct.ts`;
+  agregado a `.env.example`. Pendiente: rotar el token en el backend.

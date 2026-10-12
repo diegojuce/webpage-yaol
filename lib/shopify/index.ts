@@ -158,7 +158,7 @@ export async function backendFetch<T>({
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "X-Backend-bearer-token": "HNFEggYGyfFgjkhKHfdtdtfhlJugyfTd",
+        Authorization: `Bearer ${process.env.BACKEND_API_TOKEN ?? ""}`,
         ...headers,
       },
       body: JSON.stringify({
