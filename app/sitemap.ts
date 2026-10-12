@@ -1,4 +1,4 @@
-import { getCollections, getPages, getProducts } from "lib/shopify";
+import { getCollections, getProducts } from "lib/commerce";
 import { baseUrl, validateEnvironmentVariables } from "lib/utils";
 import { MetadataRoute } from "next";
 
@@ -37,7 +37,19 @@ function toIsoDate(value: unknown): string {
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   validateEnvironmentVariables();
 
-  const routesMap = [""].map((route) => ({
+  const routesMap = [
+    "",
+    "/nosotros",
+    "/servicios",
+    "/ubicaciones",
+    "/contacto",
+    "/agendar",
+    "/club",
+    "/politica-privacidad",
+    "/privacy-advice",
+    "/return-policy",
+    "/shipping-policy",
+  ].map((route) => ({
     url: `${baseUrl}${route}`,
     lastModified: new Date().toISOString(),
   }));
@@ -70,15 +82,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     })),
   );
 
-  const pagesPromise = safe("pages", async () =>
-    (await getPages()).map((page) => ({
-      url: `${baseUrl}/${page.handle}`,
-      lastModified: toIsoDate(page.updatedAt),
-    })),
-  );
-
   const fetchedRoutes = (
-    await Promise.all([collectionsPromise, productsPromise, pagesPromise])
+    await Promise.all([collectionsPromise, productsPromise])
   ).flat();
 
   return [...routesMap, ...fetchedRoutes];

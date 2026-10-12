@@ -5,8 +5,8 @@ import FilterList from "components/layout/search/filter";
 import PanelSearchForm from "components/layout/search/panel-search-form";
 import SizeChipsSelector from "components/layout/search/size-chips-selector";
 import { defaultSort, sorting } from "lib/constants";
-import { getCategoryProducts, getProducts } from "lib/shopify";
-import { CategoryKind, Product } from "lib/shopify/types";
+import { getCategoryProducts, getProducts } from "lib/commerce";
+import { CategoryKind, Product } from "lib/commerce/types";
 
 const CATEGORY_LABELS: Record<CategoryKind, Record<string, string>> = {
   vehiculo: {

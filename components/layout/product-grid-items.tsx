@@ -1,6 +1,6 @@
 import Grid from "components/grid";
 import ProductCard from "components/product/product-card";
-import { Product } from "lib/shopify/types";
+import { Product } from "lib/commerce/types";
 
 export default function ProductGridItems({
   products,

@@ -23,7 +23,7 @@
 | Fase | Entregable | Tiempo aprox. | ¿Se puede vender? | Estado |
 |---|---|---|---|---|
 | 0 | Seguridad, cuenta Stripe e interruptor | 2–3 días | No | ✅ Terminada |
-| 1 | `lib/commerce` y sitio sin Shopify | 1 sem | No (catálogo sí) | ⬜ Pendiente |
+| 1 | `lib/commerce` y sitio sin Shopify | 1 sem | No (catálogo sí) | 🟨 En curso |
 | 2 | Carrito propio | 1.5–2 sem | No | ⬜ Pendiente |
 | 3 | Checkout Stripe, webhook y cita | 2–3 sem | **Sí, con tarjeta** | ⬜ Pendiente |
 | 4 | CFDI 4.0 | 1.5–2 sem | Sí, con factura | ⬜ Pendiente |
@@ -102,26 +102,26 @@ Leyenda: ⬜ Pendiente · 🟨 En curso · ✅ Terminada · ⛔ Bloqueada
 
 ### Tareas: frontend
 
-- [ ] Crear `lib/commerce/types.ts` con `Product`, `Variant`, `Cart`,
+- [x] Crear `lib/commerce/types.ts` con `Product`, `Variant`, `Cart`,
       `CartLine`, `Money` y `Order` propios, con IDs simples (SKU o UUID) y
       precios en **centavos enteros**.
-- [ ] Crear `lib/commerce/index.ts` con el mismo contrato que hoy
+- [x] Crear `lib/commerce/index.ts` con el mismo contrato que hoy
       (`getProduct`, `getProducts`, `getCart`, `addToCart`…). Por dentro
       elige el adaptador según `COMMERCE_PROVIDER`.
-- [ ] `lib/commerce/providers/shopify.ts`: mover aquí el código actual
+- [x] `lib/commerce/providers/shopify.ts`: mover aquí el código actual
       (temporal).
-- [ ] `lib/commerce/providers/native.ts`: adaptador que llama al backend.
-- [ ] Cambiar los ~30 imports de `lib/shopify` a `lib/commerce`.
-- [ ] `getMenu` en `components/layout/navbar/index.tsx` → menú fijo en
+- [x] `lib/commerce/providers/native.ts`: adaptador que llama al backend.
+- [x] Cambiar los ~30 imports de `lib/shopify` a `lib/commerce`.
+- [x] `getMenu` en `components/layout/navbar/index.tsx` → menú fijo en
       `lib/constants.ts`.
-- [ ] `getPage` en `app/[page]` → borrarlo o servirlo desde el backend (las
+- [x] `getPage` en `app/[page]` → borrarlo o servirlo desde el backend (las
       políticas ya viven en `app/(doc)`).
-- [ ] `getCollections`, `getCollection` y `getProductRecommendations` →
+- [x] `getCollections`, `getCollection` y `getProductRecommendations` →
       endpoints del backend.
 
 ### Tareas: backend
 
-- [ ] Que `/get/products`, `/get/category` y `/get/product` respondan
+- [x] Que `/get/products`, `/get/category` y `/get/product` respondan
       **sin** el formato de Shopify (sin `edges/node` ni `gid://`). Mantener
       `/bypass/shopify/*` un tiempo para no romper nada.
 
@@ -132,7 +132,31 @@ El sitio navega igual con `COMMERCE_PROVIDER=off` y
 
 ### Notas y decisiones
 
-_(vacío)_
+- **Backend** (rama `diego-stripe`, commit d522ce2): nuevo router
+  `/bypass/shop` (GET, `TOKEN_YAOL` con timingSafeEqual, fail-closed):
+  `/products?q&sort&reverse`, `/products/:handle`,
+  `/products/:handle/recommendations` (misma medida y rin),
+  `/products/:handle/availability?quantity`, `/categories/:kind/:value`,
+  `/brands`, `/brands/:handle/products`. Precios en centavos, id = handle =
+  sku = `inv-<id>`. `/bypass/shopify` sigue montado. 17 pruebas en
+  `tests/shop.test.js`.
+- **Frontend**: el catálogo siempre sale de `providers/native.ts`; el carrito
+  depende de `COMMERCE_PROVIDER` (con `native` aún no hay carrito: Fase 2).
+- **Decisión:** `Money.amount` sigue siendo string en pesos en la UI (así se
+  muestra). Los cálculos de dinero se hacen en el backend en centavos.
+- **Decisión:** una llanta = un SKU, sin variantes. Las dos variantes de
+  Shopify ("Recoger en sucursal" / "Envío a domicilio") desaparecen de la
+  página de producto; esa elección pasa al carrito en la Fase 2.
+- Colecciones = marcas con existencia (`/brands`); aparecen en el filtro de
+  búsqueda y en el sitemap.
+- Se borraron `app/[page]` (las políticas viven en `app/(doc)`) y
+  `app/api/test-checkout` (endpoint público de prueba de Shopify). El
+  sitemap lista las páginas fijas del sitio.
+- **Orden de despliegue:** primero el backend con `/bypass/shop` en el
+  ambiente al que apunta `NEXT_PUBLIC_BACKEND_URL`; después el merge del
+  frontend a `main`. Si no, el catálogo sale vacío.
+- `tests/accesosCobertura.test.js` del backend ya fallaba antes (falta
+  `docs/autorizacion/endpoints.json` en el repo).
 
 ---
 

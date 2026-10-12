@@ -20,32 +20,20 @@ export const ensureStartsWith = (stringToCheck: string, startsWith: string) =>
     : `${startsWith}${stringToCheck}`;
 
 export const validateEnvironmentVariables = () => {
+  // El catálogo sale del backend propio (lib/commerce/providers/native.ts).
   const requiredEnvironmentVariables = [
-    "SHOPIFY_STORE_DOMAIN",
-    "SHOPIFY_STOREFRONT_ACCESS_TOKEN",
+    "NEXT_PUBLIC_BACKEND_URL",
+    "BACKEND_API_TOKEN",
   ];
-  const missingEnvironmentVariables = [] as string[];
-
-  requiredEnvironmentVariables.forEach((envVar) => {
-    if (!process.env[envVar]) {
-      missingEnvironmentVariables.push(envVar);
-    }
-  });
+  const missingEnvironmentVariables = requiredEnvironmentVariables.filter(
+    (envVar) => !process.env[envVar],
+  );
 
   if (missingEnvironmentVariables.length) {
     throw new Error(
-      `The following environment variables are missing. Your site will not work without them. Read more: https://vercel.com/docs/integrations/shopify#configure-environment-variables\n\n${missingEnvironmentVariables.join(
+      `The following environment variables are missing. Your site will not work without them.\n\n${missingEnvironmentVariables.join(
         "\n",
       )}\n`,
-    );
-  }
-
-  if (
-    process.env.SHOPIFY_STORE_DOMAIN?.includes("[") ||
-    process.env.SHOPIFY_STORE_DOMAIN?.includes("]")
-  ) {
-    throw new Error(
-      "Your `SHOPIFY_STORE_DOMAIN` environment variable includes brackets (ie. `[` and / or `]`). Your site will not work with them there. Please remove them.",
     );
   }
 };

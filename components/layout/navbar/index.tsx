@@ -1,7 +1,6 @@
 import { Header } from "app/header/header";
 import CartModal from "components/cart/modal";
 import LogoSquare from "components/logo-square";
-import { getMenu } from "lib/shopify";
 import Link from "next/link";
 import { Suspense } from "react";
 import MobileMenu from "./mobile-menu";
@@ -37,8 +36,6 @@ const SERVICE_LINKS = [
 ];
 
 export async function Navbar() {
-  await getMenu("next-js-frontend-header-menu");
-
   return (
     <div className="fixed left-0 right-0 top-0 z-50 flex h-28 flex-col">
       <Header />

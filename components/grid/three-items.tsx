@@ -2,8 +2,8 @@ import FeaturedProducts from "components/grid/FeaturedProducts";
 import PromoBannerCarousel, {
   type PromoBanner,
 } from "components/grid/promo-banner-carousel";
-import { getCollectionProducts } from "lib/shopify";
-import type { Product } from "lib/shopify/types";
+import { getCollectionProducts } from "lib/commerce";
+import type { Product } from "lib/commerce/types";
 import Image from "components/safe-image";
 import SearchBox from "./search-box";
 

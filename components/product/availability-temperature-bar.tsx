@@ -2,8 +2,8 @@
 
 import clsx from "clsx";
 import { useProduct } from "components/product/product-context";
-import { Product, ProductVariant } from "lib/shopify/types";
-import { normalizeVariantId } from "lib/shopify/variant-utils";
+import { Product, ProductVariant } from "lib/commerce/types";
+import { normalizeVariantId } from "lib/commerce/variant-utils";
 import { useMemo } from "react";
 
 const TOTAL_BLOCKS = 5;

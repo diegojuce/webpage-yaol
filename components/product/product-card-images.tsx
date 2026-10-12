@@ -2,7 +2,7 @@
 
 import Image from "components/safe-image";
 import { useState, type MouseEvent } from "react";
-import type { Image as ProductImage } from "lib/shopify/types";
+import type { Image as ProductImage } from "lib/commerce/types";
 
 interface ProductCardImagesProps {
   images: ProductImage[];

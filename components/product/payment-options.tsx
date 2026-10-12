@@ -1,8 +1,8 @@
 "use client";
 
 import { useProduct } from "components/product/product-context";
-import { normalizeVariantId } from "lib/shopify/variant-utils";
-import { Product, ProductVariant } from "lib/shopify/types";
+import { normalizeVariantId } from "lib/commerce/variant-utils";
+import { Product, ProductVariant } from "lib/commerce/types";
 import { useMemo, useState } from "react";
 
 const PAYMENT_PLANS = [

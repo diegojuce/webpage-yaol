@@ -1,5 +1,5 @@
 import ProductCard from "components/product/product-card";
-import { getCollectionProducts } from "lib/shopify";
+import { getCollectionProducts } from "lib/commerce";
 
 export async function Carousel() {
   // Collections that start with `hidden-*` are hidden from the search page.

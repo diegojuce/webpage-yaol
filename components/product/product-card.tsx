@@ -1,5 +1,5 @@
 import clsx from "clsx";
-import type { Image as ProductImage, Product } from "lib/shopify/types";
+import type { Image as ProductImage, Product } from "lib/commerce/types";
 import Link from "next/link";
 import ProductCardImages from "./product-card-images";
 

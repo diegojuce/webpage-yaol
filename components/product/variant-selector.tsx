@@ -5,8 +5,8 @@ import BuildIcon from '@mui/icons-material/Build';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import clsx from "clsx";
 import { useProduct, useUpdateURL } from "components/product/product-context";
-import { ProductOption, ProductVariant } from "lib/shopify/types";
-import { normalizeVariantId } from "lib/shopify/variant-utils";
+import { ProductOption, ProductVariant } from "lib/commerce/types";
+import { normalizeVariantId } from "lib/commerce/variant-utils";
 
 type Combination = {
   id: string;

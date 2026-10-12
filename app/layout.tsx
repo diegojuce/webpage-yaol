@@ -4,7 +4,7 @@ import { HideOnPathPrefixes } from "components/layout/hide-on-path-prefixes";
 import { Navbar } from "components/layout/navbar";
 import { WelcomeToast } from "components/welcome-toast";
 import { BRANCHES, COMPANY, SOCIALS } from "lib/company";
-import { getCart } from "lib/shopify";
+import { getCart } from "lib/commerce";
 import { baseUrl } from "lib/utils";
 import { ReactNode } from "react";
 import { Toaster } from "sonner";

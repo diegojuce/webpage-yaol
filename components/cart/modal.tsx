@@ -44,7 +44,7 @@ import { DeleteItemButton } from "./delete-item-button";
 import { EditItemQuantityButton } from "./edit-item-quantity-button";
 import OpenCart from "./open-cart";
 // Removed unused static ShippingType in favor of per-line selector
-import type { CartItem, Product, ProductVariant } from "lib/shopify/types";
+import type { CartItem, Product, ProductVariant } from "lib/commerce/types";
 
 let activeCartModalId: string | null = null;
 const activeCartModalListeners = new Set<(id: string | null) => void>();

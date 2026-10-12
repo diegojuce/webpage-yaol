@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getProduct } from "lib/shopify";
+import { getProduct } from "lib/commerce";
 
 export async function GET(req: Request) {
   try {

@@ -1,3 +1,22 @@
+// Tipos crudos de la Storefront API de Shopify y de /bypass/shopify (legado).
+// Los tipos de dominio viven en lib/commerce/types; aquí solo se derivan las
+// formas con edges/node que devuelve Shopify. Se borra en la Fase 6.
+import type {
+  Cart,
+  CartAttribute,
+  CartItem,
+  CategoryKind,
+  Collection,
+  Image,
+  Menu,
+  Product,
+  ProductAvailability,
+  ProductVariant,
+  SEO,
+} from "lib/commerce/types";
+
+export type * from "lib/commerce/types";
+
 export type Maybe<T> = T | null;
 
 export type Connection<T> = {
@@ -8,60 +27,6 @@ export type Edge<T> = {
   node: T;
 };
 
-export type Cart = Omit<ShopifyCart, "lines"> & {
-  lines: CartItem[];
-};
-
-export type CartAttribute = {
-  key: string;
-  value: string;
-};
-
-export type CartProduct = {
-  id: string;
-  handle: string;
-  title: string;
-  featuredImage: Image;
-};
-
-export type CartItem = {
-  id: string | undefined;
-  quantity: number;
-  cost: {
-    totalAmount: Money;
-  };
-  merchandise: {
-    id: string;
-    title: string;
-    selectedOptions: {
-      name: string;
-      value: string;
-    }[];
-    product: CartProduct;
-  };
-};
-
-export type Collection = ShopifyCollection & {
-  path: string;
-};
-
-export type Image = {
-  url: string;
-  altText: string;
-  width: number;
-  height: number;
-};
-
-export type Menu = {
-  title: string;
-  path: string;
-};
-
-export type Money = {
-  amount: string;
-  currencyCode: string;
-};
-
 export type Page = {
   id: string;
   title: string;
@@ -70,82 +35,6 @@ export type Page = {
   bodySummary: string;
   seo?: SEO;
   createdAt: string;
-  updatedAt: string;
-};
-
-export type Product = Omit<ShopifyProduct, "variants" | "images"> & {
-  variants: ProductVariant[];
-  images: Image[];
-};
-
-export type ProductAvailability = {
-  availableForSale: boolean;
-  sufficientStock: boolean;
-};
-
-export type ProductOption = {
-  id: string;
-  name: string;
-  values: string[];
-};
-
-export type ProductVariant = {
-  id: string;
-  title: string;
-  availableForSale: boolean;
-  quantityAvailable: number | null;
-  sku?: string;
-  selectedOptions: {
-    name: string;
-    value: string;
-  }[];
-  price: Money;
-};
-
-export type SEO = {
-  title: string;
-  description: string;
-};
-
-export type ShopifyCart = {
-  id: string | undefined;
-  checkoutUrl: string;
-  attributes?: CartAttribute[];
-  cost: {
-    subtotalAmount: Money;
-    totalAmount: Money;
-    totalTaxAmount: Money;
-  };
-  lines: Connection<CartItem>;
-  totalQuantity: number;
-};
-
-export type ShopifyCollection = {
-  handle: string;
-  title: string;
-  description: string;
-  seo: SEO;
-  updatedAt: string;
-};
-
-export type ShopifyProduct = {
-  id: string;
-  handle: string;
-  availableForSale: boolean;
-  title: string;
-  vendor?: string;
-  description: string;
-  descriptionHtml: string;
-  options: ProductOption[];
-  priceRange: {
-    maxVariantPrice: Money;
-    minVariantPrice: Money;
-  };
-  variants: Connection<ProductVariant>;
-  featuredImage: Image;
-  images: Connection<Image>;
-  seo: SEO;
-  tags: string[];
   updatedAt: string;
 };
 
@@ -324,8 +213,6 @@ export type ShopifyProductsOperation = {
   };
 };
 
-export type CategoryKind = "vehiculo" | "tipo" | "gama";
-
 export type ShopifyCategoryProductsOperation = {
   data: {
     products: Connection<ShopifyProduct>;
@@ -336,4 +223,15 @@ export type ShopifyCategoryProductsOperation = {
     reverse?: boolean;
     sortKey?: string;
   };
+};
+
+export type ShopifyCart = Omit<Cart, "lines"> & {
+  lines: Connection<CartItem>;
+};
+
+export type ShopifyCollection = Omit<Collection, "path">;
+
+export type ShopifyProduct = Omit<Product, "variants" | "images"> & {
+  variants: Connection<ProductVariant>;
+  images: Connection<Image>;
 };

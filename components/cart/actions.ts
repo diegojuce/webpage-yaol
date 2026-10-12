@@ -10,7 +10,7 @@ import {
   removeFromCart,
   updateCart,
   updateCartAttributes,
-} from "lib/shopify";
+} from "lib/commerce";
 import { revalidateTag } from "next/cache";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
@@ -146,7 +146,7 @@ export async function addItem(
   try {
     // Validate cartId from cookie; create one if missing/invalid.
     let cartId = (await cookies()).get("cartId")?.value;
-    let cart: import("lib/shopify/types").Cart | undefined;
+    let cart: import("lib/commerce/types").Cart | undefined;
 
     if (!isValidCartId(cartId)) {
       console.debug(
