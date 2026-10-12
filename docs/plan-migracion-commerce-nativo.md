@@ -396,3 +396,9 @@ Formato: `AAAA-MM-DD · Fase N · qué se hizo / qué se decidió / qué quedó 
 - 2026-10-12 · Fase 0 · Token del backend movido a `BACKEND_API_TOKEN`
   (solo servidor) en `lib/shopify/index.ts` y `noCacheGetProduct.ts`;
   agregado a `.env.example`. Pendiente: rotar el token en el backend.
+- 2026-10-12 · Fase 0 · Token configurado en Vercel y `.env.local`
+  (commit ed9880b). Pendiente del backend: proteger `/bypass/shopify/*`,
+  que hoy responde 200 sin token.
+- 2026-10-12 · Fase 0 · Vercel: Node 20.x → 24.x; proyecto conectado al
+  repo `diegojuce/webpage-yaol` (antes solo se desplegaba con la CLI). Se
+  corrigió el autor de git del repo (tenía comillas tipográficas).
