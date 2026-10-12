@@ -6,10 +6,17 @@
 
 - **Inicio del plan:** 2026-10-12
 - **Repos involucrados:** este frontend (`commerce-main`, Next.js 15) y el
-  backend (`backend-yssm`).
-- **Supuestos:** el backend es Node con base de datos SQL (la tabla
-  `shopify_orders` usa `TEXT PK → BIGINT FK`). Los tiempos asumen un
-  desarrollador de tiempo completo que conoce el código.
+  backend (`jfzepeda/yssm-backend`, clonado en `../yssm-backend`). El trabajo
+  del backend va en la rama **`diego-stripe`**, creada desde `staging`.
+- **Backend:** Express 4 ESM + PostgreSQL. Migraciones a mano en
+  `src/sql/00NN_*.sql`. Leer su `CLAUDE.md` antes de tocarlo (rutas bypass,
+  `withTransaction` con `synchronousCommit: 'on'` para dinero y stock,
+  `emitDelta` para movimientos de stock, `accesosCatalogo`).
+- **Ojo con los nombres:** `orders` y `order_items` ya existen en el backend
+  (vistas de `pedidos_mayoreo`). Las tablas nuevas del plan llevan el prefijo
+  `shop_` (`shop_carts`, `shop_cart_items`, `shop_orders`, `shop_order_items`,
+  `shop_stock_reservations`, `stripe_events`).
+- Los tiempos asumen un desarrollador de tiempo completo que conoce el código.
 
 ## Estado general
 
@@ -304,7 +311,8 @@ _(vacío)_
 ### Tareas
 
 - [ ] Elegir un PAC (Facturapi, Facturama, SW Sapien…) o conectar el
-      sistema actual de facturación.
+      sistema actual de facturación. *(El backend ya tiene
+      `src/clients/facturapi.js` y webhook `/bypass/facturapi`: reutilizar.)*
 - [ ] Casilla opcional "¿Requieres factura?", en el checkout o en
       `/status/[id]` después de pagar. Pide RFC, razón social, régimen
       fiscal, código postal fiscal y uso de CFDI.
@@ -429,3 +437,6 @@ Formato: `AAAA-MM-DD · Fase N · qué se hizo / qué se decidió / qué quedó 
   entrega specs de endpoints.
 - 2026-10-12 · Fase 0 · El programador del backend agregó las llaves de
   Stripe (test) en staging.
+- 2026-10-12 · Backend · Clonado `jfzepeda/yssm-backend` y creada la rama
+  `diego-stripe` desde `staging` (9b3575f). En `staging`, `/bypass/shopify` ya
+  valida `TOKEN_YAOL` (falta desplegar). Tablas nuevas con prefijo `shop_`.
