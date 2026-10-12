@@ -63,7 +63,7 @@ Leyenda: ⬜ Pendiente · 🟨 En curso · ✅ Terminada · ⛔ Bloqueada
 - [x] Activar el modo de prueba e instalar la Stripe CLI para recibir
       webhooks en local.
 - [ ] Variables del backend: `STRIPE_SECRET_KEY` y `STRIPE_WEBHOOK_SECRET`.
-      *(Movida a la Fase 3: se configuran cuando exista el código que las use.)*
+      *(Agregadas en staging el 2026-10-12; seguimiento en la Fase 3.)*
 - [x] ~~Variable del frontend, solo si se usa el Payment Element:~~ No aplica
       en el MVP (Stripe Checkout alojado).
       `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`.
@@ -257,8 +257,9 @@ stripe_events (event_id TEXT PK, type, processed_at)   -- evita procesar un even
 
 ### Tareas: backend
 
-- [ ] Variables del backend: `STRIPE_SECRET_KEY` (sk_test) y
-      `STRIPE_WEBHOOK_SECRET` (traída de la Fase 0).
+- [x] Variables del backend: `STRIPE_SECRET_KEY` (sk_test) y
+      `STRIPE_WEBHOOK_SECRET` (traída de la Fase 0). *(Agregadas en staging el
+      2026-10-12; el webhook secret se llena al crear el endpoint.)*
 - [ ] Migraciones de `orders`, `order_items`, `stock_reservations` y
       `stripe_events`.
 - [ ] `POST /shop/checkout`.
@@ -426,3 +427,5 @@ Formato: `AAAA-MM-DD · Fase N · qué se hizo / qué se decidió / qué quedó 
 - 2026-10-12 · Fase 0 · **Terminada.** Variables de Stripe del backend
   movidas a la Fase 3. El backend lo escribe su programador; este repo le
   entrega specs de endpoints.
+- 2026-10-12 · Fase 0 · El programador del backend agregó las llaves de
+  Stripe (test) en staging.
