@@ -162,6 +162,8 @@ El sitio navega igual con `COMMERCE_PROVIDER=off` y
 - **Datos sucios en `inventario.marca`:** errores de captura (CONNTINENTAL,
   CONTIENTAL, MICHELLIN, ROADSHiNE) y valores que no son marca (14C, 89H,
   BPB200, LT, QH505, FCR-T, BDR-HG). Corregir en el ERP.
+- **Decisión (2026-10-15):** el filtro de búsqueda muestra todas las marcas
+  con existencia, tal cual, mientras el ERP limpia los datos.
 - `tests/accesosCobertura.test.js` del backend ya fallaba antes (falta
   `docs/autorizacion/endpoints.json` en el repo).
 
@@ -472,5 +474,5 @@ Formato: `AAAA-MM-DD · Fase N · qué se hizo / qué se decidió / qué quedó 
   `diego-stripe` desde `staging` (9b3575f). En `staging`, `/bypass/shopify` ya
   valida `TOKEN_YAOL` (falta desplegar). Tablas nuevas con prefijo `shop_`.
 - 2026-10-15 · Fase 1 · `/bypass/shop` desplegado en staging (PR #92).
-  Preview de `diego-stripe` verificado contra staging. Falta: decidir marcas
-  en el filtro, desplegar `/bypass/shop` en producción y merge a `main`.
+  Preview de `diego-stripe` verificado contra staging. Marcas: se muestran
+  todas (opción C). Falta: desplegar `/bypass/shop` en producción y merge a `main`.
