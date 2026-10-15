@@ -3,10 +3,11 @@
 //
 // - Catálogo: siempre del backend propio (providers/native.ts).
 // - Carrito: según NEXT_PUBLIC_COMMERCE_PROVIDER (lib/commerce-status.ts).
-//   "native" todavía no tiene carrito (Fase 2): getCart devuelve undefined y
-//   las escrituras lanzan.
+//   "off" cae en shopify, que corta cada llamada con su propio cortafuegos
+//   (SHOPIFY_ENABLED).
 import { COMMERCE_PROVIDER } from "lib/commerce-status";
 import type { Cart, CartAttribute } from "./types";
+import * as native from "./providers/native";
 import * as shopify from "./providers/shopify";
 
 export {
@@ -20,23 +21,16 @@ export {
   getProducts,
 } from "./providers/native";
 
-export class NativeCartNotReadyError extends Error {
-  constructor() {
-    super("El carrito nativo llega en la Fase 2");
-    this.name = "NativeCartNotReadyError";
-  }
-}
+const cartProvider = () => (COMMERCE_PROVIDER === "native" ? native : shopify);
 
-function cartProvider() {
-  if (COMMERCE_PROVIDER === "native") throw new NativeCartNotReadyError();
-  // "off" también cae aquí: lib/shopify corta cada llamada con su propio
-  // cortafuegos (SHOPIFY_ENABLED).
-  return shopify;
+// La cookie `cartId` guarda un UUID (nativo) o el gid con ?key= (Shopify).
+export function isValidCartId(id?: string): id is string {
+  if (COMMERCE_PROVIDER === "native") return native.isValidCartId(id);
+  return !!id && id.startsWith("gid://shopify/Cart/") && id.includes("?key=");
 }
 
 export async function getCart(): Promise<Cart | undefined> {
-  if (COMMERCE_PROVIDER === "native") return undefined;
-  return shopify.getCart();
+  return cartProvider().getCart();
 }
 
 export async function createCart(attributes?: CartAttribute[]): Promise<Cart> {

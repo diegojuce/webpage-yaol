@@ -1,4 +1,5 @@
 "use client";
+import { cartLineVariants } from "lib/commerce/variant-utils";
 
 import type {
   Cart,
@@ -47,8 +48,7 @@ function updateCartItem(
   if (updateType === "delete") return null;
 
   const productAny = (item.merchandise?.product ?? {}) as any;
-  const edges = productAny?.variants?.edges ?? [];
-  const variants: ProductVariant[] = edges.map((e: any) => e.node);
+  const variants: ProductVariant[] = cartLineVariants(productAny);
   const currentVariant = variants.find(
     (variant) => variant.id === item.merchandise.id
   );
@@ -147,6 +147,7 @@ function createOrUpdateCartItem(
         handle: product.handle,
         title: product.title,
         featuredImage: product.featuredImage,
+        variants: product.variants,
       },
     },
   };

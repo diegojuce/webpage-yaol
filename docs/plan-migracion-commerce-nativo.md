@@ -174,14 +174,16 @@ El sitio navega igual con `COMMERCE_PROVIDER=off` y
 ### Modelo de datos (backend)
 
 ```sql
-carts (
+shop_carts (                          -- migración 0154_shop_carritos.sql
   id UUID PK, status TEXT,            -- active | converted | abandoned
   customer_phone TEXT NULL, branch_code TEXT NULL, quote_id BIGINT NULL,
-  created_at, updated_at, expires_at
+  created_at, updated_at, expires_at  -- expira 30 días después del último cambio
 )
-cart_items (
-  id UUID PK, cart_id FK, sku TEXT, quantity INT,
-  UNIQUE(cart_id, sku)
+shop_cart_items (
+  id UUID PK, cart_id FK, sku TEXT,   -- sku = inv-<inventario.id>
+  fulfillment TEXT,                   -- install | delivery (por renglón)
+  quantity INT,
+  UNIQUE(cart_id, sku, fulfillment)
 )
 ```
 
@@ -191,11 +193,12 @@ El carrito **no guarda precios**. Los precios se calculan al leerlo.
 
 | Método | Ruta | Qué hace |
 |---|---|---|
-| POST | `/shop/carts` | Crea un carrito y devuelve su `id` |
-| GET | `/shop/carts/:id` | Devuelve el carrito con precios y stock actuales y sus totales |
-| POST | `/shop/carts/:id/items` | `{sku, quantity}`; suma si el producto ya está, con tope según el stock |
-| PATCH | `/shop/carts/:id/items/:sku` | Cambia la cantidad; 0 quita el producto |
-| PATCH | `/shop/carts/:id` | Sucursal, teléfono, `quote_id` (sustituye a `updateCartAttributes`) |
+| POST | `/bypass/shop/carts` | Crea un carrito y devuelve su `id` |
+| GET | `/bypass/shop/carts/:id` | Devuelve el carrito con precios y stock actuales y sus totales |
+| POST | `/bypass/shop/carts/:id/items` | `{sku, quantity, fulfillment}`; suma si ya está, con tope según el stock del SKU |
+| PATCH | `/bypass/shop/carts/:id/items/:itemId` | `{quantity?, fulfillment?}`; 0 quita el renglón; cambiar la entrega funde renglones |
+| DELETE | `/bypass/shop/carts/:id/items/:itemId` | Quita el renglón |
+| PATCH | `/bypass/shop/carts/:id` | Sucursal, teléfono, `quote_id` (sustituye a `updateCartAttributes`) |
 
 ### Reglas
 
@@ -207,14 +210,14 @@ El carrito **no guarda precios**. Los precios se calculan al leerlo.
 
 ### Tareas
 
-- [ ] Backend: migraciones de `carts` y `cart_items`.
-- [ ] Backend: endpoints `/shop/carts*`.
-- [ ] Frontend, `components/cart/actions.ts`: la cookie `cartId` pasa a ser
+- [x] Backend: migraciones de `carts` y `cart_items`. *(0154, escrita; falta aplicarla en STG.)*
+- [x] Backend: endpoints `/shop/carts*`. *(commit 7044651, 14 pruebas.)*
+- [x] Frontend, `components/cart/actions.ts`: la cookie `cartId` pasa a ser
       un UUID (sigue `httpOnly`), `isValidCartId` valida UUID y las acciones
       llaman a `lib/commerce`.
-- [ ] Frontend, `components/cart/cart-context.tsx`: adaptar a los tipos
+- [x] Frontend, `components/cart/cart-context.tsx`: adaptar a los tipos
       nuevos y mantener la actualización inmediata en pantalla.
-- [ ] Frontend, `add-to-cart.tsx` y `modal.tsx`: ajustar tipos (el
+- [x] Frontend, `add-to-cart.tsx` y `modal.tsx`: ajustar tipos (el
       checkout se toca en la Fase 3).
 
 ### Listo cuando
@@ -224,7 +227,22 @@ el carrito sobrevive a un refresh y no deja pasar del stock.
 
 ### Notas y decisiones
 
-_(vacío)_
+- **Decisión (2026-10-15):** la entrega se elige por renglón, igual que con
+  Shopify: "Instalar en sucursal" o "Envío a domicilio". En la UI son dos
+  variantes por llanta con id `inv-<id>:install` / `inv-<id>:delivery`; el
+  backend guarda `fulfillment` en el renglón. Si hay renglones con envío,
+  Stripe pedirá la dirección en la Fase 3.
+- El stock se topa por SKU sumando ambos tipos de entrega; tope de 20 piezas
+  por SKU. Si el stock cae después de agregar, el renglón queda marcado
+  (`exceedsStock` / `available: false`) y fuera del total.
+- IVA: `subtotalCents = round(total / 1.16)`, `taxCents = total − subtotal`.
+- Con `COMMERCE_PROVIDER=native` el modal ya no pre-crea un carrito por visita:
+  se crea al agregar el primer producto o al guardar sucursal/teléfono. Si la
+  cookie apunta a un carrito expirado o pagado, se crea uno nuevo.
+- El botón de pago muestra "disponible muy pronto" hasta la Fase 3.
+- **Para probar en preview:** aplicar la 0154 en STG, merge de `diego-stripe`
+  (backend) a `staging` y `NEXT_PUBLIC_COMMERCE_PROVIDER=native` solo en
+  Preview de Vercel.
 
 ---
 

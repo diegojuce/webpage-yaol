@@ -1,4 +1,5 @@
 "use client";
+import { cartLineVariants } from "lib/commerce/variant-utils";
 
 import { Dialog, Transition } from "@headlessui/react";
 import {
@@ -13,7 +14,11 @@ import {
 import clsx from "clsx";
 import LoadingDots from "components/loading-dots";
 import Price from "components/price";
-import { COMMERCE_ENABLED, COMMERCE_DISABLED_MESSAGE } from "lib/commerce-status";
+import {
+  COMMERCE_DISABLED_MESSAGE,
+  COMMERCE_ENABLED,
+  COMMERCE_PROVIDER,
+} from "lib/commerce-status";
 import { DEFAULT_OPTION } from "lib/constants";
 import { createUrl } from "lib/utils";
 import Image from "components/safe-image";
@@ -69,8 +74,7 @@ function LineShippingSelector({
 
   // Extract variants from product on the cart line
   const productAny = (item?.merchandise?.product ?? {}) as any;
-  const edges = productAny?.variants?.edges ?? [];
-  const variants: ProductVariant[] = edges.map((e: any) => e.node);
+  const variants: ProductVariant[] = cartLineVariants(productAny);
   const first = variants[0];
   const second = variants[1];
   if (!first || !second) return null;
@@ -802,7 +806,10 @@ export default function CartModal({ isWhite = false }) {
   };
 
   useEffect(() => {
-    if (!COMMERCE_ENABLED) {
+    // El carrito nativo se crea al agregar el primer producto o al guardar
+    // los datos (addItem / setCartAttributes): pre-crearlo aquí escribiría
+    // una fila por cada visita, bots incluidos.
+    if (!COMMERCE_ENABLED || COMMERCE_PROVIDER === "native") {
       return;
     }
     if (!cart) {
@@ -1292,6 +1299,13 @@ function CheckoutButton() {
             "No se pudo validar la disponibilidad del carrito. Inténtalo de nuevo.",
           );
         }
+        setPending(false);
+        return;
+      }
+
+      // Carrito nativo: el pago con Stripe llega en la Fase 3.
+      if (!result.checkoutUrl) {
+        toast.info("El pago en línea estará disponible muy pronto.");
         setPending(false);
         return;
       }

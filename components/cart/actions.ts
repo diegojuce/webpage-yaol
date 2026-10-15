@@ -1,4 +1,5 @@
 "use server";
+import { cartLineVariants } from "lib/commerce/variant-utils";
 
 import { COMMERCE_ENABLED, COMMERCE_DISABLED_MESSAGE } from "lib/commerce-status";
 import { TAGS } from "lib/constants";
@@ -7,6 +8,7 @@ import {
   createCart,
   getCart,
   getProductFresh,
+  isValidCartId,
   removeFromCart,
   updateCart,
   updateCartAttributes,
@@ -14,9 +16,6 @@ import {
 import { revalidateTag } from "next/cache";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-
-const isValidCartId = (id?: string) =>
-  !!id && id.startsWith("gid://shopify/Cart/") && id.includes("?key=");
 
 // cartId cookie: persistente para que el cart sobreviva refreshes y entre
 // sesiones del mismo navegador. El path post-pago para resolver quote_id
@@ -98,6 +97,11 @@ export async function setCartAttributes(payload: {
 
   let cartId = (await cookies()).get("cartId")?.value;
 
+  // Un carrito que expiró o ya se pagó cuenta como inexistente.
+  if (isValidCartId(cartId) && !(await getCart())) {
+    cartId = undefined;
+  }
+
   if (!isValidCartId(cartId)) {
     console.debug(
       "[actions][setCartAttributes] Missing/invalid cartId cookie (",
@@ -161,6 +165,13 @@ export async function addItem(
       cart = newCart;
     } else {
       cart = await getCart();
+      // Cookie de un carrito que expiró o ya se pagó: se empieza uno nuevo.
+      if (!cart) {
+        const newCart = await createCart();
+        cartId = newCart.id!;
+        (await cookies()).set("cartId", cartId, CART_COOKIE_OPTIONS);
+        cart = newCart;
+      }
     }
 
     // Si ya existe una línea con este variant en el carrito, actualizar su cantidad
@@ -173,8 +184,7 @@ export async function addItem(
 
       // Usar stock de Shopify desde el producto en el carrito
       const productAny = (existingLine.merchandise?.product ?? {}) as any;
-      const edges = productAny?.variants?.edges ?? [];
-      const variants = edges.map((e: any) => e.node);
+      const variants = cartLineVariants(productAny);
       const currentVariant = variants.find(
         (variant: any) => variant.id === existingLine.merchandise.id,
       );
@@ -280,8 +290,7 @@ export async function updateItemQuantity(
     }
 
     const productAny = (lineItem.merchandise?.product ?? {}) as any;
-    const edges = productAny?.variants?.edges ?? [];
-    const variants = edges.map((e: any) => e.node);
+    const variants = cartLineVariants(productAny);
     const currentVariant = variants.find(
       (variant: any) => variant.id === lineItem.merchandise.id,
     );

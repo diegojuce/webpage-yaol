@@ -97,6 +97,8 @@ export type CartProduct = {
   handle: string;
   title: string;
   featuredImage: Image;
+  // Para elegir la entrega y topar la cantidad desde el carrito (nativo).
+  variants?: ProductVariant[];
 };
 
 export type CartItem = {

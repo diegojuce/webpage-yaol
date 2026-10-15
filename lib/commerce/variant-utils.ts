@@ -1,3 +1,5 @@
+import type { ProductVariant } from "./types";
+
 export const normalizeVariantId = (id: unknown): string | undefined => {
   if (typeof id === "string") {
     return id;
@@ -26,4 +28,13 @@ export const normalizeVariantId = (id: unknown): string | undefined => {
   }
 
   return undefined;
+};
+
+// Variantes del producto de un renglón del carrito. El carrito de Shopify las
+// trae como Connection (edges/node); el nativo, como arreglo.
+export const cartLineVariants = (product: unknown): ProductVariant[] => {
+  const variants = (product as { variants?: unknown } | null)?.variants;
+  if (Array.isArray(variants)) return variants as ProductVariant[];
+  const edges = (variants as { edges?: { node: ProductVariant }[] } | undefined)?.edges;
+  return Array.isArray(edges) ? edges.map((e) => e.node) : [];
 };

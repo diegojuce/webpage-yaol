@@ -1,18 +1,23 @@
-// Adaptador nativo: catálogo desde el backend propio (/bypass/shop) sin el
-// formato de Shopify. El carrito nativo llega en la Fase 2.
+// Adaptador nativo: catálogo y carrito desde el backend propio (/bypass/shop)
+// sin el formato de Shopify.
 import { TAGS } from "lib/constants";
 import type {
+  Cart,
+  CartAttribute,
+  CartItem,
   CategoryKind,
   Collection,
   Image,
   Money,
   Product,
   ProductAvailability,
+  ProductVariant,
 } from "lib/commerce/types";
 import {
   unstable_cacheLife as cacheLife,
   unstable_cacheTag as cacheTag,
 } from "next/cache";
+import { cookies } from "next/headers";
 
 // Respuesta de /bypass/shop (ver src/routes/services/shop.service.js en el
 // backend).
@@ -45,28 +50,46 @@ type SortParams = { sortKey?: string; reverse?: boolean };
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
-class ShopFetchError extends Error {
-  constructor(path: string, status: number) {
-    super(`/bypass/shop${path} respondió ${status}`);
-    this.name = "ShopFetchError";
+export class ShopApiError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+    readonly code?: string,
+  ) {
+    super(message);
+    this.name = "ShopApiError";
   }
 }
 
-// null = 404. Cualquier otro error lanza.
+// null = 404. Cualquier otro error lanza ShopApiError (con el `code` del
+// backend cuando lo trae, p. ej. SIN_EXISTENCIA).
 async function shopFetch<T>(
   path: string,
   params: Record<string, string | number | boolean | undefined> = {},
+  init: { method?: string; body?: unknown } = {},
 ): Promise<T | null> {
   const url = new URL(`${BACKEND_URL}/bypass/shop${path}`);
   for (const [key, value] of Object.entries(params)) {
     if (value !== undefined && value !== "") url.searchParams.set(key, String(value));
   }
   const res = await fetch(url, {
-    headers: { Authorization: `Bearer ${process.env.BACKEND_API_TOKEN ?? ""}` },
+    method: init.method ?? "GET",
+    headers: {
+      Authorization: `Bearer ${process.env.BACKEND_API_TOKEN ?? ""}`,
+      ...(init.body !== undefined ? { "Content-Type": "application/json" } : {}),
+    },
+    body: init.body !== undefined ? JSON.stringify(init.body) : undefined,
     cache: "no-store",
   });
-  if (res.status === 404) return null;
-  if (!res.ok) throw new ShopFetchError(path, res.status);
+  if (res.status === 404 && (init.method ?? "GET") === "GET") return null;
+  if (!res.ok) {
+    const err = (await res.json().catch(() => ({}))) as { error?: string; code?: string };
+    throw new ShopApiError(
+      err.error ?? `/bypass/shop${path} respondió ${res.status}`,
+      res.status,
+      err.code,
+    );
+  }
   return (await res.json()) as T;
 }
 
@@ -86,6 +109,41 @@ const escapeHtml = (s: string) =>
     ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!,
   );
 
+// Tipo de entrega por renglón. Para la UI son las dos "variantes" de cada
+// llanta, como lo eran en Shopify: id = "<sku>:<entrega>".
+export type Fulfillment = "install" | "delivery";
+const FULFILLMENT_LABEL: Record<Fulfillment, string> = {
+  install: "Instalar en sucursal",
+  delivery: "Envío a domicilio",
+};
+
+export const variantId = (sku: string, fulfillment: Fulfillment) => `${sku}:${fulfillment}`;
+
+export function parseVariantId(id: string): { sku: string; fulfillment: Fulfillment } {
+  const [sku = "", fulfillment] = id.split(":");
+  return { sku, fulfillment: fulfillment === "delivery" ? "delivery" : "install" };
+}
+
+function fulfillmentVariants(v: {
+  sku: string;
+  available: boolean;
+  quantityAvailable: number;
+  price: Money;
+  compareAtPrice: Money | null;
+  supplierSku?: string;
+}): ProductVariant[] {
+  return (Object.keys(FULFILLMENT_LABEL) as Fulfillment[]).map((f) => ({
+    id: variantId(v.sku, f),
+    title: FULFILLMENT_LABEL[f],
+    availableForSale: v.available,
+    quantityAvailable: v.quantityAvailable,
+    sku: v.supplierSku,
+    selectedOptions: [{ name: "Entrega", value: FULFILLMENT_LABEL[f] }],
+    price: v.price,
+    compareAtPrice: v.compareAtPrice,
+  }));
+}
+
 export function toProduct(p: ShopProduct): Product {
   const price = money(p.priceCents, p.currency);
   const compareAt =
@@ -103,28 +161,20 @@ export function toProduct(p: ShopProduct): Product {
     vendor: p.brand ?? undefined,
     description,
     descriptionHtml: `<p>${escapeHtml(description)}</p>`,
-    // Un solo SKU por llanta: sin opciones que elegir.
+    // Sin opciones: la única elección es la entrega (dos variantes).
     options: [],
     priceRange: {
       minVariantPrice: price,
       maxVariantPrice: compareAt ?? price,
     },
-    variants: [
-      {
-        id: p.sku,
-        title: p.title,
-        availableForSale: p.available,
-        quantityAvailable: p.stock.total,
-        sku: p.supplierSku ?? undefined,
-        selectedOptions: [
-          { name: "Medida", value: p.size ?? "" },
-          { name: "Rin", value: p.rim ?? "" },
-          { name: "Marca", value: p.brand ?? "" },
-        ],
-        price,
-        compareAtPrice: compareAt,
-      },
-    ],
+    variants: fulfillmentVariants({
+      sku: p.sku,
+      available: p.available,
+      quantityAvailable: p.stock.total,
+      price,
+      compareAtPrice: compareAt,
+      supplierSku: p.supplierSku ?? undefined,
+    }),
     featuredImage: p.images[0]!,
     images: p.images,
     seo: {
@@ -266,4 +316,198 @@ export async function getCollectionProducts({
     sortQuery(sort),
   );
   return (res?.products ?? []).map(toProduct);
+}
+
+// --- Carrito (Fase 2) ------------------------------------------------------
+
+type ShopCartLine = {
+  id: string;
+  sku: string;
+  fulfillment: Fulfillment;
+  quantity: number;
+  quantityAvailable: number;
+  available: boolean;
+  exceedsStock: boolean;
+  unitPriceCents: number;
+  compareAtPriceCents: number | null;
+  lineTotalCents: number;
+  product: {
+    handle: string;
+    title: string;
+    brand: string | null;
+    size: string | null;
+    rim: string | null;
+    image: Image | null;
+  };
+};
+
+type ShopCart = {
+  id: string;
+  status: "active" | "converted" | "abandoned";
+  phone: string | null;
+  branchCode: string | null;
+  quoteId: string | null;
+  lines: ShopCartLine[];
+  totalQuantity: number;
+  currency: string;
+  totals: { subtotalCents: number; taxCents: number; totalCents: number };
+};
+
+const DEFAULT_IMAGE_URL =
+  "https://static.vecteezy.com/system/resources/previews/008/730/042/non_2x/car-rim-and-tire-linear-icon-thin-line-illustration-automobile-wheel-contour-symbol-isolated-outline-drawing-vector.jpg";
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+export const isValidCartId = (id?: string): id is string => !!id && UUID_RE.test(id);
+
+// Atributos del carrito de Shopify ↔ campos del carrito nativo.
+const ATTRIBUTE_FIELDS = {
+  quote_id: "quoteId",
+  sucursal: "branchCode",
+  telefono: "phone",
+} as const;
+
+function attributesToFields(attributes: CartAttribute[] = []) {
+  const fields: Record<string, string> = {};
+  for (const { key, value } of attributes) {
+    const field = ATTRIBUTE_FIELDS[key as keyof typeof ATTRIBUTE_FIELDS];
+    if (field) fields[field] = value;
+  }
+  return fields;
+}
+
+function toCartItem(line: ShopCartLine, currency: string): CartItem {
+  const price = money(line.unitPriceCents, currency);
+  const compareAt =
+    line.compareAtPriceCents != null ? money(line.compareAtPriceCents, currency) : null;
+  const variants = fulfillmentVariants({
+    sku: line.sku,
+    available: line.available,
+    quantityAvailable: line.quantityAvailable,
+    price,
+    compareAtPrice: compareAt,
+  });
+  const current = variants.find((v) => v.id === variantId(line.sku, line.fulfillment))!;
+  return {
+    id: line.id,
+    quantity: line.quantity,
+    cost: { totalAmount: money(line.lineTotalCents, currency) },
+    merchandise: {
+      id: current.id,
+      title: current.title,
+      selectedOptions: current.selectedOptions,
+      product: {
+        id: line.product.handle,
+        handle: line.product.handle,
+        title: line.product.title,
+        featuredImage: line.product.image ?? {
+          url: DEFAULT_IMAGE_URL,
+          altText: line.product.title,
+          width: 800,
+          height: 800,
+        },
+        variants,
+      },
+    },
+  };
+}
+
+export function toCart(c: ShopCart): Cart {
+  const attributes: CartAttribute[] = [
+    ...(c.quoteId ? [{ key: "quote_id", value: c.quoteId }] : []),
+    ...(c.branchCode ? [{ key: "sucursal", value: c.branchCode }] : []),
+    ...(c.phone ? [{ key: "telefono", value: c.phone }] : []),
+  ];
+  return {
+    id: c.id,
+    // El checkout nativo (Fase 3) crea la sesión de pago al momento.
+    checkoutUrl: "",
+    attributes,
+    cost: {
+      // Precios con IVA incluido: el subtotal que ve el cliente es el total.
+      subtotalAmount: money(c.totals.totalCents, c.currency),
+      totalTaxAmount: money(c.totals.taxCents, c.currency),
+      totalAmount: money(c.totals.totalCents, c.currency),
+    },
+    lines: c.lines.map((l) => toCartItem(l, c.currency)),
+    totalQuantity: c.totalQuantity,
+  };
+}
+
+async function cartIdFromCookie() {
+  const id = (await cookies()).get("cartId")?.value;
+  return isValidCartId(id) ? id : undefined;
+}
+
+async function requireCartId(cartId?: string) {
+  const id = cartId ?? (await cartIdFromCookie());
+  if (!isValidCartId(id)) throw new ShopApiError("Carrito no encontrado", 404);
+  return id;
+}
+
+async function cartMutation(path: string, method: string, body?: unknown): Promise<Cart> {
+  const res = await shopFetch<{ cart: ShopCart }>(path, {}, { method, body });
+  return toCart(res!.cart);
+}
+
+// undefined si no hay carrito, expiró o ya se pagó (convertido).
+export async function getCart(): Promise<Cart | undefined> {
+  const id = await cartIdFromCookie();
+  if (!id) return undefined;
+  const res = await shopFetch<{ cart: ShopCart }>(`/carts/${id}`);
+  if (!res || res.cart.status !== "active") return undefined;
+  return toCart(res.cart);
+}
+
+export function createCart(attributes?: CartAttribute[]): Promise<Cart> {
+  return cartMutation("/carts", "POST", attributesToFields(attributes));
+}
+
+export async function addToCart(
+  lines: { merchandiseId: string; quantity: number }[],
+  cartId?: string,
+): Promise<Cart> {
+  const id = await requireCartId(cartId);
+  let cart: Cart | undefined;
+  for (const line of lines) {
+    const { sku, fulfillment } = parseVariantId(line.merchandiseId);
+    cart = await cartMutation(`/carts/${id}/items`, "POST", {
+      sku,
+      quantity: line.quantity,
+      fulfillment,
+    });
+  }
+  return cart ?? (await getCart())!;
+}
+
+export async function removeFromCart(lineIds: string[]): Promise<Cart> {
+  const id = await requireCartId();
+  let cart: Cart | undefined;
+  for (const lineId of lineIds) {
+    cart = await cartMutation(`/carts/${id}/items/${encodeURIComponent(lineId)}`, "DELETE");
+  }
+  return cart ?? (await getCart())!;
+}
+
+// Cambia cantidad y, si cambió la variante, el tipo de entrega del renglón.
+export async function updateCart(
+  lines: { id: string; merchandiseId: string; quantity: number }[],
+): Promise<Cart> {
+  const id = await requireCartId();
+  let cart: Cart | undefined;
+  for (const line of lines) {
+    const { fulfillment } = parseVariantId(line.merchandiseId);
+    cart = await cartMutation(`/carts/${id}/items/${encodeURIComponent(line.id)}`, "PATCH", {
+      quantity: line.quantity,
+      fulfillment,
+    });
+  }
+  return cart ?? (await getCart())!;
+}
+
+export async function updateCartAttributes(
+  attributes: CartAttribute[],
+  cartId?: string,
+): Promise<Cart> {
+  const id = await requireCartId(cartId);
+  return cartMutation(`/carts/${id}`, "PATCH", attributesToFields(attributes));
 }

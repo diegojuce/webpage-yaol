@@ -1,4 +1,5 @@
 "use client";
+import { cartLineVariants } from "lib/commerce/variant-utils";
 
 import { MinusIcon, PlusIcon } from "@heroicons/react/24/outline";
 import clsx from "clsx";
@@ -42,8 +43,7 @@ export function EditItemQuantityButton({
 }) {
   const [message, formAction] = useActionState(updateItemQuantity, null);
   const productAny = (item?.merchandise?.product ?? {}) as any;
-  const edges = productAny?.variants?.edges ?? [];
-  const variants = edges.map((e: any) => e.node);
+  const variants = cartLineVariants(productAny);
   const currentVariant = variants.find(
     (variant: any) => variant.id === item.merchandise.id
   );
