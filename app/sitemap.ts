@@ -35,8 +35,6 @@ function toIsoDate(value: unknown): string {
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  validateEnvironmentVariables();
-
   const routesMap = [
     "",
     "/nosotros",
@@ -53,6 +51,15 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     url: `${baseUrl}${route}`,
     lastModified: new Date().toISOString(),
   }));
+
+  // Sin variables del backend el sitemap sale solo con las páginas fijas, en
+  // lugar de tumbar el build (el sitemap se prerenderiza al compilar).
+  try {
+    validateEnvironmentVariables();
+  } catch (error) {
+    console.error("[sitemap] catálogo omitido:", error);
+    return routesMap;
+  }
 
   // Each source is isolated: a failing or slow source yields [] instead of
   // taking down the whole sitemap (keeps the endpoint at 200 with the rest).
