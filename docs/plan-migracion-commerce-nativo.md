@@ -23,8 +23,8 @@
 | Fase | Entregable | Tiempo aprox. | ¿Se puede vender? | Estado |
 |---|---|---|---|---|
 | 0 | Seguridad, cuenta Stripe e interruptor | 2–3 días | No | ✅ Terminada |
-| 1 | `lib/commerce` y sitio sin Shopify | 1 sem | No (catálogo sí) | 🟨 En curso |
-| 2 | Carrito propio | 1.5–2 sem | No | ⬜ Pendiente |
+| 1 | `lib/commerce` y sitio sin Shopify | 1 sem | No (catálogo sí) | ✅ Terminada (en staging; merge a `main` pendiente) |
+| 2 | Carrito propio | 1.5–2 sem | No | 🟨 En curso |
 | 3 | Checkout Stripe, webhook y cita | 2–3 sem | **Sí, con tarjeta** | ⬜ Pendiente |
 | 4 | CFDI 4.0 | 1.5–2 sem | Sí, con factura | ⬜ Pendiente |
 | 5 | MSI, OXXO, SPEI, reembolsos, carritos abandonados | 2–3 sem | Sí, completo | ⬜ Pendiente |
@@ -476,3 +476,7 @@ Formato: `AAAA-MM-DD · Fase N · qué se hizo / qué se decidió / qué quedó 
 - 2026-10-15 · Fase 1 · `/bypass/shop` desplegado en staging (PR #92).
   Preview de `diego-stripe` verificado contra staging. Marcas: se muestran
   todas (opción C). Falta: desplegar `/bypass/shop` en producción y merge a `main`.
+- 2026-10-15 · Fase 1 · Producción del backend no puede recibir
+  `/bypass/shop` todavía (≈30 migraciones en cola en staging). Se sigue
+  trabajando y probando contra staging; el merge de `diego-stripe` a `main`
+  (frontend) espera a que `/bypass/shop` esté en `back.yantissimo.com`.
