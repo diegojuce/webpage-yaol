@@ -155,6 +155,13 @@ El sitio navega igual con `COMMERCE_PROVIDER=off` y
 - **Orden de despliegue:** primero el backend con `/bypass/shop` en el
   ambiente al que apunta `NEXT_PUBLIC_BACKEND_URL`; después el merge del
   frontend a `main`. Si no, el catálogo sale vacío.
+- **Vercel:** Preview y Development apuntan a `https://stg-back.yantissimo.com`;
+  Production a `https://back.yantissimo.com`. `BACKEND_API_TOKEN` en los tres.
+- **Verificado en preview (2026-10-15):** búsqueda, producto con
+  recomendaciones, marca, las 4 categorías y sitemap (850 URLs).
+- **Datos sucios en `inventario.marca`:** errores de captura (CONNTINENTAL,
+  CONTIENTAL, MICHELLIN, ROADSHiNE) y valores que no son marca (14C, 89H,
+  BPB200, LT, QH505, FCR-T, BDR-HG). Corregir en el ERP.
 - `tests/accesosCobertura.test.js` del backend ya fallaba antes (falta
   `docs/autorizacion/endpoints.json` en el repo).
 
@@ -464,3 +471,6 @@ Formato: `AAAA-MM-DD · Fase N · qué se hizo / qué se decidió / qué quedó 
 - 2026-10-12 · Backend · Clonado `jfzepeda/yssm-backend` y creada la rama
   `diego-stripe` desde `staging` (9b3575f). En `staging`, `/bypass/shopify` ya
   valida `TOKEN_YAOL` (falta desplegar). Tablas nuevas con prefijo `shop_`.
+- 2026-10-15 · Fase 1 · `/bypass/shop` desplegado en staging (PR #92).
+  Preview de `diego-stripe` verificado contra staging. Falta: decidir marcas
+  en el filtro, desplegar `/bypass/shop` en producción y merge a `main`.
