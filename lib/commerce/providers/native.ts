@@ -50,11 +50,15 @@ type SortParams = { sortKey?: string; reverse?: boolean };
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
+export type UnavailableLine = { sku: string; title: string; quantityAvailable: number };
+
 export class ShopApiError extends Error {
   constructor(
     message: string,
     readonly status: number,
     readonly code?: string,
+    // Renglones sin existencia (checkout con code SIN_EXISTENCIA).
+    readonly lines?: UnavailableLine[],
   ) {
     super(message);
     this.name = "ShopApiError";
@@ -83,11 +87,16 @@ async function shopFetch<T>(
   });
   if (res.status === 404 && (init.method ?? "GET") === "GET") return null;
   if (!res.ok) {
-    const err = (await res.json().catch(() => ({}))) as { error?: string; code?: string };
+    const err = (await res.json().catch(() => ({}))) as {
+      error?: string;
+      code?: string;
+      lines?: UnavailableLine[];
+    };
     throw new ShopApiError(
       err.error ?? `/bypass/shop${path} respondió ${res.status}`,
       res.status,
       err.code,
+      err.lines,
     );
   }
   return (await res.json()) as T;
@@ -510,4 +519,68 @@ export async function updateCartAttributes(
 ): Promise<Cart> {
   const id = await requireCartId(cartId);
   return cartMutation(`/carts/${id}`, "PATCH", attributesToFields(attributes));
+}
+
+// --- Checkout con Stripe (Fase 3) -------------------------------------------
+// `returnUrl`: origen del sitio al que Stripe regresa al cliente. El pedido
+// solo se marca pagado desde el webhook del backend.
+
+export type CheckoutSession = { url: string; orderId: number };
+
+// comprar → agendar: paga el carrito de la cookie.
+export async function startCheckout(returnUrl: string): Promise<CheckoutSession> {
+  const cartId = await requireCartId();
+  const res = await shopFetch<CheckoutSession>("/checkout", {}, {
+    method: "POST",
+    body: { cartId, returnUrl },
+  });
+  return res!;
+}
+
+// agendar → pagar: liga de pago de una cotización (/pagar/<token>).
+export type QuoteLink = {
+  quoteId: number;
+  clientName: string;
+  branchCode: string;
+  open: boolean;
+  paid: boolean;
+  lines: { title: string; quantity: number; totalCents: number }[];
+  totalCents: number;
+  paidCents: number;
+  dueCents: number;
+};
+
+export async function getQuoteLink(token: string): Promise<QuoteLink | undefined> {
+  if (!isValidCartId(token)) return undefined;
+  const res = await shopFetch<{ link: QuoteLink }>(`/quote-links/${token}`);
+  return res?.link;
+}
+
+export async function startQuoteCheckout(
+  token: string,
+  returnUrl: string,
+): Promise<CheckoutSession> {
+  const res = await shopFetch<CheckoutSession>(`/quote-links/${token}/checkout`, {}, {
+    method: "POST",
+    body: { returnUrl },
+  });
+  return res!;
+}
+
+// Regreso de Stripe a /agendar-cita?session_id=cs_…
+export type CheckoutOrder = {
+  orderId: number;
+  kind: "cart" | "quote";
+  status: "pending_payment" | "paid" | "cancelled" | "expired" | "refunded" | "partially_refunded";
+  quoteId: string | null;
+  needsAppointment: boolean;
+  hasDelivery: boolean;
+};
+
+export async function getOrderBySession(sessionId: string): Promise<CheckoutOrder | undefined> {
+  if (!/^cs_[A-Za-z0-9_]+$/.test(sessionId)) return undefined;
+  const res = await shopFetch<{ order: CheckoutOrder }>(
+    `/orders/by-session/${encodeURIComponent(sessionId)}`,
+  );
+  return res?.order;
 }

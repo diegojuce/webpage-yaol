@@ -1,29 +1,33 @@
 "use server";
 import { cartLineVariants } from "lib/commerce/variant-utils";
 
-import { COMMERCE_ENABLED, COMMERCE_DISABLED_MESSAGE } from "lib/commerce-status";
+import {
+  COMMERCE_DISABLED_MESSAGE,
+  COMMERCE_ENABLED,
+  COMMERCE_PROVIDER,
+} from "lib/commerce-status";
 import { TAGS } from "lib/constants";
 import {
   addToCart,
   createCart,
   getCart,
+  getOrderBySession,
   getProductFresh,
   isValidCartId,
   removeFromCart,
+  ShopApiError,
+  startCheckout as startNativeCheckout,
   updateCart,
   updateCartAttributes,
 } from "lib/commerce";
 import { revalidateTag } from "next/cache";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 // cartId cookie: persistente para que el cart sobreviva refreshes y entre
-// sesiones del mismo navegador. El path post-pago para resolver quote_id
-// NO depende de esta cookie (la sobrescribe el useEffect de cart/modal.tsx
-// cuando Shopify devuelve null para el cart completed); el cart_token
-// viaja por localStorage. Las opciones siguen aquí porque son buena
-// práctica per-se (sin maxAge la cookie es de sesión y se descarta al
-// cerrar el navegador).
+// sesiones del mismo navegador. El regreso del pago NO depende de esta
+// cookie: Stripe regresa a /agendar-cita?session_id=… y el pedido se busca
+// por la sesión.
 const CART_COOKIE_OPTIONS = {
   maxAge: 60 * 60 * 24 * 30, // 30 days
   sameSite: "lax" as const,
@@ -459,6 +463,98 @@ export async function validateCartAvailability(): Promise<ValidateCartAvailabili
   } catch (e) {
     console.error("[actions][validateCartAvailability] error:", e);
     return { ok: false, error: "error", unavailableItems: [] };
+  }
+}
+
+// Origen del sitio (preview, producción o local) al que Stripe regresa.
+async function returnOrigin() {
+  const h = await headers();
+  const origin = h.get("origin");
+  if (origin) return origin;
+  const host = h.get("x-forwarded-host") ?? h.get("host");
+  const proto = h.get("x-forwarded-proto") ?? "https";
+  return `${proto}://${host}`;
+}
+
+export type StartCheckoutResult =
+  | { ok: true; url: string }
+  | {
+      ok: false;
+      error: "empty_cart" | "unavailable" | "missing_phone" | "missing_branch" | "error";
+      message?: string;
+      unavailableItems: UnavailableCartItem[];
+    };
+
+// "Completar pago": con el carrito nativo el backend valida stock, aparta
+// las piezas y abre Stripe Checkout; con Shopify (legado) se valida y se usa
+// su checkoutUrl.
+export async function startCheckout(): Promise<StartCheckoutResult> {
+  if (!COMMERCE_ENABLED) {
+    return { ok: false, error: "error", message: COMMERCE_DISABLED_MESSAGE, unavailableItems: [] };
+  }
+
+  if (COMMERCE_PROVIDER !== "native") {
+    const result = await validateCartAvailability();
+    return result.ok ? { ok: true, url: result.checkoutUrl } : result;
+  }
+
+  try {
+    const session = await startNativeCheckout(await returnOrigin());
+    return { ok: true, url: session.url };
+  } catch (e) {
+    if (!(e instanceof ShopApiError)) {
+      console.error("[actions][startCheckout] error:", e);
+      return { ok: false, error: "error", unavailableItems: [] };
+    }
+    switch (e.code) {
+      case "SIN_EXISTENCIA": {
+        const cart = await getCart().catch(() => undefined);
+        const requested = (sku: string) =>
+          (cart?.lines ?? [])
+            .filter((l) => l.merchandise.product.handle === sku)
+            .reduce((sum, l) => sum + l.quantity, 0);
+        revalidateTag(TAGS.cart, { expire: 0 });
+        return {
+          ok: false,
+          error: "unavailable",
+          message: e.message,
+          unavailableItems: (e.lines ?? []).map((l) => ({
+            title: l.title,
+            requested: requested(l.sku),
+            available: l.quantityAvailable,
+          })),
+        };
+      }
+      case "FALTA_TELEFONO":
+        return { ok: false, error: "missing_phone", message: e.message, unavailableItems: [] };
+      case "FALTA_SUCURSAL":
+        return { ok: false, error: "missing_branch", message: e.message, unavailableItems: [] };
+      case "CARRITO_VACIO":
+      case "CARRITO_NO_ENCONTRADO":
+      case "CARRITO_CERRADO":
+        revalidateTag(TAGS.cart, { expire: 0 });
+        return { ok: false, error: "empty_cart", unavailableItems: [] };
+      default:
+        console.error("[actions][startCheckout]", e.status, e.code, e.message);
+        return {
+          ok: false,
+          error: "error",
+          message: e.status < 500 ? e.message : undefined,
+          unavailableItems: [],
+        };
+    }
+  }
+}
+
+// Regreso de Stripe (/agendar-cita?session_id=…): estado del pedido. null si
+// la sesión no existe (o no es del proveedor nativo).
+export async function lookupCheckoutSession(sessionId: string) {
+  if (COMMERCE_PROVIDER !== "native") return null;
+  try {
+    return (await getOrderBySession(sessionId)) ?? null;
+  } catch (e) {
+    console.error("[actions][lookupCheckoutSession]", e);
+    throw new Error("No se pudo consultar el pago");
   }
 }
 

@@ -38,8 +38,8 @@ import {
   createCartAndSetCookie,
   setCartAttributes,
   setCartIdFromParam,
+  startCheckout,
   updateItemVariant,
-  validateCartAvailability,
 } from "./actions";
 import BranchList from "./branch-list";
 import BranchMap from "./branch-map";
@@ -1001,6 +1001,29 @@ export default function CartModal({ isWhite = false }) {
     });
   }, [isActive, isTriggerVisible, pathname, router, searchParams]);
 
+  // Regreso de Stripe con el pago cancelado: se abre el carrito tal cual.
+  useEffect(() => {
+    if (!isTriggerVisible) {
+      return;
+    }
+    if (searchParams.get("pago") !== "cancelado") {
+      return;
+    }
+
+    if (!isActive) {
+      activateModal();
+    }
+    setIsOpen(true);
+    toast.info("Pago cancelado. Tu carrito sigue aquí.");
+
+    const nextParams = new URLSearchParams(searchParams.toString());
+    nextParams.delete("pago");
+    const nextQuery = nextParams.toString();
+    router.replace(nextQuery ? `${pathname}?${nextQuery}` : pathname, {
+      scroll: false,
+    });
+  }, [isActive, isTriggerVisible, pathname, router, searchParams]);
+
   const openWizardForEdit = (step: 1 | 2) => {
     if (!isActive) {
       activateModal();
@@ -1246,7 +1269,7 @@ export default function CartModal({ isWhite = false }) {
                     </div>
                   </div>
                   <div className="py-4">
-                    <CheckoutButton />
+                    <CheckoutButton onMissingData={openWizardForEdit} />
                   </div>
                 </div>
               )}
@@ -1271,67 +1294,56 @@ function CloseCart({ className }: { className?: string }) {
   );
 }
 
-function CheckoutButton() {
+function CheckoutButton({
+  onMissingData,
+}: {
+  onMissingData: (step: 1 | 2) => void;
+}) {
   const [pending, setPending] = useState(false);
-  const { cart } = useCart();
 
   const handleCheckout = async () => {
     if (pending) return;
     setPending(true);
     try {
-      const result = await validateCartAvailability();
+      const result = await startCheckout();
 
       if (!result.ok) {
         if (result.error === "unavailable") {
           const details = result.unavailableItems
-            .map(
-              (it) =>
-                `${it.title}: solicitado ${it.requested}, disponible ${it.available}`,
+            .map((it) =>
+              it.requested
+                ? `${it.title}: solicitado ${it.requested}, disponible ${it.available}`
+                : `${it.title}: disponible ${it.available}`,
             )
             .join("\n");
-          toast.error("Algunos productos no están disponibles", {
-            description: details,
-          });
+          toast.error(
+            result.message ?? "Algunos productos no están disponibles",
+            {
+              description: details,
+            },
+          );
         } else if (result.error === "empty_cart") {
           toast.error("Tu carrito está vacío.");
+        } else if (result.error === "missing_phone") {
+          toast.info("Antes de pagar, déjanos tu teléfono.");
+          onMissingData(1);
+        } else if (result.error === "missing_branch") {
+          toast.info("Antes de pagar, elige tu sucursal.");
+          onMissingData(2);
         } else {
           toast.error(
-            "No se pudo validar la disponibilidad del carrito. Inténtalo de nuevo.",
+            result.message ?? "No se pudo iniciar el pago. Inténtalo de nuevo.",
           );
         }
         setPending(false);
         return;
       }
 
-      // Carrito nativo: el pago con Stripe llega en la Fase 3.
-      if (!result.checkoutUrl) {
-        toast.info("El pago en línea estará disponible muy pronto.");
-        setPending(false);
-        return;
-      }
-
-      // Persiste el cart_token en localStorage antes de redirigir al checkout
-      // de Shopify. Post-pago, Shopify marca el cart como completed y la
-      // Storefront API empieza a devolver null para ese cart id, lo cual
-      // dispara la auto-creacion de un cart nuevo (modal.tsx useEffect ~800)
-      // que sobrescribe la cookie cartId. localStorage no se ve afectado por
-      // esa logica y /agendar-cita lo usa para resolver quote_id via
-      // /bypass/yaol/quote-by-cart-token (que matchea contra el cart_token
-      // que el webhook orders/paid guarda en shopify_orders).
-      try {
-        const cartId = cart?.id ?? "";
-        const tokenMatch = cartId.match(/^gid:\/\/shopify\/Cart\/([^?]+)/);
-        if (tokenMatch?.[1]) {
-          localStorage.setItem("yaol_pending_cart_token", tokenMatch[1]);
-        }
-      } catch (storageErr) {
-        console.warn("[CheckoutButton] localStorage write failed", storageErr);
-      }
-
-      window.location.href = result.checkoutUrl;
+      // Stripe Checkout (o el checkout de Shopify con el proveedor legado).
+      window.location.href = result.url;
     } catch (e) {
-      console.error("[CheckoutButton] validation failed", e);
-      toast.error("Error al validar el carrito. Inténtalo de nuevo.");
+      console.error("[CheckoutButton] checkout failed", e);
+      toast.error("No se pudo iniciar el pago. Inténtalo de nuevo.");
       setPending(false);
     }
   };

@@ -5,15 +5,17 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { TimePicker } from "@mui/x-date-pickers/TimePicker";
 import { renderMultiSectionDigitalClockTimeView } from "@mui/x-date-pickers/timeViewRenderers";
 import { useCart } from "components/cart/cart-context";
-import { setCartAttributes } from "components/cart/actions";
+import {
+  lookupCheckoutSession,
+  setCartAttributes,
+} from "components/cart/actions";
 import { CART_BRANCHES, backendBranchCode } from "components/cart/branches";
+import { COMMERCE_PROVIDER } from "lib/commerce-status";
 import dayjs, { Dayjs } from "dayjs";
 import "dayjs/locale/es";
 import {
   fetchAvailableTimes,
   fetchClientServiceAndItems,
-  fetchQuoteByCartToken,
-  fetchQuoteByShopifyOrder,
   fetchRegisteredClient,
   saveAndSchedule,
 } from "lib/api/appointments";
@@ -288,10 +290,14 @@ type QuoteStatus =
   | "ok"
   | "not_found"
   | "unpaid"
-  | "already_scheduled";
+  | "already_scheduled"
+  // Regreso de Stripe (?session_id=):
+  | "order_confirmed" // pagado y todo va a domicilio: no hay cita que agendar
+  | "payment_not_completed" // la sesión expiró o se canceló
+  | "payment_delayed"; // el webhook no ha llegado tras los reintentos
 
-// Backoff schedule for the registered-client poll while the Shopify webhook
-// catches up. Cumulative ~31s before we give up and show not_found.
+// Backoff schedule for the polls while the Stripe webhook catches up.
+// Cumulative ~31s before we give up.
 const REGISTERED_CLIENT_RETRY_DELAYS_MS = [1000, 2000, 4000, 8000, 16000];
 
 export default function AgendarCitaPage() {
@@ -299,8 +305,7 @@ export default function AgendarCitaPage() {
   const router = useRouter();
   const pathname = usePathname();
   const quoteIdFromQuery = searchParams.get("quote_id") ?? undefined;
-  const shopifyOrderIdFromQuery =
-    searchParams.get("shopify_order_id") ?? undefined;
+  const sessionIdFromQuery = searchParams.get("session_id") ?? undefined;
   const { cart } = useCart();
 
   const [today, setToday] = useState<Date | null>(null);
@@ -313,10 +318,11 @@ export default function AgendarCitaPage() {
   const [timesLoading, setTimesLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [client, setClient] = useState<ClientData>(EMPTY_CLIENT);
-  // Empezamos en "loading" siempre: el useEffect de cart_token corre apenas
-  // monta el componente y resuelve a "ok" si no hay cookie, o avanza a
-  // "syncing"/redirect si encuentra una quote pagada.
+  // Empezamos en "loading" siempre: el useEffect de session_id resuelve a
+  // "ok" si no hay parámetros, o a "syncing"/redirect mientras confirma el
+  // pago con Stripe.
   const [quoteStatus, setQuoteStatus] = useState<QuoteStatus>("loading");
+  const [confirmedQuoteId, setConfirmedQuoteId] = useState<string | null>(null);
   const [scheduledAt, setScheduledAt] = useState<string | null>(null);
   const [rescheduling, setRescheduling] = useState(false);
   const [attempted, setAttempted] = useState(false);
@@ -359,43 +365,54 @@ export default function AgendarCitaPage() {
     }));
   }, [phoneFromCart, branchNameFromCart, branchCodeFromCart]);
 
-  // Exchange `?shopify_order_id=` for `?quote_id=` via the shopify_orders
-  // bridge table. Triggered when the Shopify Order Status Page redirects
-  // post-payment carrying only the Shopify order id. The webhook may not
-  // have inserted the bridge row yet, so retry with the same backoff used
-  // by the registered-client poll below.
+  // Regreso de Stripe: `?session_id=cs_…` → `?quote_id=`. El pedido solo
+  // pasa a pagado desde el webhook, que suele tardar unos segundos: mientras
+  // siga pendiente se reintenta con backoff. Si todo va a domicilio no hay
+  // cita: se muestra la confirmación del pedido.
   useEffect(() => {
     if (quoteIdFromQuery) return;
-    if (!shopifyOrderIdFromQuery) return;
+    if (!sessionIdFromQuery) {
+      setQuoteStatus("ok");
+      return;
+    }
 
     let cancelled = false;
     let retryTimer: ReturnType<typeof setTimeout> | null = null;
     setQuoteStatus("syncing");
 
     const attempt = (retryIdx: number) => {
-      fetchQuoteByShopifyOrder(shopifyOrderIdFromQuery)
-        .then((data) => {
+      lookupCheckoutSession(sessionIdFromQuery)
+        .then((order) => {
           if (cancelled) return;
-          if (data.exists && data.quote_id) {
+          if (order?.status === "paid" && order.quoteId) {
+            if (!order.needsAppointment) {
+              setConfirmedQuoteId(order.quoteId);
+              setQuoteStatus("order_confirmed");
+              return;
+            }
             const nextParams = new URLSearchParams(searchParams.toString());
-            nextParams.delete("shopify_order_id");
-            nextParams.set("quote_id", data.quote_id);
+            nextParams.delete("session_id");
+            nextParams.set("quote_id", order.quoteId);
             router.replace(`${pathname}?${nextParams.toString()}`, {
               scroll: false,
             });
+            return;
+          }
+          if (order?.status === "expired" || order?.status === "cancelled") {
+            setQuoteStatus("payment_not_completed");
             return;
           }
           const delay = REGISTERED_CLIENT_RETRY_DELAYS_MS[retryIdx];
           if (delay !== undefined) {
             retryTimer = setTimeout(() => attempt(retryIdx + 1), delay);
           } else {
-            setQuoteStatus("not_found");
+            setQuoteStatus("payment_delayed");
           }
         })
         .catch((error) => {
           if (cancelled) return;
-          console.warn("[agendar-cita] fetchQuoteByShopifyOrder", error);
-          setQuoteStatus("not_found");
+          console.warn("[agendar-cita] lookupCheckoutSession", error);
+          setQuoteStatus("payment_delayed");
         });
     };
 
@@ -406,90 +423,20 @@ export default function AgendarCitaPage() {
       if (retryTimer) clearTimeout(retryTimer);
     };
   }, [
-    shopifyOrderIdFromQuery,
+    sessionIdFromQuery,
     quoteIdFromQuery,
     pathname,
     router,
     searchParams,
+    retryNonce,
   ]);
-
-  // Fallback final cuando no hay quote_id ni shopify_order_id en la URL:
-  // el redirect post-checkout de Shopify Basic no acepta query params, así
-  // que el CheckoutButton escribe el cart_token a localStorage antes del
-  // redirect. Aquí lo leemos y resolvemos quote_id contra el bridge table
-  // shopify_orders.cart_token que pobla el webhook orders/paid. Usamos
-  // localStorage (no cookie) porque la cookie cartId la sobrescribe el
-  // useEffect de cart/modal.tsx cuando Shopify devuelve null para el cart
-  // completed. Limpiamos localStorage al resolver para que el siguiente
-  // visit a /agendar-cita sin params no reintente.
-  useEffect(() => {
-    if (quoteIdFromQuery) return;
-    if (shopifyOrderIdFromQuery) return;
-
-    let token: string | null = null;
-    try {
-      token = localStorage.getItem("yaol_pending_cart_token");
-    } catch (storageErr) {
-      console.warn("[agendar-cita] localStorage read failed", storageErr);
-    }
-    if (!token) {
-      setQuoteStatus("ok");
-      return;
-    }
-
-    let cancelled = false;
-    let retryTimer: ReturnType<typeof setTimeout> | null = null;
-
-    const attempt = (retryIdx: number) => {
-      fetchQuoteByCartToken(token!)
-        .then((data) => {
-          if (cancelled) return;
-          if (data.exists && data.quote_id) {
-            try {
-              localStorage.removeItem("yaol_pending_cart_token");
-            } catch {
-              /* no-op */
-            }
-            const nextParams = new URLSearchParams(searchParams.toString());
-            nextParams.set("quote_id", data.quote_id);
-            router.replace(`${pathname}?${nextParams.toString()}`, {
-              scroll: false,
-            });
-            return;
-          }
-          const delay = REGISTERED_CLIENT_RETRY_DELAYS_MS[retryIdx];
-          if (delay !== undefined) {
-            setQuoteStatus("syncing");
-            retryTimer = setTimeout(() => attempt(retryIdx + 1), delay);
-          } else {
-            // No se resolvió tras todos los reintentos: caemos al flujo
-            // manual y dejamos el token en localStorage por si un refresh
-            // posterior lo encuentra (el webhook puede haberse retrasado
-            // más de 31s).
-            setQuoteStatus("ok");
-          }
-        })
-        .catch((error) => {
-          if (cancelled) return;
-          console.warn("[agendar-cita] fetchQuoteByCartToken", error);
-          setQuoteStatus("ok");
-        });
-    };
-
-    attempt(0);
-
-    return () => {
-      cancelled = true;
-      if (retryTimer) clearTimeout(retryTimer);
-    };
-  }, [quoteIdFromQuery, shopifyOrderIdFromQuery, pathname, router, searchParams]);
 
   // Fetch registered client data + quote status. Drives the invalid-state
   // screens (not found / unpaid / already scheduled).
   //
-  // Si el webhook orders/paid todavia no ha creado la quote en BD (race
-  // entre el redirect post-pago y el procesamiento del webhook), exists
-  // viene false. Reintentamos con backoff antes de declarar not_found para
+  // Si el webhook de pago todavia no ha creado la quote en BD (race entre
+  // el redirect post-pago y el procesamiento del webhook), exists viene
+  // false. Reintentamos con backoff antes de declarar not_found para
   // que el usuario no tenga que recargar manualmente.
   useEffect(() => {
     if (!quoteIdFromQuery) {
@@ -712,7 +659,9 @@ export default function AgendarCitaPage() {
 
       const quoteId = extractQuoteId(response);
 
-      if (quoteId || client.branchCode) {
+      // El carrito nativo ya quedó pagado (convertido): no hay atributos que
+      // sincronizar.
+      if (COMMERCE_PROVIDER !== "native" && (quoteId || client.branchCode)) {
         try {
           await setCartAttributes({
             quoteId,
@@ -791,6 +740,58 @@ export default function AgendarCitaPage() {
             <button
               type="button"
               className="success__cta"
+              onClick={() => setRetryNonce((n) => n + 1)}
+            >
+              Reintentar
+            </button>
+          }
+        />
+      </div>
+    );
+  }
+
+  if (quoteStatus === "order_confirmed") {
+    return (
+      <div className="yt-agendar-page" style={{ paddingTop: "7rem" }}>
+        <StatusScreen
+          eyebrow="PAGO CONFIRMADO"
+          title="¡Gracias por tu compra!"
+          message={`Tu pedido${
+            confirmedQuoteId ? ` con folio ${confirmedQuoteId}` : ""
+          } va a domicilio. Te escribimos por WhatsApp para coordinar el envío.`}
+        />
+      </div>
+    );
+  }
+
+  if (quoteStatus === "payment_not_completed") {
+    return (
+      <div className="yt-agendar-page" style={{ paddingTop: "7rem" }}>
+        <StatusScreen
+          eyebrow="PAGO NO COMPLETADO"
+          title="Tu pago no se completó"
+          message="No se hizo ningún cargo. Tu carrito sigue disponible para intentarlo de nuevo."
+          actions={
+            <a className="cta" href="/?pago=cancelado">
+              Volver al carrito <span className="cta__arrow">→</span>
+            </a>
+          }
+        />
+      </div>
+    );
+  }
+
+  if (quoteStatus === "payment_delayed") {
+    return (
+      <div className="yt-agendar-page" style={{ paddingTop: "7rem" }}>
+        <StatusScreen
+          eyebrow="CONFIRMANDO PAGO"
+          title="Tu pago se está procesando"
+          message="Está tardando más de lo normal. Si ya pagaste, te confirmamos por WhatsApp en unos minutos."
+          actions={
+            <button
+              type="button"
+              className="cta"
               onClick={() => setRetryNonce((n) => n + 1)}
             >
               Reintentar

@@ -25,7 +25,7 @@
 | 0 | Seguridad, cuenta Stripe e interruptor | 2–3 días | No | ✅ Terminada |
 | 1 | `lib/commerce` y sitio sin Shopify | 1 sem | No (catálogo sí) | ✅ Terminada (en staging; merge a `main` pendiente) |
 | 2 | Carrito propio | 1.5–2 sem | No | ✅ Terminada (en staging) |
-| 3 | Checkout Stripe, webhook y cita | 2–3 sem | **Sí, con tarjeta** | ⬜ Siguiente |
+| 3 | Checkout Stripe, webhook y cita | 2–3 sem | **Sí, con tarjeta** | 🟨 En curso (código listo; falta desplegar en STG y probar) |
 | 4 | CFDI 4.0 | 1.5–2 sem | Sí, con factura | ⬜ Pendiente |
 | 5 | MSI, OXXO, SPEI, reembolsos, carritos abandonados | 2–3 sem | Sí, completo | ⬜ Pendiente |
 | 6 | Producción y retiro de Shopify | 1 sem | — | ⬜ Pendiente |
@@ -327,23 +327,31 @@ stripe_events (event_id TEXT PK, type, processed_at)   -- evita procesar un even
 - [x] Variables del backend: `STRIPE_SECRET_KEY` (sk_test) y
       `STRIPE_WEBHOOK_SECRET` (traída de la Fase 0). *(Agregadas en staging el
       2026-10-12; el webhook secret se llena al crear el endpoint.)*
-- [ ] Migraciones de `orders`, `order_items`, `stock_reservations` y
-      `stripe_events`.
-- [ ] `POST /shop/checkout`.
-- [ ] `POST /webhooks/stripe` con verificación de firma y control de
-      eventos repetidos.
-- [ ] Crear la cotización desde el webhook (reutilizar la lógica actual de
+- [x] Migraciones de `orders`, `order_items`, `stock_reservations` y
+      `stripe_events`. *(0162, con prefijo `shop_` y `shop_quote_links`;
+      falta aplicarla en STG.)*
+- [x] `POST /shop/checkout`. *(`/bypass/shop/checkout`.)*
+- [x] `POST /webhooks/stripe` con verificación de firma y control de
+      eventos repetidos. *(`/bypass/stripe/webhook`.)*
+- [x] Crear la cotización desde el webhook (reutilizar la lógica actual de
       `orders/paid`).
-- [ ] `GET /shop/orders/by-session/:session_id`.
+- [x] `GET /shop/orders/by-session/:session_id`.
+- [x] Liga de pago de una cotización (agendar → pagar):
+      `/bypass/shop/quote-links/:token` y su `/checkout`; la generan
+      `/api/yaol/cart/:quote_id`, `cart-by-phone` (ERP y bot) y
+      `payment-link` de la app con `SHOP_NATIVE_CHECKOUT=true`.
 
 ### Tareas: frontend
 
-- [ ] Server action `startCheckout()` y nuevo `handleCheckout` en
+- [x] Server action `startCheckout()` y nuevo `handleCheckout` en
       `components/cart/modal.tsx`. Quitar `yaol_pending_cart_token` y la
       búsqueda del `gid`.
-- [ ] Captura de nombre, teléfono, email y sucursal antes de pagar.
-- [ ] `app/agendar-cita/page.tsx`: reemplazar la búsqueda por
+- [x] Captura de nombre, teléfono, email y sucursal antes de pagar.
+      *(Teléfono y sucursal: wizard del carrito, el backend los exige.
+      Nombre, email y dirección de envío: los pide Stripe Checkout.)*
+- [x] `app/agendar-cita/page.tsx`: reemplazar la búsqueda por
       `shopify_order_id` y `cart_token` con la búsqueda por `session_id`.
+- [x] Página `app/pagar/[token]` para las ligas de pago de cotizaciones.
 - [x] Decidir si se queda el flujo "agendar primero, pagar después". Si se
       queda, el pedido se crea con el `quote_id` que ya existe.
       *(Decisión 2026-10-23: se quedan **los dos flujos**: comprar → agendar
@@ -353,9 +361,13 @@ stripe_events (event_id TEXT PK, type, processed_at)   -- evita procesar un even
 
 - [ ] Tarjetas de prueba: éxito, rechazo, 3D Secure y fondos insuficientes.
 - [ ] `stripe trigger checkout.session.completed`.
-- [ ] Un evento repetido no duplica la cotización.
-- [ ] Dos clientes comprando la última llanta al mismo tiempo.
-- [ ] Un pago que expira y libera el stock.
+- [ ] Un evento repetido no duplica la cotización. *(Cubierto en
+      `tests/shopCheckout.test.js`; falta en STG.)*
+- [ ] Dos clientes comprando la última llanta al mismo tiempo. *(Prueba
+      unitaria secuencial; la concurrencia real la da el advisory lock y se
+      prueba en STG.)*
+- [ ] Un pago que expira y libera el stock. *(Cubierto en pruebas; falta en
+      STG.)*
 
 ### Listo cuando
 
@@ -364,7 +376,52 @@ su `quote_id` y agenda; el stock y la cotización quedan bien en el backend.
 
 ### Notas y decisiones
 
-_(vacío)_
+- **Backend** (rama `diego-stripe`, commit d68ead8): migración
+  `0162_shop_pedidos_stripe.sql` (`shop_orders`, `shop_order_items`,
+  `shop_stock_reservations`, `stripe_events`, `shop_quote_links`); servicios
+  `shopCheckout.service.js` (checkout, ligas, webhook) y
+  `shopPedidoErp.service.js` (cotización, anticipo, confirmación); webhook en
+  `stripeWebhook.routes.js`. SDK `stripe@22.6.2`. 22 pruebas nuevas
+  (`tests/shopCheckout.test.js`, `tests/shopPedidoErp.test.js`).
+- **Dos flujos**, un mismo regreso (`/agendar-cita?session_id=…`):
+  - *comprar → agendar* (`kind='cart'`): el checkout congela los precios del
+    carrito y aparta el stock 36 min; la sesión de Stripe dura 31 min (el
+    mínimo de Stripe es 30). Al pagar, el webhook crea la cotización (COT,
+    pagada) con la bodega de cada llanta y su M.O. VS1 (solo en lo que se
+    instala), y registra el anticipo `YAOL-ST-<pedido>`.
+  - *agendar → pagar* (`kind='quote'`): liga `/pagar/<token>` (token UUID; el
+    `quote_id` es secuencial y no sirve como llave pública), vigente 30 días y
+    reutilizable. Muestra la cotización y abre Stripe por el saldo.
+- **Decisión (2026-10-23):** la liga cobra el **total de la cotización**
+  (servicios, piezas de proveedor y descuentos incluidos) menos los anticipos
+  vivos, en un solo concepto de Stripe. No toca los renglones.
+- **Decisión (2026-10-23):** el stock se aparta en el ERP **al pagar**: el
+  webhook corre la misma confirmación que `save-and-schedule`
+  (`confirmarPedidoYaol`), en su propia transacción. Si el motor la rechaza,
+  el pago queda registrado, el pedido se queda en COT con log, y se confirma
+  al agendar como antes.
+- Reservas: el catálogo, la disponibilidad y el carrito restan las reservas
+  vigentes de otros carritos (`shop_stock_reservations`). El checkout
+  serializa por artículo con `pg_advisory_xact_lock`. Reintentar el pago del
+  mismo carrito o cotización cancela el intento anterior y expira su sesión.
+- El webhook es idempotente: el `event_id` se guarda en `stripe_events` en la
+  misma transacción que los efectos; si algo falla responde 500, no queda
+  registrado y Stripe reintenta. Un pago que llega sobre un pedido cancelado
+  o con monto distinto se registra igual, con nota en `shop_orders.notes`.
+- Datos del cliente: teléfono y sucursal salen del carrito (el checkout los
+  exige; si faltan, el modal abre el wizard). Nombre, email y dirección (si
+  hay envío a domicilio) los captura Stripe y el webhook los copia.
+- Pedidos solo con envío a domicilio: `/agendar-cita` muestra "pago
+  confirmado" en vez del calendario.
+- Interruptor de las ligas nativas en el backend: `SHOP_NATIVE_CHECKOUT=true`
+  y `SHOP_SITE_URL` (sitio con `/pagar`). Sin ellos, las rutas del ERP, bot
+  y app responden 410 como hoy.
+- Orden de despliegue: 0162 → backend. Sin la 0162 el catálogo sigue
+  funcionando (no resta reservas) y el checkout responde 500.
+- Frontend (rama `diego-stripe`): `startCheckout` y `lookupCheckoutSession`
+  en `components/cart/actions.ts`, `app/pagar/[token]`, `?pago=cancelado`
+  reabre el carrito. Se quitaron `yaol_pending_cart_token`,
+  `fetchQuoteByCartToken` y `fetchQuoteByShopifyOrder`.
 
 ---
 
@@ -461,9 +518,12 @@ _(vacío)_
 
 ## Cómo retomar (estado al 2026-10-23)
 
-**Siguiente paso: Fase 3 (checkout con Stripe).** Decisión ya tomada: se
-quedan los dos flujos (comprar → agendar y agendar → pagar con el `quote_id`
-existente).
+**Siguiente paso: desplegar la Fase 3 en staging y probarla.** El código de
+los dos flujos (comprar → agendar y agendar → pagar) está en las ramas
+`diego-stripe` de los dos repos. Falta: merge del backend a `staging`,
+aplicar la 0162 en STG, crear el webhook en Stripe, las variables
+`STRIPE_WEBHOOK_SECRET`, `SHOP_NATIVE_CHECKOUT` y `SHOP_SITE_URL` en
+staging, y las pruebas obligatorias contra el preview.
 
 **Repos y ramas**
 - Frontend: `commerce-main` (`diegojuce/webpage-yaol`), rama `diego-stripe`.
@@ -575,3 +635,8 @@ Formato: `AAAA-MM-DD · Fase N · qué se hizo / qué se decidió / qué quedó 
 - 2026-10-23 · Fase 3 · Decisión: se quedan los dos flujos (comprar →
   agendar y agendar → pagar). Se agrega la sección "Cómo retomar" para
   continuar en otra conversación.
+- 2026-10-23 · Fase 3 · Decisiones: la liga de pago cobra el total de la
+  cotización (menos anticipos) y el stock se aparta en el ERP al pagar.
+  Código de los dos flujos listo en `diego-stripe` (backend d68ead8, 0162,
+  webhook `/bypass/stripe/webhook`; frontend con `/pagar/[token]` y regreso
+  por `session_id`). Falta: desplegar en STG, webhook de Stripe y pruebas.

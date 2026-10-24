@@ -21,6 +21,20 @@ export {
   getProducts,
 } from "./providers/native";
 
+// Checkout con Stripe: solo existe en el proveedor nativo.
+export {
+  getOrderBySession,
+  getQuoteLink,
+  ShopApiError,
+  startCheckout,
+  startQuoteCheckout,
+} from "./providers/native";
+export type {
+  CheckoutOrder,
+  QuoteLink,
+  UnavailableLine,
+} from "./providers/native";
+
 const cartProvider = () => (COMMERCE_PROVIDER === "native" ? native : shopify);
 
 // La cookie `cartId` guarda un UUID (nativo) o el gid con ?key= (Shopify).

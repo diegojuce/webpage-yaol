@@ -43,7 +43,7 @@ export type RegisteredClient = {
 };
 
 export async function fetchRegisteredClient(
-  quoteId?: string
+  quoteId?: string,
 ): Promise<RegisteredClient> {
   if (!quoteId) {
     return {
@@ -59,9 +59,9 @@ export async function fetchRegisteredClient(
   }
   const res = await fetch(
     buildUrl(
-      `/bypass/yaol/registered-client?quote_id=${encodeURIComponent(quoteId)}`
+      `/bypass/yaol/registered-client?quote_id=${encodeURIComponent(quoteId)}`,
     ),
-    { cache: "no-store" }
+    { cache: "no-store" },
   );
   if (!res.ok) {
     throw new Error("Error al obtener los datos del cliente");
@@ -79,60 +79,6 @@ export async function fetchRegisteredClient(
   };
 }
 
-// Lookup quote_id by Shopify cart_token. The orders/paid webhook stores
-// payload.cart_token in shopify_orders.cart_token; the cartId cookie on
-// shop-yaol contains that same token inside the cart GID. Used by
-// /agendar-cita to resolve quote_id post-payment when the Order Status
-// Page redirect can't carry query params (Shopify Basic plan).
-export type CartTokenLookup = { exists: boolean; quote_id?: string };
-
-export async function fetchQuoteByCartToken(
-  cartToken: string
-): Promise<CartTokenLookup> {
-  const res = await fetch(
-    buildUrl(
-      `/bypass/yaol/quote-by-cart-token?cart_token=${encodeURIComponent(
-        cartToken
-      )}`
-    ),
-    { cache: "no-store" }
-  );
-  if (!res.ok) {
-    throw new Error("Error al resolver el cart_token");
-  }
-  const data = await res.json();
-  return {
-    exists: Boolean(data.exists),
-    quote_id: data.quote_id ? String(data.quote_id) : undefined,
-  };
-}
-
-// Lookup quote_id by Shopify order_id. Backed by the shopify_orders bridge
-// table populated by the orders/paid webhook. Used by /agendar-cita to
-// resolve `?shopify_order_id=` from the Order Status Page redirect.
-export type ShopifyOrderLookup = { exists: boolean; quote_id?: string };
-
-export async function fetchQuoteByShopifyOrder(
-  shopifyOrderId: string
-): Promise<ShopifyOrderLookup> {
-  const res = await fetch(
-    buildUrl(
-      `/bypass/yaol/quote-by-shopify-order?shopify_order_id=${encodeURIComponent(
-        shopifyOrderId
-      )}`
-    ),
-    { cache: "no-store" }
-  );
-  if (!res.ok) {
-    throw new Error("Error al resolver la orden Shopify");
-  }
-  const data = await res.json();
-  return {
-    exists: Boolean(data.exists),
-    quote_id: data.quote_id ? String(data.quote_id) : undefined,
-  };
-}
-
 export type RegisteredQuote = {
   articulos: string;
   servicios: string;
@@ -140,16 +86,16 @@ export type RegisteredQuote = {
 };
 
 export async function fetchClientServiceAndItems(
-  quoteId?: string
+  quoteId?: string,
 ): Promise<RegisteredQuote> {
   if (!quoteId) {
     return { articulos: "", servicios: "", duracion: 60 };
   }
   const res = await fetch(
     buildUrl(
-      `/bypass/yaol/quote-summary?quote_id=${encodeURIComponent(quoteId)}`
+      `/bypass/yaol/quote-summary?quote_id=${encodeURIComponent(quoteId)}`,
     ),
-    { cache: "no-store" }
+    { cache: "no-store" },
   );
   if (!res.ok) {
     throw new Error("Error al obtener los servicios y artículos");
@@ -165,9 +111,9 @@ export async function fetchClientServiceAndItems(
 export async function fetchAvailableDates(branchId: string) {
   const res = await fetch(
     buildUrl(
-      `/bypass/availability/dates?branchId=${encodeURIComponent(branchId)}`
+      `/bypass/availability/dates?branchId=${encodeURIComponent(branchId)}`,
     ),
-    { cache: "no-store" }
+    { cache: "no-store" },
   );
   if (!res.ok) {
     throw new Error("Error al obtener fechas disponibles");
@@ -178,7 +124,7 @@ export async function fetchAvailableDates(branchId: string) {
 export async function fetchAvailableTimes(
   mins: string,
   suc: string,
-  date: string
+  date: string,
 ) {
   const searchParams = new URLSearchParams({
     mins,
@@ -188,7 +134,7 @@ export async function fetchAvailableTimes(
 
   const res = await fetch(
     buildUrl(`/bypass/yaol/get/availability?${searchParams.toString()}`),
-    { cache: "no-store" }
+    { cache: "no-store" },
   );
   // console.log("Fetching times with params:", { mins, suc, date });
   const data = await res.clone().json();
@@ -297,7 +243,7 @@ function buildStartAtISO(date: string, time: string): string | null {
   }
 
   const timeMatch = trimmedTime.match(
-    /^(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(am|pm)?$/i
+    /^(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(am|pm)?$/i,
   );
 
   if (!timeMatch) {
