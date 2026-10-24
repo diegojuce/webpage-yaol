@@ -557,8 +557,9 @@ Development) y `.env.local`, y las pruebas obligatorias contra el preview.
   `https://commerce-main-git-diego-stripe-adminyaols-projects.vercel.app`.
   `main` = producción (`yantissimo.com`); no se toca hasta el merge de la
   Fase 1.
-- Backend: `../yssm-backend` (`jfzepeda/yssm-backend`), rama `diego-stripe`
-  creada desde `staging`. Antes de trabajar: `git fetch` y
+- Backend: `../yssm-backend` (`jfzepeda/yssm-backend`). `diego-stripe` ya
+  se mergeó a `staging` (PR #96, con la Fase 3); el trabajo nuevo va en
+  `diego-stripe-2`, creada desde `staging` el 2026-10-24. Antes de trabajar: `git fetch` y
   `git merge --ff-only origin/staging` (o merge normal) y `pnpm install`.
   El programador del backend mergea `diego-stripe` → `staging`, aplica las
   migraciones en STG y despliega `stg-back`. No tengo credenciales de BD.
@@ -678,3 +679,6 @@ Formato: `AAAA-MM-DD · Fase N · qué se hizo / qué se decidió / qué quedó 
   Corregido: `confirm()` no acepta `returnUrl` si la sesión ya lo trae, y un
   error ahí dejaba el botón en "Procesando…". Pendiente: llave publicable en
   Vercel, despliegue en STG y webhook.
+- 2026-10-24 · Fase 3 · Backend: `diego-stripe` mergeada a `staging` (PR #96).
+  Rama nueva `diego-stripe-2` desde `staging`; las 54 pruebas del shop pasan
+  sobre el `staging` actual. Falta: aplicar la 0162 en STG, variables y deploy.
