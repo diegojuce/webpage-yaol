@@ -1269,7 +1269,10 @@ export default function CartModal({ isWhite = false }) {
                     </div>
                   </div>
                   <div className="py-4">
-                    <CheckoutButton onMissingData={openWizardForEdit} />
+                    <CheckoutButton
+                      onMissingData={openWizardForEdit}
+                      onClose={closeCart}
+                    />
                   </div>
                 </div>
               )}
@@ -1296,9 +1299,12 @@ function CloseCart({ className }: { className?: string }) {
 
 function CheckoutButton({
   onMissingData,
+  onClose,
 }: {
   onMissingData: (step: 1 | 2) => void;
+  onClose: () => void;
 }) {
+  const router = useRouter();
   const [pending, setPending] = useState(false);
 
   const handleCheckout = async () => {
@@ -1339,8 +1345,14 @@ function CheckoutButton({
         return;
       }
 
-      // Stripe Checkout (o el checkout de Shopify con el proveedor legado).
-      window.location.href = result.url;
+      if (result.url) {
+        // Checkout de Shopify (proveedor legado).
+        window.location.href = result.url;
+        return;
+      }
+      // Formulario de pago dentro del sitio.
+      onClose();
+      router.push(`/pago/${result.sessionId}`);
     } catch (e) {
       console.error("[CheckoutButton] checkout failed", e);
       toast.error("No se pudo iniciar el pago. Inténtalo de nuevo.");

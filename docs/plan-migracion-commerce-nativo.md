@@ -71,9 +71,9 @@ Leyenda: ⬜ Pendiente · 🟨 En curso · ✅ Terminada · ⛔ Bloqueada
       webhooks en local.
 - [ ] Variables del backend: `STRIPE_SECRET_KEY` y `STRIPE_WEBHOOK_SECRET`.
       *(Agregadas en staging el 2026-10-12; seguimiento en la Fase 3.)*
-- [x] ~~Variable del frontend, solo si se usa el Payment Element:~~ No aplica
-      en el MVP (Stripe Checkout alojado).
-      `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`.
+- [ ] Variable del frontend `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` (pk_test).
+      *(Ahora sí aplica: desde el 2026-10-23 el pago va dentro del sitio con
+      Stripe Elements; ver Fase 3.)*
 - [x] Convertir `COMMERCE_ENABLED` en
       `COMMERCE_PROVIDER = "off" | "shopify" | "native"`.
 
@@ -282,7 +282,7 @@ stripe_events (event_id TEXT PK, type, processed_at)   -- evita procesar un even
 ### Flujo de pago
 
 ```
-[Modal] "Completar pago"
+[Modal] "Completar pago"     (flujo de diseño original; ver la nota de abajo)
    → server action startCheckout()
    → POST /shop/checkout { cart_id, nombre, teléfono, email, sucursal }
         backend, dentro de una transacción:
@@ -315,9 +315,13 @@ stripe_events (event_id TEXT PK, type, processed_at)   -- evita procesar un even
 
 ### Decisiones tomadas
 
-- **Stripe Checkout (página alojada por Stripe)** para el MVP: menos
-  código, 3D Secure y obligaciones mínimas de seguridad de tarjetas. El
-  Payment Element embebido puede llegar después.
+- ~~Stripe Checkout (página alojada por Stripe) para el MVP.~~
+  **Cambio (2026-10-23): el pago va dentro del sitio** para que el cliente
+  no salga del flujo: Stripe Checkout Sessions en modo `ui_mode: "elements"`
+  + Payment Element en `/pago/<sesión>`, con nuestro diseño. Se conservan la
+  sesión de 30 min, el evento `expired` y el webhook; los datos de tarjeta
+  siguen en iframes de Stripe (cumplimiento mínimo, SAQ A). El 3D Secure se
+  resuelve en un modal sin salir de la página.
 - Un pedido **solo** se marca como pagado desde el webhook, nunca desde el
   `success_url`.
 - Precios en centavos enteros en todo el sistema.
@@ -418,6 +422,21 @@ su `quote_id` y agenda; el stock y la cotización quedan bien en el backend.
   y app responden 410 como hoy.
 - Orden de despliegue: 0162 → backend. Sin la 0162 el catálogo sigue
   funcionando (no resta reservas) y el checkout responde 500.
+- **Pago dentro del sitio (2026-10-23, backend 9836e4d/5c0b5ff):** la
+  sesión se crea con `ui_mode: "elements"` y devuelve `clientSecret` (se
+  guarda en `shop_orders.stripe_client_secret`); ya no hay `success_url` ni
+  `cancel_url`, solo `return_url` para pagos que necesiten redirigir. Los
+  dos flujos terminan en `/pago/<sesión>`: resumen del pedido + nombre y
+  email (nuestros campos, se guardan con
+  `PATCH /bypass/shop/orders/by-session/:id/contact`) + dirección de envío
+  (Address Element, si hay envío) + tarjeta (Payment Element). Al confirmar
+  pasa a `/agendar-cita?session_id=…`. "Volver al carrito" usa
+  `/?pago=cancelado`.
+- Stripe ya no acepta `payment_method_types` en la sesión: los métodos se
+  activan en el Dashboard (hoy: tarjeta y Link). No activar OXXO/SPEI hasta
+  la Fase 5 (el apartado dura 36 min).
+- Librerías del frontend: `@stripe/stripe-js@9.17.0` y
+  `@stripe/react-stripe-js@6.12.0` (`CheckoutElementsProvider`).
 - Frontend (rama `diego-stripe`): `startCheckout` y `lookupCheckoutSession`
   en `components/cart/actions.ts`, `app/pagar/[token]`, `?pago=cancelado`
   reabre el carrito. Se quitaron `yaol_pending_cart_token`,
@@ -520,10 +539,12 @@ _(vacío)_
 
 **Siguiente paso: desplegar la Fase 3 en staging y probarla.** El código de
 los dos flujos (comprar → agendar y agendar → pagar) está en las ramas
-`diego-stripe` de los dos repos. Falta: merge del backend a `staging`,
-aplicar la 0162 en STG, crear el webhook en Stripe, las variables
+`diego-stripe` de los dos repos, con el pago dentro del sitio (Stripe
+Elements en `/pago/<sesión>`). Falta: merge del backend a `staging`, aplicar
+la 0162 en STG, crear el webhook en Stripe, las variables
 `STRIPE_WEBHOOK_SECRET`, `SHOP_NATIVE_CHECKOUT` y `SHOP_SITE_URL` en
-staging, y las pruebas obligatorias contra el preview.
+staging, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` en Vercel (Preview y
+Development) y `.env.local`, y las pruebas obligatorias contra el preview.
 
 **Repos y ramas**
 - Frontend: `commerce-main` (`diegojuce/webpage-yaol`), rama `diego-stripe`.
@@ -640,3 +661,9 @@ Formato: `AAAA-MM-DD · Fase N · qué se hizo / qué se decidió / qué quedó 
   Código de los dos flujos listo en `diego-stripe` (backend d68ead8, 0162,
   webhook `/bypass/stripe/webhook`; frontend con `/pagar/[token]` y regreso
   por `session_id`). Falta: desplegar en STG, webhook de Stripe y pruebas.
+- 2026-10-23 · Fase 3 · Cambio: el pago va dentro del sitio (Stripe
+  Elements con Checkout Sessions `ui_mode: "elements"`) en lugar de
+  redirigir a checkout.stripe.com. Página `/pago/<sesión>` para los dos
+  flujos. Sesión de prueba validada contra la API de Stripe (sin
+  `payment_method_types`, que ya no se acepta). Falta la llave publicable en
+  Vercel.

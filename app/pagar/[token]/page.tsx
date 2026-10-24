@@ -1,7 +1,7 @@
 // agendar → pagar: liga de pago de una cotización que ya existe (la mandan el
-// bot, el ERP o la app). Muestra la cotización y abre Stripe Checkout por su
-// saldo; al pagar, Stripe regresa a /agendar-cita?session_id=… como en una
-// compra del carrito.
+// bot, el ERP o la app). Muestra la cotización; "Pagar" abre la sesión por
+// su saldo y lleva al formulario de pago del sitio (/pago/<sesión>), el mismo
+// que usa el carrito. Al pagar se sigue a /agendar-cita.
 import "../../agendar-cita/agendar-cita.css";
 
 import type { Metadata } from "next";
@@ -48,10 +48,8 @@ function Screen({
 
 export default async function PagarPage(props: {
   params: Promise<{ token: string }>;
-  searchParams: Promise<{ pago?: string }>;
 }) {
   const { token } = await props.params;
-  const { pago } = await props.searchParams;
 
   if (COMMERCE_PROVIDER !== "native") {
     return (
@@ -117,16 +115,9 @@ export default async function PagarPage(props: {
       eyebrow={`COTIZACIÓN ${link.quoteId}`}
       title={firstName ? `Hola, ${firstName}` : "Paga tu cotización"}
     >
-      {pago === "cancelado" ? (
-        <p className="success__lead">
-          El pago se canceló y no se hizo ningún cargo. Puedes intentarlo de
-          nuevo.
-        </p>
-      ) : (
-        <p className="success__lead">
-          Revisa tu cotización y paga en línea con tarjeta.
-        </p>
-      )}
+      <p className="success__lead">
+        Revisa tu cotización y paga en línea con tarjeta.
+      </p>
       <div className="success__detail">
         {link.lines.map((line, i) => (
           <div className="success__row" key={i}>

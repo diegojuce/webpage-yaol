@@ -476,8 +476,11 @@ async function returnOrigin() {
   return `${proto}://${host}`;
 }
 
+// Nativo: `sessionId` → el formulario de pago se abre en /pago/<sessionId>.
+// Shopify (legado): `url` de su checkout.
 export type StartCheckoutResult =
-  | { ok: true; url: string }
+  | { ok: true; sessionId: string; url?: undefined }
+  | { ok: true; url: string; sessionId?: undefined }
   | {
       ok: false;
       error: "empty_cart" | "unavailable" | "missing_phone" | "missing_branch" | "error";
@@ -486,8 +489,8 @@ export type StartCheckoutResult =
     };
 
 // "Completar pago": con el carrito nativo el backend valida stock, aparta
-// las piezas y abre Stripe Checkout; con Shopify (legado) se valida y se usa
-// su checkoutUrl.
+// las piezas y abre la sesión de Stripe; con Shopify (legado) se valida y se
+// usa su checkoutUrl.
 export async function startCheckout(): Promise<StartCheckoutResult> {
   if (!COMMERCE_ENABLED) {
     return { ok: false, error: "error", message: COMMERCE_DISABLED_MESSAGE, unavailableItems: [] };
@@ -500,7 +503,7 @@ export async function startCheckout(): Promise<StartCheckoutResult> {
 
   try {
     const session = await startNativeCheckout(await returnOrigin());
-    return { ok: true, url: session.url };
+    return { ok: true, sessionId: session.sessionId };
   } catch (e) {
     if (!(e instanceof ShopApiError)) {
       console.error("[actions][startCheckout] error:", e);
@@ -546,12 +549,16 @@ export async function startCheckout(): Promise<StartCheckoutResult> {
   }
 }
 
-// Regreso de Stripe (/agendar-cita?session_id=…): estado del pedido. null si
-// la sesión no existe (o no es del proveedor nativo).
+// Regreso del pago (/agendar-cita?session_id=…): estado del pedido. null si
+// la sesión no existe (o no es del proveedor nativo). Sin el client secret:
+// esto viaja al navegador.
 export async function lookupCheckoutSession(sessionId: string) {
   if (COMMERCE_PROVIDER !== "native") return null;
   try {
-    return (await getOrderBySession(sessionId)) ?? null;
+    const order = await getOrderBySession(sessionId);
+    if (!order) return null;
+    const { clientSecret: _secret, ...rest } = order;
+    return rest;
   } catch (e) {
     console.error("[actions][lookupCheckoutSession]", e);
     throw new Error("No se pudo consultar el pago");

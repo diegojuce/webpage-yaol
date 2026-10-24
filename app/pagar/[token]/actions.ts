@@ -15,10 +15,11 @@ async function returnOrigin() {
 }
 
 export type PayQuoteResult =
-  | { ok: true; url: string }
+  | { ok: true; sessionId: string }
   | { ok: false; message: string };
 
-// agendar → pagar: abre Stripe Checkout por el saldo de la cotización.
+// agendar → pagar: abre la sesión de pago por el saldo de la cotización; el
+// formulario se pinta en /pago/<sessionId>.
 export async function payQuote(token: string): Promise<PayQuoteResult> {
   if (COMMERCE_PROVIDER !== "native") {
     return {
@@ -28,7 +29,7 @@ export async function payQuote(token: string): Promise<PayQuoteResult> {
   }
   try {
     const session = await startQuoteCheckout(token, await returnOrigin());
-    return { ok: true, url: session.url };
+    return { ok: true, sessionId: session.sessionId };
   } catch (e) {
     if (e instanceof ShopApiError && e.status < 500) {
       return { ok: false, message: e.message };

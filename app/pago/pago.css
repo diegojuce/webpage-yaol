@@ -1,0 +1,183 @@
+/* =========================================================
+   PAGO — formulario de pago dentro del sitio (Stripe Elements).
+   Usa las variables y botones de agendar-cita.css; todo bajo .yt-pago.
+   ========================================================= */
+
+.yt-pago .pago-layout {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 40px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.yt-pago .pago-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+  align-items: start;
+}
+@media (min-width: 900px) {
+  .yt-pago .pago-grid {
+    grid-template-columns: minmax(0, 380px) minmax(0, 1fr);
+  }
+  .yt-pago .pago-summary {
+    position: sticky;
+    top: 120px;
+  }
+}
+
+.yt-pago .pago-summary,
+.yt-pago .pago-card {
+  background: #fff;
+  border: 1px solid #eaeaea;
+  border-radius: 24px;
+  padding: 28px 24px;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.06);
+}
+.yt-pago .pago-summary {
+  background: var(--yt-black);
+  border-color: var(--yt-black);
+  color: #fff;
+}
+.yt-pago .pago-summary .pago-section__title {
+  color: var(--yt-yellow);
+}
+
+.yt-pago .pago-section__title {
+  margin: 0 0 14px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #6b6b6b;
+}
+
+.yt-pago .pago-lines {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.yt-pago .pago-line {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 14px;
+}
+.yt-pago .pago-line__title {
+  min-width: 0;
+}
+.yt-pago .pago-line__sub {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  color: #a3a3a3;
+}
+.yt-pago .pago-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding-top: 16px;
+  font-size: 14px;
+}
+.yt-pago .pago-total strong {
+  font-size: 24px;
+  color: var(--yt-yellow);
+}
+.yt-pago .pago-back {
+  display: inline-block;
+  margin-top: 18px;
+  font-size: 13px;
+  color: #d4d4d4;
+  text-decoration: none;
+}
+.yt-pago .pago-back:hover {
+  color: #fff;
+}
+
+.yt-pago .pago-form {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+.yt-pago .pago-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Campos propios con el mismo look que los de Stripe (APPEARANCE). */
+.yt-pago .pago-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.yt-pago .pago-field__label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #6b6b6b;
+}
+.yt-pago .pago-field__input {
+  width: 100%;
+  padding: 14px;
+  border: 1px solid #e2e2e2;
+  border-radius: 12px;
+  background: #fff;
+  color: var(--yt-black);
+  font-family: inherit;
+  font-size: 15px;
+  outline: none;
+  transition:
+    border-color 0.15s var(--ease-out),
+    box-shadow 0.15s var(--ease-out);
+}
+.yt-pago .pago-field__input:focus {
+  border-color: var(--yt-yellow);
+  box-shadow: 0 0 0 3px rgba(255, 198, 0, 0.25);
+}
+.yt-pago .pago-field__input::placeholder {
+  color: #a3a3a3;
+}
+
+.yt-pago .pago-skeleton {
+  height: 160px;
+  border-radius: 12px;
+  background: linear-gradient(90deg, #f1f1ef 25%, #e8e8e6 50%, #f1f1ef 75%);
+  background-size: 200% 100%;
+  animation: ytPagoShimmer 1.2s linear infinite;
+}
+@keyframes ytPagoShimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+
+.yt-pago .pago-alert {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: #fdecea;
+  color: #b71c1c;
+  font-size: 14px;
+}
+
+.yt-pago .pago-submit {
+  width: 100%;
+  padding: 18px 24px;
+  font-size: 16px;
+}
+.yt-pago .pago-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.yt-pago .pago-secure {
+  margin: -8px 0 0;
+  text-align: center;
+  font-size: 12px;
+  color: #8a8a8a;
+}

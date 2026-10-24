@@ -522,10 +522,16 @@ export async function updateCartAttributes(
 }
 
 // --- Checkout con Stripe (Fase 3) -------------------------------------------
-// `returnUrl`: origen del sitio al que Stripe regresa al cliente. El pedido
-// solo se marca pagado desde el webhook del backend.
+// Stripe Checkout en modo `elements`: el backend abre la sesión y el sitio
+// pinta el formulario de pago en /pago/<sessionId>, sin salir a Stripe.
+// `returnUrl`: origen del sitio (solo para pagos que necesiten redirigir).
+// El pedido solo se marca pagado desde el webhook del backend.
 
-export type CheckoutSession = { url: string; orderId: number };
+export type CheckoutSession = {
+  orderId: number;
+  sessionId: string;
+  clientSecret: string;
+};
 
 // comprar → agendar: paga el carrito de la cookie.
 export async function startCheckout(returnUrl: string): Promise<CheckoutSession> {
@@ -567,14 +573,32 @@ export async function startQuoteCheckout(
   return res!;
 }
 
-// Regreso de Stripe a /agendar-cita?session_id=cs_…
+// Página de pago (/pago/<sessionId>) y regreso a /agendar-cita.
 export type CheckoutOrder = {
   orderId: number;
   kind: "cart" | "quote";
-  status: "pending_payment" | "paid" | "cancelled" | "expired" | "refunded" | "partially_refunded";
+  status:
+    | "pending_payment"
+    | "paid"
+    | "cancelled"
+    | "expired"
+    | "refunded"
+    | "partially_refunded";
   quoteId: string | null;
   needsAppointment: boolean;
   hasDelivery: boolean;
+  totalCents: number;
+  expiresAt: string;
+  customerName: string | null;
+  customerEmail: string | null;
+  lines: {
+    title: string;
+    quantity: number;
+    unitPriceCents: number;
+    fulfillment: Fulfillment | null;
+  }[];
+  // Solo mientras el pedido se puede pagar.
+  clientSecret: string | null;
 };
 
 export async function getOrderBySession(sessionId: string): Promise<CheckoutOrder | undefined> {
@@ -583,4 +607,16 @@ export async function getOrderBySession(sessionId: string): Promise<CheckoutOrde
     `/orders/by-session/${encodeURIComponent(sessionId)}`,
   );
   return res?.order;
+}
+
+// Nombre y email del formulario de pago (antes de confirmar).
+export async function updateOrderContact(
+  sessionId: string,
+  contact: { name: string; email: string },
+): Promise<void> {
+  await shopFetch(
+    `/orders/by-session/${encodeURIComponent(sessionId)}/contact`,
+    {},
+    { method: "PATCH", body: contact },
+  );
 }

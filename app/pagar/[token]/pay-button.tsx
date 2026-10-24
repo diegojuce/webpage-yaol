@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { payQuote } from "./actions";
 
@@ -10,6 +11,7 @@ export default function PayButton({
   token: string;
   label: string;
 }) {
+  const router = useRouter();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -20,7 +22,7 @@ export default function PayButton({
     try {
       const result = await payQuote(token);
       if (result.ok) {
-        window.location.href = result.url;
+        router.push(`/pago/${result.sessionId}`);
         return;
       }
       setError(result.message);

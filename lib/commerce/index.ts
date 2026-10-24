@@ -28,6 +28,7 @@ export {
   ShopApiError,
   startCheckout,
   startQuoteCheckout,
+  updateOrderContact,
 } from "./providers/native";
 export type {
   CheckoutOrder,
