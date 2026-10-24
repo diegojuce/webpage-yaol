@@ -139,28 +139,27 @@ function CheckoutForm({
     setSubmitting(true);
     setError(null);
 
-    const saved = await saveCheckoutContact(sessionId, {
-      name: cleanName,
-      email: cleanEmail,
-    });
-    if (!saved.ok) {
-      setError(saved.message);
+    const fail = (message?: string) => {
+      setError(message || "No se pudo completar el pago. Inténtalo de nuevo.");
       setSubmitting(false);
-      return;
-    }
+    };
 
-    const result = await state.checkout.confirm({
-      email: cleanEmail,
-      redirect: "if_required",
-      returnUrl: `${window.location.origin}${doneUrl}`,
-    });
-    if (result.type === "error") {
-      setError(
-        result.error.message ||
-          "No se pudo completar el pago. Inténtalo de nuevo.",
-      );
-      setSubmitting(false);
-      return;
+    try {
+      const saved = await saveCheckoutContact(sessionId, {
+        name: cleanName,
+        email: cleanEmail,
+      });
+      if (!saved.ok) return fail(saved.message);
+
+      // Sin returnUrl: ya viene en la sesión (Stripe lo rechaza si se repite).
+      const result = await state.checkout.confirm({
+        email: cleanEmail,
+        redirect: "if_required",
+      });
+      if (result.type === "error") return fail(result.error.message);
+    } catch (e) {
+      console.error("[pago] confirm", e);
+      return fail();
     }
 
     // Se queda en "procesando" mientras navega.

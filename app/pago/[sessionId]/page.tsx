@@ -25,6 +25,7 @@ const formatHour = (iso: string) =>
   new Intl.DateTimeFormat("es-MX", {
     hour: "2-digit",
     minute: "2-digit",
+    hourCycle: "h23",
     timeZone: "America/Mexico_City",
   }).format(new Date(iso));
 

@@ -72,6 +72,7 @@ Leyenda: ⬜ Pendiente · 🟨 En curso · ✅ Terminada · ⛔ Bloqueada
 - [ ] Variables del backend: `STRIPE_SECRET_KEY` y `STRIPE_WEBHOOK_SECRET`.
       *(Agregadas en staging el 2026-10-12; seguimiento en la Fase 3.)*
 - [ ] Variable del frontend `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` (pk_test).
+      *(Ya en `.env.local`; falta en Vercel Preview y Development.)*
       *(Ahora sí aplica: desde el 2026-10-23 el pago va dentro del sitio con
       Stripe Elements; ver Fase 3.)*
 - [x] Convertir `COMMERCE_ENABLED` en
@@ -364,6 +365,10 @@ stripe_events (event_id TEXT PK, type, processed_at)   -- evita procesar un even
 ### Pruebas obligatorias
 
 - [ ] Tarjetas de prueba: éxito, rechazo, 3D Secure y fondos insuficientes.
+      *(Formulario verificado en local el 2026-10-24 con sesiones reales de
+      Stripe en modo prueba y backend simulado: 4242 con envío, rechazo,
+      fondos insuficientes y 3D Secure en modal. Falta repetirlo en STG con el
+      webhook.)*
 - [ ] `stripe trigger checkout.session.completed`.
 - [ ] Un evento repetido no duplica la cotización. *(Cubierto en
       `tests/shopCheckout.test.js`; falta en STG.)*
@@ -667,3 +672,9 @@ Formato: `AAAA-MM-DD · Fase N · qué se hizo / qué se decidió / qué quedó 
   flujos. Sesión de prueba validada contra la API de Stripe (sin
   `payment_method_types`, que ya no se acepta). Falta la llave publicable en
   Vercel.
+- 2026-10-24 · Fase 3 · Formulario de pago probado en local con Playwright
+  y Stripe en modo prueba: pago aprobado (con dirección de envío), tarjeta
+  rechazada, fondos insuficientes y 3D Secure (modal dentro de la página).
+  Corregido: `confirm()` no acepta `returnUrl` si la sesión ya lo trae, y un
+  error ahí dejaba el botón en "Procesando…". Pendiente: llave publicable en
+  Vercel, despliegue en STG y webhook.
