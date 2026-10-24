@@ -24,7 +24,7 @@
 |---|---|---|---|---|
 | 0 | Seguridad, cuenta Stripe e interruptor | 2–3 días | No | ✅ Terminada |
 | 1 | `lib/commerce` y sitio sin Shopify | 1 sem | No (catálogo sí) | ✅ Terminada (en staging; merge a `main` pendiente) |
-| 2 | Carrito propio | 1.5–2 sem | No | 🟨 En curso |
+| 2 | Carrito propio | 1.5–2 sem | No | ✅ Terminada (en staging) |
 | 3 | Checkout Stripe, webhook y cita | 2–3 sem | **Sí, con tarjeta** | ⬜ Pendiente |
 | 4 | CFDI 4.0 | 1.5–2 sem | Sí, con factura | ⬜ Pendiente |
 | 5 | MSI, OXXO, SPEI, reembolsos, carritos abandonados | 2–3 sem | Sí, completo | ⬜ Pendiente |
@@ -240,9 +240,18 @@ el carrito sobrevive a un refresh y no deja pasar del stock.
   se crea al agregar el primer producto o al guardar sucursal/teléfono. Si la
   cookie apunta a un carrito expirado o pagado, se crea uno nuevo.
 - El botón de pago muestra "disponible muy pronto" hasta la Fase 3.
-- **Para probar en preview:** aplicar la 0154 en STG, merge de `diego-stripe`
-  (backend) a `staging` y `NEXT_PUBLIC_COMMERCE_PROVIDER=native` solo en
-  Preview de Vercel.
+- **Preview:** `NEXT_PUBLIC_COMMERCE_PROVIDER=native` solo en Preview de
+  Vercel. La 0154 ya está aplicada en STG y el carrito está en `staging`.
+- **Verificado en navegador (2026-10-23, Playwright contra el preview):**
+  agregar desde producto con "Envío a domicilio", wizard de teléfono y
+  sucursal (se guardan en el carrito), cambiar la entrega desde el carrito,
+  `+` topado al stock (2), el carrito sobrevive a un refresh y la cookie es
+  httpOnly con UUID. El backend tiene exactamente lo que muestra la UI.
+- **Bug corregido:** el toast de bienvenida (`duration: Infinity`) tapaba el
+  botón "Continuar al carrito" del wizard y, por el modal, no se podía
+  cerrar. Ahora se descarta al agregar al carrito.
+- **Pendiente aparte:** el mapa del wizard de sucursal muestra "API KEY
+  REQUIRED" (mapa base de Carto sin llave).
 
 ---
 
@@ -498,3 +507,6 @@ Formato: `AAAA-MM-DD · Fase N · qué se hizo / qué se decidió / qué quedó 
   `/bypass/shop` todavía (≈30 migraciones en cola en staging). Se sigue
   trabajando y probando contra staging; el merge de `diego-stripe` a `main`
   (frontend) espera a que `/bypass/shop` esté en `back.yantissimo.com`.
+- 2026-10-23 · Fase 2 · **Terminada en staging.** 0154 aplicada en STG,
+  carrito en `staging`, flujo completo verificado en el preview con
+  Playwright. Sigue la Fase 3 (checkout con Stripe).

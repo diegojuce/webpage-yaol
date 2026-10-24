@@ -4,6 +4,15 @@ import { useEffect } from "react";
 import { toast } from "sonner";
 
 export function WelcomeToast() {
+  // Al agregar al carrito se abre el wizard (modal): el toast quedaría encima
+  // del botón "Continuar al carrito" y, por el modal, ni siquiera se podría
+  // cerrar. Se descarta en ese momento.
+  useEffect(() => {
+    const dismiss = () => toast.dismiss("welcome-toast");
+    window.addEventListener("cart:item-added", dismiss);
+    return () => window.removeEventListener("cart:item-added", dismiss);
+  }, []);
+
   useEffect(() => {
     // ignore if screen height is too small
     if (window.innerHeight < 650) return;
