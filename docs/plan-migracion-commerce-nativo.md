@@ -25,7 +25,7 @@
 | 0 | Seguridad, cuenta Stripe e interruptor | 2–3 días | No | ✅ Terminada |
 | 1 | `lib/commerce` y sitio sin Shopify | 1 sem | No (catálogo sí) | ✅ Terminada (en staging; merge a `main` pendiente) |
 | 2 | Carrito propio | 1.5–2 sem | No | ✅ Terminada (en staging) |
-| 3 | Checkout Stripe, webhook y cita | 2–3 sem | **Sí, con tarjeta** | ⬜ Pendiente |
+| 3 | Checkout Stripe, webhook y cita | 2–3 sem | **Sí, con tarjeta** | ⬜ Siguiente |
 | 4 | CFDI 4.0 | 1.5–2 sem | Sí, con factura | ⬜ Pendiente |
 | 5 | MSI, OXXO, SPEI, reembolsos, carritos abandonados | 2–3 sem | Sí, completo | ⬜ Pendiente |
 | 6 | Producción y retiro de Shopify | 1 sem | — | ⬜ Pendiente |
@@ -344,8 +344,10 @@ stripe_events (event_id TEXT PK, type, processed_at)   -- evita procesar un even
 - [ ] Captura de nombre, teléfono, email y sucursal antes de pagar.
 - [ ] `app/agendar-cita/page.tsx`: reemplazar la búsqueda por
       `shopify_order_id` y `cart_token` con la búsqueda por `session_id`.
-- [ ] Decidir si se queda el flujo "agendar primero, pagar después". Si se
+- [x] Decidir si se queda el flujo "agendar primero, pagar después". Si se
       queda, el pedido se crea con el `quote_id` que ya existe.
+      *(Decisión 2026-10-23: se quedan **los dos flujos**: comprar → agendar
+      y agendar → pagar.)*
 
 ### Pruebas obligatorias
 
@@ -457,6 +459,66 @@ _(vacío)_
 
 ---
 
+## Cómo retomar (estado al 2026-10-23)
+
+**Siguiente paso: Fase 3 (checkout con Stripe).** Decisión ya tomada: se
+quedan los dos flujos (comprar → agendar y agendar → pagar con el `quote_id`
+existente).
+
+**Repos y ramas**
+- Frontend: `commerce-main` (`diegojuce/webpage-yaol`), rama `diego-stripe`.
+  Cada push genera preview en
+  `https://commerce-main-git-diego-stripe-adminyaols-projects.vercel.app`.
+  `main` = producción (`yantissimo.com`); no se toca hasta el merge de la
+  Fase 1.
+- Backend: `../yssm-backend` (`jfzepeda/yssm-backend`), rama `diego-stripe`
+  creada desde `staging`. Antes de trabajar: `git fetch` y
+  `git merge --ff-only origin/staging` (o merge normal) y `pnpm install`.
+  El programador del backend mergea `diego-stripe` → `staging`, aplica las
+  migraciones en STG y despliega `stg-back`. No tengo credenciales de BD.
+
+**Ambientes**
+- Vercel Preview/Development → `NEXT_PUBLIC_BACKEND_URL=https://stg-back.yantissimo.com`,
+  `NEXT_PUBLIC_COMMERCE_PROVIDER=native`, `BACKEND_API_TOKEN` (= `TOKEN_YAOL`).
+- Vercel Production → `https://back.yantissimo.com`, proveedor `off`.
+- Stripe: cuenta en modo prueba (`acct_1UPnVIRzetgpiCYb`), Stripe CLI
+  instalada y con `stripe login`. `STRIPE_SECRET_KEY` (sk_test) ya está en el
+  backend de staging; `STRIPE_WEBHOOK_SECRET` se llena al crear el endpoint.
+- `.env.local` del frontend apunta a `stg-back` y tiene `BACKEND_API_TOKEN`.
+
+**Lo que ya existe para construir la Fase 3**
+- Backend `/bypass/shop/*` (`src/routes/shop.routes.js`,
+  `services/shop.service.js`, `services/shopCart.service.js`): catálogo y
+  carrito con precios en centavos, IVA calculado, stock por SKU,
+  `fulfillment` install/delivery por renglón, `quote_id`/sucursal/teléfono en
+  el carrito. Pruebas: `tests/shop.test.js`, `tests/shopCart.test.js`.
+- Frontend `lib/commerce` (`providers/native.ts`): `getCart`, `addToCart`…;
+  variantes `inv-<id>:install|delivery`. El botón "Completar Pago" muestra
+  "disponible muy pronto" cuando `checkoutUrl` está vacío
+  (`components/cart/modal.tsx`, `handleCheckout`).
+- Flujo actual post-pago de Shopify a reemplazar: `app/agendar-cita/page.tsx`
+  (busca por `shopify_order_id` / `cart_token`) y el webhook `orders/paid`
+  del backend (`/bypass/yaol/orders/paid`, tabla `shopify_orders`).
+
+**Pruebas de navegador:** Playwright quedó en el scratchpad de la sesión
+anterior (temporal). Para repetir, instalar `playwright@1.49.1` en una
+carpeta temporal y abrir el preview; poner la cookie `welcome-toast=2` si no
+se quiere el toast de bienvenida.
+
+**Pendientes fuera del plan**
+- Merge de la Fase 1 a `main`: espera a que `/bypass/shop` esté en
+  `back.yantissimo.com` (producción del backend tiene ~30 migraciones en
+  cola).
+- `www.yantissimo.com` responde 525 (SSL Cloudflare ↔ origen).
+- Mapa del wizard de sucursal: "API KEY REQUIRED" (mapa base de Carto).
+- Marcas mal capturadas en `inventario.marca` (ver notas de la Fase 1).
+- `tests/accesosCobertura.test.js` del backend falla desde antes (falta
+  `docs/autorizacion/endpoints.json`).
+- La numeración de migraciones es compartida con otros desarrolladores:
+  confirmar el siguiente número libre en `src/sql/` antes de crear una.
+
+---
+
 ## Riesgos principales
 
 - **Fase 3:** que el webhook procese dos veces el mismo evento y el apartado
@@ -510,3 +572,6 @@ Formato: `AAAA-MM-DD · Fase N · qué se hizo / qué se decidió / qué quedó 
 - 2026-10-23 · Fase 2 · **Terminada en staging.** 0154 aplicada en STG,
   carrito en `staging`, flujo completo verificado en el preview con
   Playwright. Sigue la Fase 3 (checkout con Stripe).
+- 2026-10-23 · Fase 3 · Decisión: se quedan los dos flujos (comprar →
+  agendar y agendar → pagar). Se agrega la sección "Cómo retomar" para
+  continuar en otra conversación.
