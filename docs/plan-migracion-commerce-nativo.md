@@ -25,8 +25,8 @@
 | 0 | Seguridad, cuenta Stripe e interruptor | 2–3 días | No | ✅ Terminada |
 | 1 | `lib/commerce` y sitio sin Shopify | 1 sem | No (catálogo sí) | ✅ Terminada (en staging; merge a `main` pendiente) |
 | 2 | Carrito propio | 1.5–2 sem | No | ✅ Terminada (en staging) |
-| 3 | Checkout Stripe, webhook y cita | 2–3 sem | **Sí, con tarjeta** | 🟨 En curso (código listo; falta desplegar en STG y probar) |
-| 4 | CFDI 4.0 | 1.5–2 sem | Sí, con factura | ⬜ Pendiente |
+| 3 | Checkout Stripe, webhook y cita | 2–3 sem | **Sí, con tarjeta** | ✅ Terminada (en staging; prueba de la liga de pago pendiente para el final) |
+| 4 | CFDI 4.0 | 1.5–2 sem | Sí, con factura | ⬜ Siguiente |
 | 5 | MSI, OXXO, SPEI, reembolsos, carritos abandonados | 2–3 sem | Sí, completo | ⬜ Pendiente |
 | 6 | Producción y retiro de Shopify | 1 sem | — | ⬜ Pendiente |
 
@@ -543,16 +543,19 @@ _(vacío)_
 
 ---
 
-## Cómo retomar (estado al 2026-10-23)
+## Cómo retomar (estado al 2026-10-25)
 
-**Siguiente paso: desplegar la Fase 3 en staging y probarla.** El código de
-los dos flujos (comprar → agendar y agendar → pagar) está en las ramas
-`diego-stripe` de los dos repos, con el pago dentro del sitio (Stripe
-Elements en `/pago/<sesión>`). Falta: merge del backend a `staging`, aplicar
-la 0162 en STG, crear el webhook en Stripe, las variables
-`STRIPE_WEBHOOK_SECRET`, `SHOP_NATIVE_CHECKOUT` y `SHOP_SITE_URL` en
-staging, `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` en Vercel (Preview y
-Development) y `.env.local`, y las pruebas obligatorias contra el preview.
+**Siguiente paso: Fase 4 (CFDI 4.0).** La Fase 3 está en staging y verificada
+de punta a punta para comprar → agendar (pago dentro del sitio con Stripe
+Elements → webhook → cotización pagada y confirmada → cita agendada).
+
+**Pendientes de la Fase 3, para el final (antes de producción):**
+- Probar la liga de pago de una cotización (agendar → pagar): pedir al
+  programador una liga `/pagar/<token>` de STG (`GET /api/yaol/cart/:quote_id`).
+  Por decisión del 2026-10-25 se da por buena hasta entonces.
+- Limpiar en el ERP de STG los datos de prueba: cotización 11179 y su cita
+  (lunes 26-oct 10:00, Constitución), que tienen apartada la llanta inv-280.
+- Desactivar Link en Métodos de pago de Stripe (recomendado).
 
 **Repos y ramas**
 - Frontend: `commerce-main` (`diegojuce/webpage-yaol`), rama `diego-stripe`.
@@ -703,3 +706,6 @@ Formato: `AAAA-MM-DD · Fase N · qué se hizo / qué se decidió / qué quedó 
   (pedido web + id de Stripe). Pendiente: probar la liga de pago
   (agendar → pagar) y cancelar en el ERP los datos de prueba (cotización
   11179 y su cita).
+- 2026-10-25 · Fase 3 · **Terminada en staging.** La prueba de la liga de pago
+  (agendar → pagar) se deja para el final, antes de producción; se asume
+  correcta (cubierta por pruebas unitarias). Sigue la Fase 4 (CFDI 4.0).
