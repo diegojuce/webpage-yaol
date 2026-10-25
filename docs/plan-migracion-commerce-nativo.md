@@ -367,16 +367,19 @@ stripe_events (event_id TEXT PK, type, processed_at)   -- evita procesar un even
 - [ ] Tarjetas de prueba: éxito, rechazo, 3D Secure y fondos insuficientes.
       *(Formulario verificado en local el 2026-10-24 con sesiones reales de
       Stripe en modo prueba y backend simulado: 4242 con envío, rechazo,
-      fondos insuficientes y 3D Secure en modal. Falta repetirlo en STG con el
-      webhook.)*
-- [ ] `stripe trigger checkout.session.completed`.
-- [ ] Un evento repetido no duplica la cotización. *(Cubierto en
-      `tests/shopCheckout.test.js`; falta en STG.)*
-- [ ] Dos clientes comprando la última llanta al mismo tiempo. *(Prueba
-      unitaria secuencial; la concurrencia real la da el advisory lock y se
-      prueba en STG.)*
-- [ ] Un pago que expira y libera el stock. *(Cubierto en pruebas; falta en
-      STG.)*
+      fondos insuficientes y 3D Secure en modal. En STG 2026-10-25: 4242 en
+      el preview → webhook → cotización 11179 pagada y confirmada, carrito
+      convertido, stock apartado.)*
+- [x] ~~`stripe trigger checkout.session.completed`~~ → eventos reales de
+      pagos de prueba en STG (el trigger genera sesiones sin pedido, que el
+      webhook ignora).
+- [x] Un evento repetido no duplica la cotización. *(STG 2026-10-25:
+      `stripe events resend` del pago → sigue la cotización 11179, sin otra.)*
+- [x] Dos clientes comprando la última llanta al mismo tiempo. *(STG
+      2026-10-25: dos checkouts en paralelo por inv-281 (stock 1) → uno 201,
+      otro 409 SIN_EXISTENCIA.)*
+- [x] Un pago que expira y libera el stock. *(STG 2026-10-25: sesión
+      expirada → pedido `expired`, inv-281 regresa a 1.)*
 
 ### Listo cuando
 
@@ -682,3 +685,12 @@ Formato: `AAAA-MM-DD · Fase N · qué se hizo / qué se decidió / qué quedó 
 - 2026-10-24 · Fase 3 · Backend: `diego-stripe` mergeada a `staging` (PR #96).
   Rama nueva `diego-stripe-2` desde `staging`; las 54 pruebas del shop pasan
   sobre el `staging` actual. Falta: aplicar la 0162 en STG, variables y deploy.
+- 2026-10-25 · Fase 3 · Desplegada en STG (0162 aplicada, variables de Stripe
+  en stg-back). Probado contra STG: pago 4242 desde el preview → webhook →
+  cotización 11179 (pagada, cliente "Ana Prueba", stock apartado) y regreso a
+  `/agendar-cita?quote_id=11179`; evento repetido sin duplicar; dos clientes
+  por la última pieza (uno 409); expiración que libera el stock.
+  **Bloqueo:** CORS de stg-back no acepta el dominio del preview, así que
+  `/agendar-cita` no carga los datos de la cotización en el preview (en
+  `yantissimo.com` sí). Se arregla con `CORS_EXTRA_ORIGINS`. Pendiente:
+  agendar la cita en el preview y probar la liga de pago (agendar → pagar).
