@@ -694,3 +694,12 @@ Formato: `AAAA-MM-DD · Fase N · qué se hizo / qué se decidió / qué quedó 
   `/agendar-cita` no carga los datos de la cotización en el preview (en
   `yantissimo.com` sí). Se arregla con `CORS_EXTRA_ORIGINS`. Pendiente:
   agendar la cita en el preview y probar la liga de pago (agendar → pagar).
+- 2026-10-25 · Fase 3 · Con `CORS_EXTRA_ORIGINS` en stg-back, `/agendar-cita`
+  del preview carga la cotización 11179 y agenda (lunes 26 · 10:00,
+  Constitución; `save-and-schedule` 200; el documento ya venía `confirmed`
+  con stock apartado desde el pago). **Comprar → agendar verificado de punta
+  a punta en STG.** Corregido: `/agendar-cita` mandaba
+  `additional_notes: "Instalación incluida"` y borraba la nota del pago
+  (pedido web + id de Stripe). Pendiente: probar la liga de pago
+  (agendar → pagar) y cancelar en el ERP los datos de prueba (cotización
+  11179 y su cita).

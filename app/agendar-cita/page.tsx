@@ -648,7 +648,8 @@ export default function AgendarCitaPage() {
         client_name: client.nombre,
         phone: client.telefono,
         sucursal: client.branchCode,
-        additional_notes: client.servicios,
+        // Sin additional_notes: el backend las conserva (traen el pedido web y
+        // el pago de Stripe); "servicios" ya sale de la misma cotización.
         start_at: startAt,
         duration_minutes: client.duracion,
         // When the quote already exists (paid), items live in the DB from
