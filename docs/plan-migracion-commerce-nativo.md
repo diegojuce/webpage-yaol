@@ -27,7 +27,7 @@
 | 2 | Carrito propio | 1.5–2 sem | No | ✅ Terminada (en staging) |
 | 3 | Checkout Stripe, webhook y cita | 2–3 sem | **Sí, con tarjeta** | ✅ Terminada (en staging; prueba de la liga de pago pendiente para el final) |
 | 3.5 | Ajuste de flujo: checkout en pasos (`/pago`) | 2–3 días | Sí | ✅ Terminada (en staging) |
-| 4 | CFDI 4.0 | 1.5–2 sem | Sí, con factura | 🟨 En curso (código listo; falta STG) |
+| 4 | CFDI 4.0 | 1.5–2 sem | Sí, con factura | 🟨 En curso (en STG; falta probar la adopción) |
 | 5 | MSI, OXXO, SPEI, reembolsos, carritos abandonados | 2–3 sem | Sí, completo | ⬜ Pendiente |
 | 6 | Producción y retiro de Shopify | 1 sem | — | ⬜ Pendiente |
 
@@ -531,9 +531,15 @@ cita se elige ANTES de pagar.
 - [x] ~~Enviar PDF y XML por WhatsApp o correo~~ → descarga en la
       confirmación (decisión 2026-10-26).
 - [x] Claves SAT de producto y servicio: las del ERP (`cat_articulos`).
-- [ ] Deploy en STG (0182 + backend `diego-stripe-3` + frontend) y prueba
-      con Facturapi en modo prueba: timbrar, descargar, cobrar en sucursal
-      (adopción) y que no entre a la global.
+- [x] Deploy en STG (0182 + backend `diego-stripe-3` + frontend) y prueba
+      con Facturapi en modo prueba. *(2026-10-26: compra con envío en el
+      preview, pago 4242 → cotización 11204 → factura WEB-1, UUID
+      e9801f57-63d2-4ac7-9a86-1c50d5304b22: PUE, forma 04, receptor
+      EKU9003173C9 régimen 601 uso G03, llanta con clave 25172504/H87, total
+      $1,190.00 con IVA $164.14; PDF y XML descargados.)*
+- [ ] Probar la adopción: cobrar la cotización 11204 en el ERP de STG
+      ("Vender") y revisar que la remisión quede con la factura WEB-1
+      timbrada y fuera de la global.
 
 ### Notas y decisiones
 
@@ -662,8 +668,9 @@ _(vacío)_
 
 ## Cómo retomar (estado al 2026-10-26)
 
-**Siguiente paso: desplegar la Fase 4 en STG y probarla** (0182 → backend
-`diego-stripe-3` → frontend; Facturapi en modo prueba). Después, Fase 5.
+**Siguiente paso: probar la adopción de la factura web en el ERP de STG**
+(cobrar la cotización 11204, factura WEB-1). La Fase 4 ya está en STG y la
+factura se timbra y descarga desde el preview. Después, Fase 5.
 La Fase 3.5 (checkout en pasos en `/pago`) está en staging y probada. La Fase 3 está en staging y verificada
 de punta a punta para comprar → agendar (pago dentro del sitio con Stripe
 Elements → webhook → cotización pagada y confirmada → cita agendada).
@@ -675,7 +682,8 @@ Elements → webhook → cotización pagada y confirmada → cita agendada).
 - Limpiar en el ERP de STG los datos de prueba: cotización 11179 y su cita
   (lunes 26-oct 10:00, Constitución), que tienen apartada la llanta inv-280;
   cotizaciones 11199 (cita jueves 29-oct 10:00, Constitución) y 11200
-  (envío), con inv-17 apartada.
+  (envío), con inv-17 apartada; cotización 11204 (envío, inv-284, factura
+  web WEB-1 de prueba).
 - Desactivar Link en Métodos de pago de Stripe (recomendado).
 
 **Repos y ramas**
@@ -847,3 +855,8 @@ Formato: `AAAA-MM-DD · Fase N · qué se hizo / qué se decidió / qué quedó 
   el ERP adopta el CFDI web al cobrar, aplica a carrito y ligas. Código listo
   (backend `diego-stripe-3` con la 0182; frontend en `diego-stripe`) y
   probado en local. Falta: deploy y prueba en STG.
+- 2026-10-26 · Fase 4 · En STG (backend desplegado con la 0182). Probado en
+  el preview: compra con envío, pago 4242, factura WEB-1 (PUE, forma 04,
+  RFC de prueba EKU9003173C9) timbrada en Facturapi de prueba y descargada
+  en PDF y XML. Falta: cobrar la cotización 11204 en el ERP y revisar la
+  adopción.
