@@ -31,6 +31,7 @@ export {
   updateOrderContact,
 } from "./providers/native";
 export type {
+  CheckoutDetails,
   CheckoutOrder,
   QuoteLink,
   UnavailableLine,

@@ -5,7 +5,7 @@ import { AddToCart } from "components/cart/add-to-cart";
 import Price from "components/price";
 import { Product } from "lib/commerce/types";
 import { useState } from "react";
-import { VariantSelector } from "./variant-selector";
+import { BenefitsCard } from "./benefits-card";
 
 export function ProductDescription({
   product,
@@ -42,16 +42,10 @@ export function ProductDescription({
           </div>
         </div>
       </div>
-{/*  */}
-      <div className="flex lg:flex-row ">
-        <VariantSelector
-          options={product.options}
-          variants={product.variants}
-        />
-      </div>
 
       <AddToCart product={product} />
       {/* <PaymentOptions product={product} /> */}
+      <BenefitsCard />
       {productDescriptions.length > 0 ? (
         <div className="relative my-6 rounded-sm bg-neutral-100 rounded-xl px-5 py-3 shadow-sm">
           <div className="relative pr-10">

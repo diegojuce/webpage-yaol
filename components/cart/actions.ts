@@ -17,6 +17,7 @@ import {
   removeFromCart,
   ShopApiError,
   startCheckout as startNativeCheckout,
+  type CheckoutDetails,
   updateCart,
   updateCartAttributes,
 } from "lib/commerce";
@@ -476,11 +477,11 @@ async function returnOrigin() {
   return `${proto}://${host}`;
 }
 
-// Nativo: `sessionId` → el formulario de pago se abre en /pago/<sessionId>.
-// Shopify (legado): `url` de su checkout.
+// Nativo: `sessionId` (y `clientSecret` para pintar el Payment Element en
+// /pago). Shopify (legado): `url` de su checkout.
 export type StartCheckoutResult =
-  | { ok: true; sessionId: string; url?: undefined }
-  | { ok: true; url: string; sessionId?: undefined }
+  | { ok: true; sessionId: string; clientSecret: string; url?: undefined }
+  | { ok: true; url: string; sessionId?: undefined; clientSecret?: undefined }
   | {
       ok: false;
       error: "empty_cart" | "unavailable" | "missing_phone" | "missing_branch" | "error";
@@ -488,10 +489,12 @@ export type StartCheckoutResult =
       unavailableItems: UnavailableCartItem[];
     };
 
-// "Completar pago": con el carrito nativo el backend valida stock, aparta
-// las piezas y abre la sesión de Stripe; con Shopify (legado) se valida y se
-// usa su checkoutUrl.
-export async function startCheckout(): Promise<StartCheckoutResult> {
+// Paso de pago de /pago: con el carrito nativo el backend valida stock, aparta
+// las piezas y abre la sesión de Stripe con la entrega elegida (`details`);
+// con Shopify (legado) se valida y se usa su checkoutUrl.
+export async function startCheckout(
+  details?: CheckoutDetails,
+): Promise<StartCheckoutResult> {
   if (!COMMERCE_ENABLED) {
     return { ok: false, error: "error", message: COMMERCE_DISABLED_MESSAGE, unavailableItems: [] };
   }
@@ -502,8 +505,12 @@ export async function startCheckout(): Promise<StartCheckoutResult> {
   }
 
   try {
-    const session = await startNativeCheckout(await returnOrigin());
-    return { ok: true, sessionId: session.sessionId };
+    const session = await startNativeCheckout(await returnOrigin(), details);
+    return {
+      ok: true,
+      sessionId: session.sessionId,
+      clientSecret: session.clientSecret,
+    };
   } catch (e) {
     if (!(e instanceof ShopApiError)) {
       console.error("[actions][startCheckout] error:", e);

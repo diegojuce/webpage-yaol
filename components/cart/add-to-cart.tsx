@@ -163,14 +163,13 @@ export function AddToCart({ product }: { product: Product }) {
       (option) => option.value === state[option.name.toLowerCase()]
     )
   );
-  // If a variantId is explicitly chosen via the two-variant toggle, prefer it.
-  const chosenVariantIdFromState = normalizeVariantId(state["variantId"]);
+  // La entrega (instalar o enviar) se elige en el checkout (/pago): sin
+  // opciones, se agrega la primera variante.
   const defaultVariantId = normalizeVariantId(variants[0]?.id);
   const variantIdFromOptions = variant
     ? normalizeVariantId(variant.id)
     : undefined;
-  const selectedVariantId =
-    chosenVariantIdFromState || variantIdFromOptions || defaultVariantId;
+  const selectedVariantId = variantIdFromOptions || defaultVariantId;
   const finalVariant = variants.find(
     (variant) => normalizeVariantId(variant.id) === selectedVariantId
   );
@@ -420,7 +419,7 @@ export function AddToCart({ product }: { product: Product }) {
     if (quantity > availableQuantity) {
       setQuantity(availableQuantity);
     }
-  }, [availableQuantity, quantity, setQuantity, chosenVariantIdFromState]);
+  }, [availableQuantity, quantity, setQuantity]);
 
   useEffect(() => {
     return () => {

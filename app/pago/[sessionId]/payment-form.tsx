@@ -1,12 +1,11 @@
 "use client";
 
-// Formulario de pago dentro del sitio: Stripe Checkout en modo `elements`.
+// Formulario de pago de las ligas de cotización (agendar → pagar): Stripe
+// Checkout en modo `elements`. El carrito paga en /pago (checkout.tsx).
 // Los campos de tarjeta (y la dirección, si hay envío) son iframes de Stripe
 // con nuestro estilo; nombre y email son nuestros. confirm() resuelve el 3D
 // Secure en un modal, sin salir de la página, y al terminar se va a
 // /agendar-cita?session_id=… (el pedido lo marca pagado el webhook).
-import type { Appearance } from "@stripe/stripe-js";
-import { loadStripe } from "@stripe/stripe-js";
 import {
   CheckoutElementsProvider,
   PaymentElement,
@@ -15,51 +14,8 @@ import {
 } from "@stripe/react-stripe-js/checkout";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, type FormEvent } from "react";
+import { APPEARANCE_LIGHT, getStripe, PUBLISHABLE_KEY } from "../stripe";
 import { saveCheckoutContact } from "./actions";
-
-const PUBLISHABLE_KEY = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY ?? "";
-
-let stripePromise: ReturnType<typeof loadStripe> | null = null;
-const getStripe = () =>
-  (stripePromise ??= loadStripe(PUBLISHABLE_KEY, { locale: "es-419" }));
-
-// Misma paleta que /agendar-cita (amarillo #ffc600 sobre negro #0f0f0f).
-const APPEARANCE: Appearance = {
-  theme: "stripe",
-  variables: {
-    colorPrimary: "#0f0f0f",
-    colorBackground: "#ffffff",
-    colorText: "#0f0f0f",
-    colorTextSecondary: "#6b6b6b",
-    colorDanger: "#e53935",
-    fontFamily: 'Inter, system-ui, -apple-system, "Segoe UI", sans-serif',
-    fontSizeBase: "15px",
-    borderRadius: "12px",
-    spacingUnit: "4px",
-  },
-  rules: {
-    ".Input": {
-      border: "1px solid #e2e2e2",
-      boxShadow: "none",
-      padding: "14px",
-    },
-    ".Input:focus": {
-      border: "1px solid #ffc600",
-      boxShadow: "0 0 0 3px rgba(255, 198, 0, 0.25)",
-    },
-    ".Label": {
-      fontSize: "11px",
-      fontWeight: "700",
-      textTransform: "uppercase",
-      letterSpacing: "0.12em",
-      color: "#6b6b6b",
-    },
-    ".Tab--selected": {
-      borderColor: "#ffc600",
-      boxShadow: "0 0 0 1px #ffc600",
-    },
-  },
-};
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -76,7 +32,7 @@ export default function PaymentForm(props: Props) {
   const options = useMemo(
     () => ({
       clientSecret: props.clientSecret,
-      elementsOptions: { appearance: APPEARANCE },
+      elementsOptions: { appearance: APPEARANCE_LIGHT },
     }),
     [props.clientSecret],
   );

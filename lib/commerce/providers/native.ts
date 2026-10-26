@@ -533,12 +533,37 @@ export type CheckoutSession = {
   clientSecret: string;
 };
 
-// comprar → agendar: paga el carrito de la cookie.
-export async function startCheckout(returnUrl: string): Promise<CheckoutSession> {
+// Lo que el checkout del sitio (/pago) pide antes de pagar; vale para todo
+// el pedido. 'install': sucursal y la hora de la cita (el webhook la agenda
+// al pagar). 'delivery': dirección de envío.
+export type CheckoutDetails = {
+  name: string;
+  phone: string;
+} & (
+  | { fulfillment: "install"; branchCode: string; startAt: string }
+  | {
+      fulfillment: "delivery";
+      address: {
+        line1: string;
+        line2: string;
+        city: string;
+        state: string;
+        postalCode: string;
+        references: string;
+      };
+    }
+);
+
+// comprar → agendar: paga el carrito de la cookie. Sin `details`, la entrega
+// va por renglón (checkout anterior).
+export async function startCheckout(
+  returnUrl: string,
+  details?: CheckoutDetails,
+): Promise<CheckoutSession> {
   const cartId = await requireCartId();
   const res = await shopFetch<CheckoutSession>("/checkout", {}, {
     method: "POST",
-    body: { cartId, returnUrl },
+    body: { cartId, returnUrl, ...details },
   });
   return res!;
 }
@@ -591,6 +616,24 @@ export type CheckoutOrder = {
   expiresAt: string;
   customerName: string | null;
   customerEmail: string | null;
+  // Checkout del sitio: entrega elegida antes de pagar (null en los demás).
+  fulfillment: Fulfillment | null;
+  branchCode: string | null;
+  appointment: {
+    startAt: string;
+    status: "pending" | "scheduled" | "failed";
+  } | null;
+  shippingAddress: {
+    name?: string;
+    address?: {
+      line1?: string;
+      line2?: string;
+      city?: string;
+      state?: string;
+      postal_code?: string;
+    };
+    references?: string;
+  } | null;
   lines: {
     title: string;
     quantity: number;

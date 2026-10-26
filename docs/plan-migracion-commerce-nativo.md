@@ -26,6 +26,7 @@
 | 1 | `lib/commerce` y sitio sin Shopify | 1 sem | No (catálogo sí) | ✅ Terminada (en staging; merge a `main` pendiente) |
 | 2 | Carrito propio | 1.5–2 sem | No | ✅ Terminada (en staging) |
 | 3 | Checkout Stripe, webhook y cita | 2–3 sem | **Sí, con tarjeta** | ✅ Terminada (en staging; prueba de la liga de pago pendiente para el final) |
+| 3.5 | Ajuste de flujo: checkout en pasos (`/pago`) | 2–3 días | Sí | 🟨 Código listo; falta deploy del backend (0180) y prueba en STG |
 | 4 | CFDI 4.0 | 1.5–2 sem | Sí, con factura | ⬜ Siguiente |
 | 5 | MSI, OXXO, SPEI, reembolsos, carritos abandonados | 2–3 sem | Sí, completo | ⬜ Pendiente |
 | 6 | Producción y retiro de Shopify | 1 sem | — | ⬜ Pendiente |
@@ -452,6 +453,57 @@ su `quote_id` y agenda; el stock y la cotización quedan bien en el backend.
 
 ---
 
+## Fase 3.5 · Ajuste de flujo: checkout en pasos (2026-10-26)
+
+**Decisión (2026-10-26):** el flujo pasa a ser agregar al carrito →
+"Completar pago" → `/pago`: **tus datos** (nombre y teléfono) → **cita o
+envío** (sucursal, día y hora / dirección) → **pago** → **confirmación**. La
+cita se elige ANTES de pagar.
+
+### Tareas
+
+- [x] Producto: sin el switch "Recoger en sucursal / Envío a domicilio"; las
+      tarjetas de beneficios y la de envío se fusionan en una sola
+      (`components/product/benefits-card.tsx`) antes de la descripción. Se
+      borró `variant-selector.tsx`.
+- [x] Agregar al carrito sin fricción: ya no abre el wizard de teléfono y
+      sucursal ni el carrito; solo la animación del ícono.
+- [x] Carrito: sin selector de entrega por renglón ni la tarjeta "Tu
+      sucursal". "Completar pago" lleva a `/pago`. Se borraron
+      `branch-map.tsx` y `branch-list.tsx` (con ellos el pendiente del mapa
+      "API KEY REQUIRED").
+- [x] `/pago` (`app/pago/page.tsx`, `checkout.tsx`): tarjeta de pasos con el
+      estilo de `/club`; resumen con imagen de cada llanta; horarios de
+      `/bypass/yaol/get/availability` (60 min); Payment Element en tema
+      oscuro; confirmación en `/pago?session_id=…` (sobrevive a recargas).
+- [x] Backend (`diego-stripe-2`): migración `0180_shop_pedido_entrega.sql`
+      (`shop_orders.fulfillment`, `appointment_start_at`,
+      `appointment_status`); `POST /checkout` acepta `name`, `phone`,
+      `fulfillment`, `branchCode`, `startAt`, `address`; el webhook agenda la
+      cita después de confirmar (`agendarCitaDePedido` →
+      `agendarPedidoPagado` en `yaol.routes.js`). 64 pruebas del shop pasan.
+- [ ] Deploy en STG (0180 + backend) y prueba en el preview.
+
+### Notas y decisiones
+
+- La entrega vale para **todo el pedido** (gana sobre la de cada renglón; el
+  mismo SKU se junta en un renglón). El carrito sigue guardando la variante
+  `:install` por dentro.
+- Envío a domicilio: sin sucursal ni cita; la dirección la captura el sitio
+  (Stripe ya no la pide) y se guarda en `shipping_address` con la forma de
+  Stripe (+ `references`).
+- Si el horario se ocupa entre elegirlo y pagar, el pago queda registrado,
+  `appointment_status = 'failed'` con nota, y la confirmación ofrece "Elegir
+  horario" (`/agendar-cita?quote_id=…`). No se valida el horario en el
+  checkout: lo decide `scheduleQuote` al agendar.
+- El email se pide en el paso de pago (comprobante de Stripe).
+- El nombre que escribe el cliente gana al de la tarjeta en el webhook.
+- Sin la 0180 todo `/bypass/shop/checkout*` responde 500: aplicarla antes
+  del deploy. El checkout anterior (sin `fulfillment`) sigue soportado.
+- Las ligas de cotización siguen pagando en `/pago/<sesión>`.
+
+---
+
 ## Fase 4 · Facturación CFDI 4.0 (1.5–2 semanas)
 
 ### Tareas
@@ -545,7 +597,9 @@ _(vacío)_
 
 ## Cómo retomar (estado al 2026-10-25)
 
-**Siguiente paso: Fase 4 (CFDI 4.0).** La Fase 3 está en staging y verificada
+**Siguiente paso: deploy de la Fase 3.5 en STG (0180 + backend
+`diego-stripe-2`), push del frontend y prueba en el preview; luego Fase 4
+(CFDI 4.0).** La Fase 3 está en staging y verificada
 de punta a punta para comprar → agendar (pago dentro del sitio con Stripe
 Elements → webhook → cotización pagada y confirmada → cita agendada).
 
@@ -603,7 +657,6 @@ se quiere el toast de bienvenida.
   `back.yantissimo.com` (producción del backend tiene ~30 migraciones en
   cola).
 - `www.yantissimo.com` responde 525 (SSL Cloudflare ↔ origen).
-- Mapa del wizard de sucursal: "API KEY REQUIRED" (mapa base de Carto).
 - Marcas mal capturadas en `inventario.marca` (ver notas de la Fase 1).
 - `tests/accesosCobertura.test.js` del backend falla desde antes (falta
   `docs/autorizacion/endpoints.json`).
@@ -706,6 +759,12 @@ Formato: `AAAA-MM-DD · Fase N · qué se hizo / qué se decidió / qué quedó 
   (pedido web + id de Stripe). Pendiente: probar la liga de pago
   (agendar → pagar) y cancelar en el ERP los datos de prueba (cotización
   11179 y su cita).
+- 2026-10-26 · Fase 3.5 · Nuevo flujo: carrito → `/pago` en pasos (datos →
+  cita o envío → pago → confirmación). Producto y carrito sin switch de
+  entrega ni wizard. Backend: 0180 y cita agendada desde el webhook. Probado
+  en local (Playwright + backend simulado con sesiones reales de Stripe):
+  instalar en escritorio y envío en móvil, pago 4242 → confirmación. Falta:
+  deploy en STG y prueba en el preview.
 - 2026-10-25 · Fase 3 · **Terminada en staging.** La prueba de la liga de pago
   (agendar → pagar) se deja para el final, antes de producción; se asume
   correcta (cubierta por pruebas unitarias). Sigue la Fase 4 (CFDI 4.0).
