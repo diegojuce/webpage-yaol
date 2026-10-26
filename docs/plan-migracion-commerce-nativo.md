@@ -27,7 +27,7 @@
 | 2 | Carrito propio | 1.5–2 sem | No | ✅ Terminada (en staging) |
 | 3 | Checkout Stripe, webhook y cita | 2–3 sem | **Sí, con tarjeta** | ✅ Terminada (en staging; prueba de la liga de pago pendiente para el final) |
 | 3.5 | Ajuste de flujo: checkout en pasos (`/pago`) | 2–3 días | Sí | ✅ Terminada (en staging) |
-| 4 | CFDI 4.0 | 1.5–2 sem | Sí, con factura | 🟨 En curso (en STG; falta probar la adopción) |
+| 4 | CFDI 4.0 | 1.5–2 sem | Sí, con factura | ✅ Terminada (en staging; reembolsos en la Fase 5) |
 | 5 | MSI, OXXO, SPEI, reembolsos, carritos abandonados | 2–3 sem | Sí, completo | ⬜ Pendiente |
 | 6 | Producción y retiro de Shopify | 1 sem | — | ⬜ Pendiente |
 
@@ -537,9 +537,9 @@ cita se elige ANTES de pagar.
       e9801f57-63d2-4ac7-9a86-1c50d5304b22: PUE, forma 04, receptor
       EKU9003173C9 régimen 601 uso G03, llanta con clave 25172504/H87, total
       $1,190.00 con IVA $164.14; PDF y XML descargados.)*
-- [ ] Probar la adopción: cobrar la cotización 11204 en el ERP de STG
+- [x] Probar la adopción: cobrar la cotización 11204 en el ERP de STG
       ("Vender") y revisar que la remisión quede con la factura WEB-1
-      timbrada y fuera de la global.
+      timbrada y fuera de la global. *(2026-10-26: funciona.)*
 
 ### Notas y decisiones
 
@@ -668,9 +668,9 @@ _(vacío)_
 
 ## Cómo retomar (estado al 2026-10-26)
 
-**Siguiente paso: probar la adopción de la factura web en el ERP de STG**
-(cobrar la cotización 11204, factura WEB-1). La Fase 4 ya está en STG y la
-factura se timbra y descarga desde el preview. Después, Fase 5.
+**Siguiente paso: Fase 5** (MSI, OXXO, SPEI, reembolsos con nota de
+crédito, carritos abandonados). La Fase 4 (factura web) está en STG y
+probada de punta a punta, incluida la adopción en el cobro del ERP.
 La Fase 3.5 (checkout en pasos en `/pago`) está en staging y probada. La Fase 3 está en staging y verificada
 de punta a punta para comprar → agendar (pago dentro del sitio con Stripe
 Elements → webhook → cotización pagada y confirmada → cita agendada).
@@ -860,3 +860,6 @@ Formato: `AAAA-MM-DD · Fase N · qué se hizo / qué se decidió / qué quedó 
   RFC de prueba EKU9003173C9) timbrada en Facturapi de prueba y descargada
   en PDF y XML. Falta: cobrar la cotización 11204 en el ERP y revisar la
   adopción.
+- 2026-10-26 · Fase 4 · **Terminada en staging.** La adopción en el ERP
+  funciona (cotización 11204 cobrada con la factura WEB-1). UI: botón
+  "Facturar" negro con hover gris y la fecha límite arriba del botón.

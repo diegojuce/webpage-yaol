@@ -1009,19 +1009,19 @@ function Factura({
   if (!abierto) {
     return (
       <div className="flex flex-col gap-2">
-        <button
-          type="button"
-          onClick={() => setAbierto(true)}
-          className={BOTON_SECUNDARIO}
-        >
-          Facturar
-        </button>
         {estado.deadline ? (
           <p className="m-0 text-center text-[12px] text-[#8a8a8a]">
             Puedes pedir tu factura hasta el{" "}
             {formatFechaLimite(estado.deadline)}.
           </p>
         ) : null}
+        <button
+          type="button"
+          onClick={() => setAbierto(true)}
+          className={BOTON_NEGRO}
+        >
+          Facturar
+        </button>
       </div>
     );
   }
@@ -1354,6 +1354,9 @@ const BOTON =
 
 const BOTON_SECUNDARIO =
   "inline-flex w-full items-center justify-center gap-2 rounded-full border border-[#0f0f0f] bg-white px-6 py-4 text-sm font-bold uppercase tracking-wider text-[#0f0f0f] transition-colors duration-200 hover:bg-[#0f0f0f] hover:text-white";
+
+const BOTON_NEGRO =
+  "inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#0f0f0f] px-6 py-4 text-sm font-bold uppercase tracking-wider text-white transition-colors duration-200 hover:bg-[#3a3a3a]";
 
 function Boton({
   children,
