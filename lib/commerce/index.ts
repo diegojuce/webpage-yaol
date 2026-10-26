@@ -23,8 +23,11 @@ export {
 
 // Checkout con Stripe: solo existe en el proveedor nativo.
 export {
+  fetchInvoiceFile,
+  getFiscalCatalog,
   getOrderBySession,
   getQuoteLink,
+  requestInvoice,
   ShopApiError,
   startCheckout,
   startQuoteCheckout,
@@ -33,6 +36,9 @@ export {
 export type {
   CheckoutDetails,
   CheckoutOrder,
+  FiscalCatalog,
+  InvoiceRequest,
+  OrderInvoice,
   QuoteLink,
   UnavailableLine,
 } from "./providers/native";

@@ -4,8 +4,8 @@
 // Checkout en modo `elements`. El carrito paga en /pago (checkout.tsx).
 // Los campos de tarjeta (y la dirección, si hay envío) son iframes de Stripe
 // con nuestro estilo; nombre y email son nuestros. confirm() resuelve el 3D
-// Secure en un modal, sin salir de la página, y al terminar se va a
-// /agendar-cita?session_id=… (el pedido lo marca pagado el webhook).
+// Secure en un modal, sin salir de la página, y al terminar se va a la
+// confirmación de /pago?session_id=… (el pedido lo marca pagado el webhook).
 import {
   CheckoutElementsProvider,
   PaymentElement,
@@ -75,7 +75,7 @@ function CheckoutForm({
   }
 
   const loading = state.type === "loading";
-  const doneUrl = `/agendar-cita?session_id=${encodeURIComponent(sessionId)}`;
+  const doneUrl = `/pago?session_id=${encodeURIComponent(sessionId)}`;
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();

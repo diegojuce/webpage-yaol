@@ -27,7 +27,7 @@
 | 2 | Carrito propio | 1.5–2 sem | No | ✅ Terminada (en staging) |
 | 3 | Checkout Stripe, webhook y cita | 2–3 sem | **Sí, con tarjeta** | ✅ Terminada (en staging; prueba de la liga de pago pendiente para el final) |
 | 3.5 | Ajuste de flujo: checkout en pasos (`/pago`) | 2–3 días | Sí | ✅ Terminada (en staging) |
-| 4 | CFDI 4.0 | 1.5–2 sem | Sí, con factura | ⬜ Siguiente |
+| 4 | CFDI 4.0 | 1.5–2 sem | Sí, con factura | 🟨 En curso (código listo; falta STG) |
 | 5 | MSI, OXXO, SPEI, reembolsos, carritos abandonados | 2–3 sem | Sí, completo | ⬜ Pendiente |
 | 6 | Producción y retiro de Shopify | 1 sem | — | ⬜ Pendiente |
 
@@ -515,27 +515,85 @@ cita se elige ANTES de pagar.
 
 ### Tareas
 
-- [ ] Elegir un PAC (Facturapi, Facturama, SW Sapien…) o conectar el
-      sistema actual de facturación. *(El backend ya tiene
-      `src/clients/facturapi.js` y webhook `/bypass/facturapi`: reutilizar.)*
-- [ ] Casilla opcional "¿Requieres factura?", en el checkout o en
-      `/status/[id]` después de pagar. Pide RFC, razón social, régimen
-      fiscal, código postal fiscal y uso de CFDI.
-- [ ] Tabla `invoices (order_id, uuid_sat, status, xml_url, pdf_url, rfc, …)`.
-- [ ] Al recibir el pago con datos fiscales: timbrar un CFDI de pago en una
-      sola exhibición (PUE), con forma de pago según el método (04 tarjeta de
-      crédito, 28 débito, 03 transferencia, 01 efectivo/OXXO).
-- [ ] Sin datos fiscales: la venta entra a la **factura global** del
-      periodo, con un proceso automático diario o mensual.
-- [ ] Reembolsos: CFDI de egreso (nota de crédito) o cancelación, según
-      aplique.
-- [ ] Enviar PDF y XML por WhatsApp o correo.
-- [ ] Revisar con el contador las claves SAT de producto (llantas y servicio
-      de instalación) y los motivos de cancelación.
+- [x] Elegir un PAC (Facturapi, Facturama, SW Sapien…) o conectar el
+      sistema actual de facturación. *(Facturapi del ERP:
+      `src/clients/facturapi.js`.)*
+- [x] ~~Casilla opcional "¿Requieres factura?" en el checkout~~ → botón
+      "Facturar" en la confirmación de `/pago`, después de pagar. Pide RFC,
+      razón social, régimen fiscal, código postal fiscal y uso de CFDI.
+- [x] Tabla de facturas web: `shop_invoices` (migración 0182).
+- [x] Timbrar el CFDI de ingreso PUE por la operación completa, con forma de
+      pago 04 (crédito) o 28 (débito/prepago) según la tarjeta de Stripe.
+- [x] Sin datos fiscales: la venta entra a la **factura global** con el
+      proceso que ya tiene el ERP (`/invoices/globales`, remisiones `sale`).
+- [ ] Reembolsos: CFDI de egreso (nota de crédito) o cancelación → Fase 5,
+      junto con los reembolsos de Stripe.
+- [x] ~~Enviar PDF y XML por WhatsApp o correo~~ → descarga en la
+      confirmación (decisión 2026-10-26).
+- [x] Claves SAT de producto y servicio: las del ERP (`cat_articulos`).
+- [ ] Deploy en STG (0182 + backend `diego-stripe-3` + frontend) y prueba
+      con Facturapi en modo prueba: timbrar, descargar, cobrar en sucursal
+      (adopción) y que no entre a la global.
 
 ### Notas y decisiones
 
-_(vacío)_
+- **Lo que ya existe en el ERP:** Facturapi (`src/clients/facturapi.js`,
+  sandbox con namespace por BD), timbrado de remisiones, factura global
+  (`/invoices/globales`), notas de crédito, cancelación/sustitución, CFDI de
+  anticipo + egreso (H-17, bajo demanda) y webhook `/bypass/facturapi`. Hoy el
+  timbrado de una venta es manual (`/facturas`) y la venta se cierra en
+  sucursal (`PUT /quotes/:id/facturar`, exige la OT terminada).
+- **Decisión (2026-10-26):** el cliente pide la factura **después de pagar**,
+  con un botón "Facturar" en la confirmación de `/pago` (antes de "Volver a la
+  tienda"). No se piden datos fiscales en el checkout.
+- **Decisión (2026-10-26):** se factura la **operación completa en PUE** al
+  momento de llenar el formulario (no anticipo + egreso).
+- **Decisión (2026-10-26):** plazo para pedirla: hasta el **fin del mes del
+  pago** (hora de Ciudad de México). Después, la venta va a la global.
+- **Decisión (2026-10-26):** el cliente recibe la factura como **descarga**
+  (PDF y XML) al terminar el formulario. Sin correo ni WhatsApp por ahora.
+- **Decisión (2026-10-26):** uso de CFDI = lista **filtrada por régimen**.
+- **Decisión (2026-10-26):** las claves SAT de producto y servicio son las
+  mismas que ya usa el ERP (`cat_articulos.clave_sat`).
+- Forma de pago: 04 si la tarjeta es de crédito, 28 si es de débito o
+  prepago (`card.funding` del cargo en Stripe, leído al facturar). Sin dato
+  de la tarjeta (Link) cae en 04.
+- **Decisión (2026-10-26):** el ERP **adopta** el CFDI web al cobrar en
+  sucursal: la remisión se queda con ese UUID (fila de `facturas`, serie
+  WEB), no se vuelve a timbrar y no entra a la global. Si el cobro no es por
+  lo mismo que se facturó (la sucursal agregó algo), el cobro responde 409
+  `FACTURA_WEB_NO_CUADRA` y lo agregado se cobra en un documento aparte.
+- **Decisión (2026-10-26):** el botón aplica a **carrito y ligas de pago**.
+  Las ligas ahora terminan en la misma confirmación (`/pago?session_id=…`,
+  botón "Ver o agendar mi cita") en lugar de `/agendar-cita?session_id=…`.
+- **Backend** (rama `diego-stripe-3` desde `staging`): migración
+  `0182_shop_facturas.sql`; servicio `shopFactura.service.js` (catálogo de
+  regímenes y usos, validación, elegibilidad, timbrado, descarga y
+  adopción); rutas `GET /bypass/shop/invoices/catalog`,
+  `POST /bypass/shop/orders/by-session/:id/invoice` y
+  `GET …/invoice/pdf|xml`; `order.invoice` en `GET /orders/by-session/:id`;
+  adopción en `PUT /quotes/:id/vender|facturar` (sin pedir datos fiscales
+  del cliente si ya hay factura web); el CFDI de anticipo se bloquea si hay
+  factura web. 25 pruebas nuevas (`tests/shopFactura.test.js`); 89 del shop
+  en verde.
+- Reglas de elegibilidad: solo pedidos pagados; hasta el fin del mes del
+  pago; el pago web debe cubrir la operación completa (total de la
+  cotización, o de la remisión si ya se cobró); sin anticipo con CFDI propio;
+  la venta no debe estar en la global ni facturada. Si no, el sitio muestra
+  el motivo ("Pide tu factura en la sucursal", etc.).
+- Serie `WEB` con consecutivo propio (MAX+1 bajo advisory lock, sin huecos):
+  la fila de `facturas` necesita remisión y no existe hasta el cobro.
+- Usos de CFDI ofrecidos: G01, G03, I03, I08 y S01, filtrados por régimen
+  (D01–D10 son deducciones personales y no aplican a llantas). Régimen
+  filtrado por tipo de RFC (12 = moral, 13 = física).
+- Pendiente conocido: si el CFDI web se cancela en Facturapi **antes** de la
+  adopción, `shop_invoices` no se entera (no hay webhook para serie WEB).
+  Después de la adopción la cancelación va por el ERP como cualquier factura.
+- Frontend: panel "Facturar" en `app/pago/checkout.tsx`, server actions
+  `loadFiscalCatalog`/`requestOrderInvoice` y descarga en
+  `app/api/factura/[sessionId]/[formato]`. Probado en local (Playwright +
+  backend simulado): filtros de régimen y uso, rechazo del SAT, emisión,
+  descarga, recarga, motivo de "no disponible" y liga en celular.
 
 ---
 
@@ -602,10 +660,11 @@ _(vacío)_
 
 ---
 
-## Cómo retomar (estado al 2026-10-25)
+## Cómo retomar (estado al 2026-10-26)
 
-**Siguiente paso: Fase 4 (CFDI 4.0).** La Fase 3.5 (checkout en pasos en
-`/pago`) está en staging y probada. La Fase 3 está en staging y verificada
+**Siguiente paso: desplegar la Fase 4 en STG y probarla** (0182 → backend
+`diego-stripe-3` → frontend; Facturapi en modo prueba). Después, Fase 5.
+La Fase 3.5 (checkout en pasos en `/pago`) está en staging y probada. La Fase 3 está en staging y verificada
 de punta a punta para comprar → agendar (pago dentro del sitio con Stripe
 Elements → webhook → cotización pagada y confirmada → cita agendada).
 
@@ -627,7 +686,8 @@ Elements → webhook → cotización pagada y confirmada → cita agendada).
   Fase 1.
 - Backend: `../yssm-backend` (`jfzepeda/yssm-backend`). `diego-stripe` ya
   se mergeó a `staging` (PR #96, con la Fase 3); el trabajo nuevo va en
-  `diego-stripe-2`, creada desde `staging` el 2026-10-24. Antes de trabajar: `git fetch` y
+  `diego-stripe-2`, creada desde `staging` el 2026-10-24 (mergeada en el PR
+  #97); la Fase 4 va en `diego-stripe-3`. Antes de trabajar: `git fetch` y
   `git merge --ff-only origin/staging` (o merge normal) y `pnpm install`.
   El programador del backend mergea `diego-stripe` → `staging`, aplica las
   migraciones en STG y despliega `stg-back`. No tengo credenciales de BD.
@@ -781,3 +841,9 @@ Formato: `AAAA-MM-DD · Fase N · qué se hizo / qué se decidió / qué quedó 
 - 2026-10-25 · Fase 3 · **Terminada en staging.** La prueba de la liga de pago
   (agendar → pagar) se deja para el final, antes de producción; se asume
   correcta (cubierta por pruebas unitarias). Sigue la Fase 4 (CFDI 4.0).
+- 2026-10-26 · Fase 4 · Decisiones: factura después de pagar (botón
+  "Facturar" en la confirmación), PUE por la operación completa, plazo al fin
+  del mes, descarga PDF/XML, usos filtrados por régimen, claves SAT del ERP,
+  el ERP adopta el CFDI web al cobrar, aplica a carrito y ligas. Código listo
+  (backend `diego-stripe-3` con la 0182; frontend en `diego-stripe`) y
+  probado en local. Falta: deploy y prueba en STG.

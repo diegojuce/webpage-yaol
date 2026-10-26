@@ -642,6 +642,41 @@ export type CheckoutOrder = {
   }[];
   // Solo mientras el pedido se puede pagar.
   clientSecret: string | null;
+  // Factura (solo pedidos pagados; null sin pagar).
+  invoice?: OrderInvoice | null;
+};
+
+// Factura que el cliente pide después de pagar (CFDI PUE, serie WEB), hasta el
+// fin del mes del pago.
+export type OrderInvoice =
+  | {
+      status: "issued";
+      serie: string;
+      folio: number;
+      uuid: string;
+      rfc: string;
+      razonSocial: string;
+      totalCents: number;
+    }
+  | { status: "available"; deadline: string | null }
+  | {
+      status: "unavailable" | "expired";
+      deadline: string | null;
+      code: string;
+      message: string;
+    };
+
+export type FiscalCatalog = {
+  regimenes: { clave: string; nombre: string; fisica: boolean; moral: boolean }[];
+  usos: { clave: string; nombre: string; regimenes: string[] }[];
+};
+
+export type InvoiceRequest = {
+  rfc: string;
+  razonSocial: string;
+  regimenFiscal: string;
+  codigoPostal: string;
+  usoCfdi: string;
 };
 
 export async function getOrderBySession(sessionId: string): Promise<CheckoutOrder | undefined> {
@@ -662,4 +697,39 @@ export async function updateOrderContact(
     {},
     { method: "PATCH", body: contact },
   );
+}
+
+export async function getFiscalCatalog(): Promise<FiscalCatalog> {
+  const res = await shopFetch<FiscalCatalog>("/invoices/catalog");
+  return res ?? { regimenes: [], usos: [] };
+}
+
+// Timbra la factura del pedido. ShopApiError con el mensaje para el cliente si
+// los datos no son válidos o el SAT los rechaza.
+export async function requestInvoice(
+  sessionId: string,
+  data: InvoiceRequest,
+): Promise<OrderInvoice> {
+  const res = await shopFetch<{ invoice: OrderInvoice }>(
+    `/orders/by-session/${encodeURIComponent(sessionId)}/invoice`,
+    {},
+    { method: "POST", body: data },
+  );
+  return res!.invoice;
+}
+
+// PDF o XML de la factura, tal cual lo entrega el backend. null = sin factura.
+export async function fetchInvoiceFile(
+  sessionId: string,
+  formato: "pdf" | "xml",
+): Promise<Response | null> {
+  if (!/^cs_[A-Za-z0-9_]+$/.test(sessionId)) return null;
+  const res = await fetch(
+    `${BACKEND_URL}/bypass/shop/orders/by-session/${encodeURIComponent(sessionId)}/invoice/${formato}`,
+    {
+      headers: { Authorization: `Bearer ${process.env.BACKEND_API_TOKEN ?? ""}` },
+      cache: "no-store",
+    },
+  );
+  return res.ok ? res : null;
 }

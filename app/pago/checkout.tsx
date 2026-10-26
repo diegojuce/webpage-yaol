@@ -30,11 +30,20 @@ import {
   normalizeAvailableTimes,
   TIME_ZONE_CDMX,
 } from "lib/appointment-time";
-import type { CheckoutDetails, CheckoutOrder } from "lib/commerce";
+import type {
+  CheckoutDetails,
+  CheckoutOrder,
+  FiscalCatalog,
+  OrderInvoice,
+} from "lib/commerce";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import { saveCheckoutContact } from "./[sessionId]/actions";
+import {
+  loadFiscalCatalog,
+  requestOrderInvoice,
+  saveCheckoutContact,
+} from "./[sessionId]/actions";
 import { APPEARANCE_LIGHT, getStripe, PUBLISHABLE_KEY } from "./stripe";
 
 export type SummaryLine = {
@@ -180,7 +189,11 @@ export default function Checkout(props: Props) {
               </>
             )}
           </div>
-          <Resumen lines={summary} total={total} />
+          <Resumen
+            lines={summary}
+            total={total}
+            nota={props.mode === "cart" || props.order.kind === "cart"}
+          />
         </div>
       </div>
     </section>
@@ -920,10 +933,14 @@ function Confirmacion({
         </div>
       ) : null}
 
+      <Factura sessionId={sessionId} invoice={order.invoice} />
+
       {agendar &&
       ((order.fulfillment === "install" && cita?.status === "failed") ||
         (!order.fulfillment && order.needsAppointment)) ? (
-        <BotonLink href={agendar}>Elegir horario</BotonLink>
+        <BotonLink href={agendar}>
+          {order.kind === "quote" ? "Ver o agendar mi cita" : "Elegir horario"}
+        </BotonLink>
       ) : (
         <BotonLink href="/">Volver a la tienda</BotonLink>
       )}
@@ -931,9 +948,298 @@ function Confirmacion({
   );
 }
 
+// --- Factura ------------------------------------------------------------------
+// Después de pagar, hasta el fin del mes del pago. Se timbra al enviar el
+// formulario y se descarga (PDF y XML).
+
+const RFC_RE = /^[A-ZÑ&]{3,4}\d{6}[A-Z\d]{3}$/;
+const formatFechaLimite = (iso: string) =>
+  new Intl.DateTimeFormat("es-MX", {
+    day: "numeric",
+    month: "long",
+    timeZone: TIME_ZONE_CDMX,
+  }).format(new Date(new Date(iso).getTime() - 1));
+
+function Factura({
+  sessionId,
+  invoice,
+}: {
+  sessionId: string;
+  invoice: OrderInvoice | null | undefined;
+}) {
+  const [emitida, setEmitida] = useState<OrderInvoice | null>(null);
+  const [abierto, setAbierto] = useState(false);
+  const estado = emitida ?? invoice;
+  if (!estado) return null;
+
+  if (estado.status === "issued") {
+    const base = `/api/factura/${encodeURIComponent(sessionId)}`;
+    return (
+      <div className="rounded-2xl border border-[#eaeaea] bg-[#f7f7f5] px-4 py-3.5">
+        <p className="m-0 text-[10px] font-bold uppercase tracking-[0.18em] text-[#8a8a8a]">
+          Tu factura
+        </p>
+        <p className="m-0 mt-1 text-[15px] font-semibold text-[#0f0f0f]">
+          Folio {estado.serie}-{estado.folio}
+        </p>
+        <p className="m-0 text-[13px] text-[#6b6b6b]">
+          {estado.razonSocial} · {estado.rfc}
+        </p>
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          <a className={BOTON_SECUNDARIO} href={`${base}/pdf`} download>
+            Descargar PDF
+          </a>
+          <a className={BOTON_SECUNDARIO} href={`${base}/xml`} download>
+            Descargar XML
+          </a>
+        </div>
+      </div>
+    );
+  }
+
+  if (estado.status !== "available") {
+    return (
+      <p className="m-0 rounded-xl border border-[#eaeaea] bg-[#f7f7f5] px-4 py-3 text-[13px] leading-relaxed text-[#6b6b6b]">
+        <span className="font-semibold text-[#0f0f0f]">Factura: </span>
+        {estado.message}
+      </p>
+    );
+  }
+
+  if (!abierto) {
+    return (
+      <div className="flex flex-col gap-2">
+        <button
+          type="button"
+          onClick={() => setAbierto(true)}
+          className={BOTON_SECUNDARIO}
+        >
+          Facturar
+        </button>
+        {estado.deadline ? (
+          <p className="m-0 text-center text-[12px] text-[#8a8a8a]">
+            Puedes pedir tu factura hasta el{" "}
+            {formatFechaLimite(estado.deadline)}.
+          </p>
+        ) : null}
+      </div>
+    );
+  }
+
+  return (
+    <FacturaForm
+      sessionId={sessionId}
+      onCancelar={() => setAbierto(false)}
+      onEmitida={setEmitida}
+    />
+  );
+}
+
+function FacturaForm({
+  sessionId,
+  onCancelar,
+  onEmitida,
+}: {
+  sessionId: string;
+  onCancelar: () => void;
+  onEmitida: (invoice: OrderInvoice) => void;
+}) {
+  const [catalogo, setCatalogo] = useState<FiscalCatalog | null>(null);
+  const [error, setError] = useState("");
+  const [enviando, setEnviando] = useState(false);
+  const [rfc, setRfc] = useState("");
+  const [razonSocial, setRazonSocial] = useState("");
+  const [regimen, setRegimen] = useState("");
+  const [cp, setCp] = useState("");
+  const [uso, setUso] = useState("");
+
+  useEffect(() => {
+    let cancelado = false;
+    loadFiscalCatalog().then((c) => {
+      if (cancelado) return;
+      if (c) setCatalogo(c);
+      else setError("No pudimos cargar el formulario. Inténtalo de nuevo.");
+    });
+    return () => {
+      cancelado = true;
+    };
+  }, []);
+
+  const rfcLimpio = rfc.trim().toUpperCase();
+  const rfcOk = RFC_RE.test(rfcLimpio);
+  // 12 caracteres = persona moral; 13 = persona física.
+  const moral = rfcLimpio.length === 12;
+  const regimenes = (catalogo?.regimenes ?? []).filter((r) =>
+    !rfcOk ? true : moral ? r.moral : r.fisica,
+  );
+  const usos = (catalogo?.usos ?? []).filter((u) =>
+    u.regimenes.includes(regimen),
+  );
+
+  // Al cambiar el RFC o el régimen, se limpia lo que ya no aplica.
+  useEffect(() => {
+    if (regimen && !regimenes.some((r) => r.clave === regimen)) setRegimen("");
+  }, [regimen, regimenes]);
+  useEffect(() => {
+    if (uso && !usos.some((u) => u.clave === uso)) setUso("");
+  }, [uso, usos]);
+
+  const listo =
+    rfcOk &&
+    razonSocial.trim().length >= 3 &&
+    Boolean(regimen) &&
+    /^\d{5}$/.test(cp) &&
+    Boolean(uso);
+
+  async function onGenerar() {
+    if (!listo || enviando) return;
+    setError("");
+    setEnviando(true);
+    try {
+      const r = await requestOrderInvoice(sessionId, {
+        rfc: rfcLimpio,
+        razonSocial: razonSocial.trim(),
+        regimenFiscal: regimen,
+        codigoPostal: cp,
+        usoCfdi: uso,
+      });
+      if (r.ok) onEmitida(r.invoice);
+      else setError(r.message);
+    } catch (e) {
+      console.error("[pago] factura", e);
+      setError("No pudimos generar tu factura. Inténtalo de nuevo.");
+    } finally {
+      setEnviando(false);
+    }
+  }
+
+  return (
+    <div className="flex flex-col gap-4 rounded-2xl border border-[#eaeaea] bg-[#f7f7f5] p-4">
+      <div>
+        <p className="m-0 text-[15px] font-semibold text-[#0f0f0f]">
+          Datos de facturación
+        </p>
+        <p className="m-0 mt-1 text-[13px] leading-relaxed text-[#6b6b6b]">
+          Escríbelos tal como aparecen en tu Constancia de Situación Fiscal.
+        </p>
+      </div>
+      <Aviso error={error} />
+      <Campo
+        id="fac-rfc"
+        label="RFC"
+        value={rfc}
+        onChange={(v) =>
+          setRfc(
+            v
+              .toUpperCase()
+              .replace(/[^A-ZÑ&0-9]/g, "")
+              .slice(0, 13),
+          )
+        }
+        placeholder="12 o 13 caracteres"
+        autoComplete="off"
+      />
+      <Campo
+        id="fac-razon"
+        label="Nombre o razón social"
+        value={razonSocial}
+        onChange={setRazonSocial}
+        placeholder="Sin S.A. de C.V."
+        autoComplete="organization"
+      />
+      <Selector
+        id="fac-regimen"
+        label="Régimen fiscal"
+        value={regimen}
+        onChange={setRegimen}
+        disabled={!catalogo}
+        opciones={regimenes.map((r) => ({
+          value: r.clave,
+          label: `${r.clave} · ${r.nombre}`,
+        }))}
+      />
+      <Campo
+        id="fac-cp"
+        label="Código postal fiscal"
+        value={cp}
+        onChange={(v) => setCp(soloDigitos(v).slice(0, 5))}
+        placeholder="28000"
+        inputMode="numeric"
+        autoComplete="postal-code"
+      />
+      <Selector
+        id="fac-uso"
+        label="Uso de CFDI"
+        value={uso}
+        onChange={setUso}
+        disabled={!regimen}
+        placeholder={regimen ? "Elige el uso" : "Elige primero tu régimen"}
+        opciones={usos.map((u) => ({
+          value: u.clave,
+          label: `${u.clave} · ${u.nombre}`,
+        }))}
+      />
+      <Boton onClick={onGenerar} disabled={!listo || enviando}>
+        {enviando ? "Generando tu factura…" : "Generar factura"}
+      </Boton>
+      <Atras onClick={onCancelar} disabled={enviando}>
+        Cancelar
+      </Atras>
+    </div>
+  );
+}
+
+function Selector({
+  id,
+  label,
+  value,
+  onChange,
+  opciones,
+  disabled,
+  placeholder = "Elige una opción",
+}: {
+  id: string;
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  opciones: { value: string; label: string }[];
+  disabled?: boolean;
+  placeholder?: string;
+}) {
+  return (
+    <div>
+      <label className={LABEL} htmlFor={id}>
+        {label}
+      </label>
+      <select
+        id={id}
+        className={INPUT}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        disabled={disabled}
+      >
+        <option value="">{placeholder}</option>
+        {opciones.map((o) => (
+          <option key={o.value} value={o.value}>
+            {o.label}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
 // --- Resumen del pedido -------------------------------------------------------
 
-function Resumen({ lines, total }: { lines: SummaryLine[]; total: number }) {
+function Resumen({
+  lines,
+  total,
+  nota,
+}: {
+  lines: SummaryLine[];
+  total: number;
+  nota: boolean;
+}) {
   return (
     <aside className="rounded-[24px] border border-[#0f0f0f] bg-[#0f0f0f] p-5 text-white sm:p-6 lg:sticky lg:top-32">
       <h2 className="m-0 text-[11px] font-extrabold uppercase tracking-[0.18em] text-[#FFC600]">
@@ -961,9 +1267,11 @@ function Resumen({ lines, total }: { lines: SummaryLine[]; total: number }) {
                 {line.imageUrl ? null : `${line.quantity}× `}
                 {line.title}
               </p>
-              <p className="m-0 text-[12px] text-white/40">
-                Instalación o envío GRATIS
-              </p>
+              {nota ? (
+                <p className="m-0 text-[12px] text-white/40">
+                  Instalación o envío GRATIS
+                </p>
+              ) : null}
             </div>
             <span className="shrink-0 text-[14px] font-semibold text-white">
               {formatMXN(Number(line.totalAmount))}
@@ -1043,6 +1351,9 @@ function Encabezado({ titulo, sub }: { titulo: string; sub: string }) {
 
 const BOTON =
   "inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#FFC600] px-6 py-4 text-sm font-bold uppercase tracking-wider text-black transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#FFD34A] hover:shadow-[0_18px_50px_rgba(255,211,74,0.35)] disabled:pointer-events-none disabled:bg-[#ececea] disabled:text-[#a3a3a3]";
+
+const BOTON_SECUNDARIO =
+  "inline-flex w-full items-center justify-center gap-2 rounded-full border border-[#0f0f0f] bg-white px-6 py-4 text-sm font-bold uppercase tracking-wider text-[#0f0f0f] transition-colors duration-200 hover:bg-[#0f0f0f] hover:text-white";
 
 function Boton({
   children,

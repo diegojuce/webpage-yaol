@@ -1,6 +1,7 @@
 // Página de pago dentro del sitio, para los dos flujos: el carrito (comprar →
 // agendar) y la liga de una cotización (agendar → pagar) llegan aquí con la
-// sesión de Stripe que abrió el backend. Al pagar se sigue a /agendar-cita.
+// sesión de Stripe que abrió el backend. Al pagar se sigue a la confirmación
+// de /pago (factura y "Elegir horario").
 import "../../agendar-cita/agendar-cita.css";
 import "../pago.css";
 
@@ -92,7 +93,7 @@ export default async function PagoPage(props: {
   }
 
   if (order.status === "paid") {
-    redirect(`/agendar-cita?session_id=${encodeURIComponent(sessionId)}`);
+    redirect(`/pago?session_id=${encodeURIComponent(sessionId)}`);
   }
 
   if (!order.clientSecret) {

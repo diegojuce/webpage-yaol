@@ -2,10 +2,10 @@
 // confirmación, con la tarjeta de pasos de /club. "Completar pago" del carrito
 // llega aquí; al pagar, la URL pasa a /pago?session_id=… (el webhook marca el
 // pedido pagado y agenda la cita). Las ligas de cotización pagan en
-// /pago/<sesión>.
+// /pago/<sesión> y también terminan en esta confirmación, donde se pide la
+// factura.
 import type { Metadata } from "next";
 import Link from "next/link";
-import { redirect } from "next/navigation";
 import { getCart, getOrderBySession } from "lib/commerce";
 import { COMMERCE_PROVIDER } from "lib/commerce-status";
 import Checkout, { type SummaryLine } from "./checkout";
@@ -95,9 +95,6 @@ export default async function PagoPage(props: {
           action={{ href: "/?pago=cancelado", label: "Volver al carrito" }}
         />
       );
-    }
-    if (order.kind === "quote") {
-      redirect(`/agendar-cita?session_id=${encodeURIComponent(sessionId)}`);
     }
     const { clientSecret: _secret, ...publicOrder } = order;
     return (
