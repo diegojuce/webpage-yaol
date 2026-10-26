@@ -986,10 +986,10 @@ function Factura({
           {estado.razonSocial} · {estado.rfc}
         </p>
         <div className="mt-3 grid grid-cols-2 gap-2">
-          <a className={BOTON_SECUNDARIO} href={`${base}/pdf`} download>
+          <a className={BOTON_NEGRO} href={`${base}/pdf`} download>
             Descargar PDF
           </a>
-          <a className={BOTON_SECUNDARIO} href={`${base}/xml`} download>
+          <a className={BOTON_NEGRO} href={`${base}/xml`} download>
             Descargar XML
           </a>
         </div>
@@ -1351,9 +1351,6 @@ function Encabezado({ titulo, sub }: { titulo: string; sub: string }) {
 
 const BOTON =
   "inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#FFC600] px-6 py-4 text-sm font-bold uppercase tracking-wider text-black transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#FFD34A] hover:shadow-[0_18px_50px_rgba(255,211,74,0.35)] disabled:pointer-events-none disabled:bg-[#ececea] disabled:text-[#a3a3a3]";
-
-const BOTON_SECUNDARIO =
-  "inline-flex w-full items-center justify-center gap-2 rounded-full border border-[#0f0f0f] bg-white px-6 py-4 text-sm font-bold uppercase tracking-wider text-[#0f0f0f] transition-colors duration-200 hover:bg-[#0f0f0f] hover:text-white";
 
 const BOTON_NEGRO =
   "inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#0f0f0f] px-6 py-4 text-sm font-bold uppercase tracking-wider text-white transition-colors duration-200 hover:bg-[#3a3a3a]";
