@@ -26,7 +26,7 @@
 | 1 | `lib/commerce` y sitio sin Shopify | 1 sem | No (catálogo sí) | ✅ Terminada (en staging; merge a `main` pendiente) |
 | 2 | Carrito propio | 1.5–2 sem | No | ✅ Terminada (en staging) |
 | 3 | Checkout Stripe, webhook y cita | 2–3 sem | **Sí, con tarjeta** | ✅ Terminada (en staging; prueba de la liga de pago pendiente para el final) |
-| 3.5 | Ajuste de flujo: checkout en pasos (`/pago`) | 2–3 días | Sí | 🟨 Código listo; falta deploy del backend (0180) y prueba en STG |
+| 3.5 | Ajuste de flujo: checkout en pasos (`/pago`) | 2–3 días | Sí | ✅ Terminada (en staging) |
 | 4 | CFDI 4.0 | 1.5–2 sem | Sí, con factura | ⬜ Siguiente |
 | 5 | MSI, OXXO, SPEI, reembolsos, carritos abandonados | 2–3 sem | Sí, completo | ⬜ Pendiente |
 | 6 | Producción y retiro de Shopify | 1 sem | — | ⬜ Pendiente |
@@ -482,10 +482,17 @@ cita se elige ANTES de pagar.
       `fulfillment`, `branchCode`, `startAt`, `address`; el webhook agenda la
       cita después de confirmar (`agendarCitaDePedido` →
       `agendarPedidoPagado` en `yaol.routes.js`). 64 pruebas del shop pasan.
-- [ ] Deploy en STG (0180 + backend) y prueba en el preview.
+- [x] Deploy en STG (0180 + backend, PR #97) y prueba en el preview.
+      *(2026-10-26: instalar → cotización 11199 pagada con cita jueves 29-oct
+      10:00 en Constitución, `appointment_status = scheduled`; envío →
+      cotización 11200 pagada, sin cita, con la dirección y referencias.)*
 
 ### Notas y decisiones
 
+- Paleta: la de la página de pago anterior (fondo claro, tarjeta blanca,
+  resumen negro con amarillo); Stripe con `APPEARANCE_LIGHT`.
+- Productos relacionados en celular: tarjetas al 72 % del ancho con margen
+  para que se lea como carrusel.
 - La entrega vale para **todo el pedido** (gana sobre la de cada renglón; el
   mismo SKU se junta en un renglón). El carrito sigue guardando la variante
   `:install` por dentro.
@@ -597,9 +604,8 @@ _(vacío)_
 
 ## Cómo retomar (estado al 2026-10-25)
 
-**Siguiente paso: deploy de la Fase 3.5 en STG (0180 + backend
-`diego-stripe-2`), push del frontend y prueba en el preview; luego Fase 4
-(CFDI 4.0).** La Fase 3 está en staging y verificada
+**Siguiente paso: Fase 4 (CFDI 4.0).** La Fase 3.5 (checkout en pasos en
+`/pago`) está en staging y probada. La Fase 3 está en staging y verificada
 de punta a punta para comprar → agendar (pago dentro del sitio con Stripe
 Elements → webhook → cotización pagada y confirmada → cita agendada).
 
@@ -608,7 +614,9 @@ Elements → webhook → cotización pagada y confirmada → cita agendada).
   programador una liga `/pagar/<token>` de STG (`GET /api/yaol/cart/:quote_id`).
   Por decisión del 2026-10-25 se da por buena hasta entonces.
 - Limpiar en el ERP de STG los datos de prueba: cotización 11179 y su cita
-  (lunes 26-oct 10:00, Constitución), que tienen apartada la llanta inv-280.
+  (lunes 26-oct 10:00, Constitución), que tienen apartada la llanta inv-280;
+  cotizaciones 11199 (cita jueves 29-oct 10:00, Constitución) y 11200
+  (envío), con inv-17 apartada.
 - Desactivar Link en Métodos de pago de Stripe (recomendado).
 
 **Repos y ramas**
@@ -765,6 +773,11 @@ Formato: `AAAA-MM-DD · Fase N · qué se hizo / qué se decidió / qué quedó 
   en local (Playwright + backend simulado con sesiones reales de Stripe):
   instalar en escritorio y envío en móvil, pago 4242 → confirmación. Falta:
   deploy en STG y prueba en el preview.
+- 2026-10-26 · Fase 3.5 · **Terminada en staging.** Backend en stg-back (PR
+  #97, 0180 aplicada); frontend en el preview. Probado de punta a punta:
+  instalar (cotización 11199, cita agendada por el webhook) y envío
+  (cotización 11200). Pendiente: cancelar en el ERP de STG esas dos
+  cotizaciones y la cita.
 - 2026-10-25 · Fase 3 · **Terminada en staging.** La prueba de la liga de pago
   (agendar → pagar) se deja para el final, antes de producción; se asume
   correcta (cubierta por pruebas unitarias). Sigue la Fase 4 (CFDI 4.0).
