@@ -137,12 +137,16 @@ async function RelatedProducts({ id }: { id: string }) {
 
   return (
     <div className="py-8">
-      <h2 className="mb-4 text-2xl font-bold">Productos relacionados</h2>
-      <ul className="flex w-full gap-4 overflow-x-auto pt-1">
+      <h2 className="mb-4 px-4 text-2xl font-bold md:px-0">
+        Productos relacionados
+      </h2>
+      {/* En celular la tarjeta no ocupa todo el ancho: se asoma la siguiente
+          para que se lea como carrusel. */}
+      <ul className="flex w-full snap-x snap-mandatory scroll-px-4 gap-4 overflow-x-auto px-4 pb-2 pt-1 md:snap-none md:px-0">
         {relatedProducts.map((product) => (
           <li
             key={product.handle}
-            className="aspect-square w-full flex-none min-[475px]:w-1/2 sm:w-1/3 md:w-1/4 lg:w-1/5"
+            className="aspect-square w-[72%] flex-none snap-start min-[475px]:w-[45%] sm:w-1/3 md:w-1/4 lg:w-1/5"
           >
             <Link
               className="relative h-full w-full"
@@ -158,7 +162,7 @@ async function RelatedProducts({ id }: { id: string }) {
                 }}
                 src={product.featuredImage?.url}
                 fill
-                sizes="(min-width: 1024px) 20vw, (min-width: 768px) 25vw, (min-width: 640px) 33vw, (min-width: 475px) 50vw, 100vw"
+                sizes="(min-width: 1024px) 20vw, (min-width: 768px) 25vw, (min-width: 640px) 33vw, (min-width: 475px) 45vw, 72vw"
               />
             </Link>
           </li>
