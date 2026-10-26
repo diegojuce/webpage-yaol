@@ -20,7 +20,9 @@ const DISPLAY_FONT =
 
 function Shell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="mt-28 min-h-screen bg-[#0F0F0F] text-white">{children}</div>
+    <div className="mt-28 min-h-screen bg-[#f4f4f2] text-[#0f0f0f]">
+      {children}
+    </div>
   );
 }
 
@@ -38,7 +40,7 @@ function Screen({
   return (
     <Shell>
       <main className="mx-auto flex max-w-[560px] flex-col items-center gap-4 px-4 py-24 text-center">
-        <p className="m-0 text-[13px] font-bold uppercase tracking-[0.22em] text-[#FFD34A]">
+        <p className="m-0 text-[13px] font-bold uppercase tracking-[0.22em] text-[#d19d00]">
           {eyebrow}
         </p>
         <h1
@@ -47,7 +49,7 @@ function Screen({
         >
           {title}
         </h1>
-        <p className="m-0 text-[15px] leading-relaxed text-white/60">
+        <p className="m-0 text-[15px] leading-relaxed text-[#6b6b6b]">
           {message}
         </p>
         {action ? (

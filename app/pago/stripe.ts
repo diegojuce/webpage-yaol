@@ -12,7 +12,7 @@ export const getStripe = () =>
 
 const FONT = 'Inter, system-ui, -apple-system, "Segoe UI", sans-serif';
 
-// /pago/<sesión> (liga de pago): misma paleta que /agendar-cita, fondo claro.
+// Misma paleta que /agendar-cita, fondo claro (/pago y /pago/<sesión>).
 export const APPEARANCE_LIGHT: Appearance = {
   theme: "stripe",
   variables: {
@@ -46,49 +46,6 @@ export const APPEARANCE_LIGHT: Appearance = {
     ".Tab--selected": {
       borderColor: "#ffc600",
       boxShadow: "0 0 0 1px #ffc600",
-    },
-  },
-};
-
-// Checkout del sitio (/pago): tarjeta oscura como el formulario de /club.
-export const APPEARANCE_DARK: Appearance = {
-  theme: "night",
-  variables: {
-    colorPrimary: "#FFC600",
-    colorBackground: "#1a1a1a",
-    colorText: "#ffffff",
-    colorTextSecondary: "#9a9a9a",
-    colorTextPlaceholder: "#5c5c5c",
-    colorDanger: "#f87171",
-    fontFamily: FONT,
-    fontSizeBase: "15px",
-    borderRadius: "12px",
-    spacingUnit: "4px",
-  },
-  rules: {
-    ".Input": {
-      border: "1px solid #2e2e2e",
-      boxShadow: "none",
-      padding: "14px",
-    },
-    ".Input:focus": {
-      border: "1px solid #FFC600",
-      boxShadow: "none",
-    },
-    ".Label": {
-      fontSize: "11px",
-      fontWeight: "700",
-      textTransform: "uppercase",
-      letterSpacing: "0.16em",
-      color: "#8a8a8a",
-    },
-    ".Tab": {
-      border: "1px solid #2e2e2e",
-      boxShadow: "none",
-    },
-    ".Tab--selected": {
-      borderColor: "#FFC600",
-      boxShadow: "0 0 0 1px #FFC600",
     },
   },
 };

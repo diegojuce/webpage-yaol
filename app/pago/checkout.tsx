@@ -1,6 +1,7 @@
 "use client";
 
-// Checkout del carrito en cuatro pasos, con la tarjeta de /club
+// Checkout del carrito en cuatro pasos, con la tarjeta de /club y la paleta
+// clara de la página de pago anterior
 // (app/club/club-signup-card.tsx):
 //   datos (nombre y teléfono) → cita (sucursal, día y hora) o envío (dirección)
 //   → pago (Stripe Elements) → confirmación
@@ -34,7 +35,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { saveCheckoutContact } from "./[sessionId]/actions";
-import { APPEARANCE_DARK, getStripe, PUBLISHABLE_KEY } from "./stripe";
+import { APPEARANCE_LIGHT, getStripe, PUBLISHABLE_KEY } from "./stripe";
 
 export type SummaryLine = {
   key: string;
@@ -70,16 +71,16 @@ const PASOS: { id: Paso; label: string }[] = [
 const DISPLAY_FONT =
   "var(--font-staatliches), var(--font-fjalla), Impact, sans-serif";
 const INPUT =
-  "w-full rounded-xl border border-white/15 bg-white/[0.04] px-4 py-3.5 text-[15px] text-white outline-none transition-colors placeholder:text-white/30 focus:border-[#FFC600] focus:bg-white/[0.07] disabled:opacity-50";
+  "w-full rounded-xl border border-[#e2e2e2] bg-white px-4 py-3.5 text-[15px] text-[#0f0f0f] outline-none transition-[border-color,box-shadow] placeholder:text-[#a3a3a3] focus:border-[#FFC600] focus:shadow-[0_0_0_3px_rgba(255,198,0,0.25)] disabled:opacity-50";
 const LABEL =
-  "mb-2 block text-[11px] font-bold uppercase tracking-[0.16em] text-white/45";
+  "mb-2 block text-[11px] font-bold uppercase tracking-[0.16em] text-[#6b6b6b]";
 const CHIP =
   "rounded-xl border px-3 py-2.5 text-center transition-colors disabled:cursor-not-allowed disabled:opacity-40";
 const chipClass = (activo: boolean) =>
   `${CHIP} ${
     activo
-      ? "border-[#FFC600] bg-[#FFC600]/10 text-white"
-      : "border-white/10 bg-white/[0.02] text-white/70 hover:border-white/25"
+      ? "border-[#FFC600] bg-[#FFC600]/15 text-[#0f0f0f]"
+      : "border-[#e2e2e2] bg-white text-[#3a3a3a] hover:border-[#c9c9c9]"
   }`;
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -154,12 +155,8 @@ export default function Checkout(props: Props) {
 
   return (
     <section className="relative overflow-hidden px-4 py-10 md:px-14 md:py-16">
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -right-40 -top-40 h-[520px] w-[520px] rounded-full bg-[#FFC600]/10 blur-[120px]"
-      />
       <div className="relative mx-auto max-w-[1180px]">
-        <p className="m-0 text-[13px] font-bold uppercase tracking-[0.22em] text-[#FFD34A]">
+        <p className="m-0 text-[13px] font-bold uppercase tracking-[0.22em] text-[#d19d00]">
           Pago seguro
         </p>
         <h1
@@ -170,7 +167,7 @@ export default function Checkout(props: Props) {
         </h1>
 
         <div className="mt-8 grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
-          <div className="rounded-[28px] border border-white/10 bg-[#141414] p-5 shadow-[0_30px_80px_rgba(0,0,0,0.55)] sm:p-8">
+          <div className="rounded-[24px] border border-[#eaeaea] bg-white p-5 shadow-[0_24px_80px_rgba(0,0,0,0.06)] sm:p-8">
             {props.mode === "cart" ? (
               <CartFlow {...props} total={total} />
             ) : (
@@ -374,7 +371,7 @@ function CartFlow({
               inputMode="numeric"
               autoComplete="tel-national"
             />
-            <p className="mt-2 text-[12px] leading-relaxed text-white/40">
+            <p className="mt-2 text-[12px] leading-relaxed text-[#8a8a8a]">
               Solo lo usamos para tu compra y su seguimiento.
             </p>
           </div>
@@ -437,7 +434,7 @@ function CartFlow({
                           aria-pressed={dia === iso}
                           className={`${chipClass(dia === iso)} min-w-[64px] shrink-0`}
                         >
-                          <span className="block text-[10px] font-bold uppercase tracking-[0.12em] text-white/45">
+                          <span className="block text-[10px] font-bold uppercase tracking-[0.12em] text-[#8a8a8a]">
                             {d.toLocaleDateString("es-MX", {
                               weekday: "short",
                             })}
@@ -445,7 +442,7 @@ function CartFlow({
                           <span className="block text-lg font-bold leading-tight">
                             {d.getDate()}
                           </span>
-                          <span className="block text-[11px] text-white/45">
+                          <span className="block text-[11px] text-[#8a8a8a]">
                             {d.toLocaleDateString("es-MX", { month: "short" })}
                           </span>
                         </button>
@@ -459,11 +456,11 @@ function CartFlow({
                 <div>
                   <span className={LABEL}>Hora</span>
                   {horasCargando ? (
-                    <p className="m-0 text-[13px] text-white/45">
+                    <p className="m-0 text-[13px] text-[#8a8a8a]">
                       Buscando horarios…
                     </p>
                   ) : horas.length === 0 ? (
-                    <p className="m-0 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-[13px] text-white/60">
+                    <p className="m-0 rounded-xl border border-[#eaeaea] bg-[#f7f7f5] px-4 py-3 text-[13px] text-[#6b6b6b]">
                       No hay horarios disponibles este día. Prueba con otro.
                     </p>
                   ) : (
@@ -487,7 +484,7 @@ function CartFlow({
           ) : null}
 
           {modo === "delivery" ? (
-            <div className="flex flex-col gap-4 rounded-2xl border border-white/10 bg-white/[0.02] p-4">
+            <div className="flex flex-col gap-4 rounded-2xl border border-[#eaeaea] bg-[#f7f7f5] p-4">
               <Campo
                 id="dir-calle"
                 label="Calle y número"
@@ -608,22 +605,22 @@ function ResumenEntrega({
   onCambiar: () => void;
 }) {
   return (
-    <div className="flex items-start justify-between gap-3 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3.5">
+    <div className="flex items-start justify-between gap-3 rounded-2xl border border-[#eaeaea] bg-[#f7f7f5] px-4 py-3.5">
       <div className="min-w-0">
-        <p className="m-0 text-[10px] font-bold uppercase tracking-[0.18em] text-white/40">
+        <p className="m-0 text-[10px] font-bold uppercase tracking-[0.18em] text-[#8a8a8a]">
           {modo === "install" ? "Instalación en sucursal" : "Envío a domicilio"}
         </p>
-        <p className="m-0 mt-1 text-[14px] font-semibold text-white">
+        <p className="m-0 mt-1 text-[14px] font-semibold text-[#0f0f0f]">
           {modo === "install" ? branchName : direccion}
         </p>
         {cita ? (
-          <p className="m-0 text-[13px] text-white/55">{formatCita(cita)}</p>
+          <p className="m-0 text-[13px] text-[#6b6b6b]">{formatCita(cita)}</p>
         ) : null}
       </div>
       <button
         type="button"
         onClick={onCambiar}
-        className="shrink-0 text-[13px] font-semibold text-[#FFC600] transition-colors hover:text-[#FFD34A]"
+        className="shrink-0 text-[13px] font-semibold text-[#b38600] transition-colors hover:text-[#0f0f0f]"
       >
         Cambiar
       </button>
@@ -641,14 +638,14 @@ function StripePago(props: {
   const options = useMemo(
     () => ({
       clientSecret: props.clientSecret,
-      elementsOptions: { appearance: APPEARANCE_DARK },
+      elementsOptions: { appearance: APPEARANCE_LIGHT },
     }),
     [props.clientSecret],
   );
 
   if (!PUBLISHABLE_KEY) {
     return (
-      <p className="m-0 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+      <p className="m-0 rounded-xl border border-[#f5c6c1] bg-[#fdecea] px-4 py-3 text-sm text-[#b71c1c]">
         El pago en línea no está disponible por ahora.
       </p>
     );
@@ -679,7 +676,7 @@ function PagoForm({
 
   if (state.type === "error") {
     return (
-      <p className="m-0 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+      <p className="m-0 rounded-xl border border-[#f5c6c1] bg-[#fdecea] px-4 py-3 text-sm text-[#b71c1c]">
         {state.error.message || "No se pudo cargar el formulario de pago."}
       </p>
     );
@@ -742,7 +739,7 @@ function PagoForm({
         <span className={LABEL}>Tarjeta</span>
         {cargando ? (
           <div
-            className="h-36 animate-pulse rounded-xl bg-white/[0.04]"
+            className="h-36 animate-pulse rounded-xl bg-[#f1f1ef]"
             aria-hidden
           />
         ) : null}
@@ -751,7 +748,7 @@ function PagoForm({
       <Boton onClick={onPagar} disabled={cargando || pagando}>
         {pagando ? "Procesando…" : `Pagar ${totalLabel}`}
       </Boton>
-      <p className="m-0 text-center text-[12px] leading-relaxed text-white/40">
+      <p className="m-0 text-center text-[12px] leading-relaxed text-[#8a8a8a]">
         Pago seguro procesado por Stripe. Yantissimo no guarda los datos de tu
         tarjeta.
       </p>
@@ -825,7 +822,7 @@ function Confirmacion({
     return (
       <div className="flex flex-col items-center gap-4 py-6 text-center">
         {!agotado ? (
-          <span className="h-10 w-10 animate-spin rounded-full border-2 border-white/15 border-t-[#FFC600]" />
+          <span className="h-10 w-10 animate-spin rounded-full border-2 border-[#e2e2e2] border-t-[#FFC600]" />
         ) : null}
         <Encabezado
           titulo={
@@ -855,12 +852,12 @@ function Confirmacion({
           ✓
         </span>
         <h2
-          className="m-0 text-3xl font-black uppercase leading-none tracking-[0.04em] text-white"
+          className="m-0 text-3xl font-black uppercase leading-none tracking-[0.04em] text-[#0f0f0f]"
           style={{ fontFamily: DISPLAY_FONT }}
         >
           ¡Pago confirmado!
         </h2>
-        <p className="m-0 max-w-[380px] text-[14px] leading-relaxed text-white/55">
+        <p className="m-0 max-w-[380px] text-[14px] leading-relaxed text-[#6b6b6b]">
           Te mandamos la confirmación por WhatsApp
           {order.customerEmail
             ? ` y el comprobante a ${order.customerEmail}`
@@ -870,34 +867,34 @@ function Confirmacion({
       </div>
 
       {order.quoteId ? (
-        <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3.5 text-center">
-          <p className="m-0 text-[10px] font-bold uppercase tracking-[0.18em] text-white/40">
+        <div className="rounded-2xl border border-[#eaeaea] bg-[#f7f7f5] px-4 py-3.5 text-center">
+          <p className="m-0 text-[10px] font-bold uppercase tracking-[0.18em] text-[#8a8a8a]">
             Número de pedido
           </p>
-          <p className="m-0 mt-1 font-mono text-[15px] text-white">
+          <p className="m-0 mt-1 font-mono text-[15px] text-[#0f0f0f]">
             {order.quoteId}
           </p>
         </div>
       ) : null}
 
       {order.fulfillment === "install" && cita ? (
-        <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3.5">
-          <p className="m-0 text-[10px] font-bold uppercase tracking-[0.18em] text-white/40">
+        <div className="rounded-2xl border border-[#eaeaea] bg-[#f7f7f5] px-4 py-3.5">
+          <p className="m-0 text-[10px] font-bold uppercase tracking-[0.18em] text-[#8a8a8a]">
             Tu cita de instalación
           </p>
-          <p className="m-0 mt-1 text-[15px] font-semibold text-white">
+          <p className="m-0 mt-1 text-[15px] font-semibold text-[#0f0f0f]">
             {formatCita(cita.startAt)}
           </p>
-          <p className="m-0 text-[13px] text-white/55">
+          <p className="m-0 text-[13px] text-[#6b6b6b]">
             {branch ? `${branch.name} · ${branch.address}` : order.branchCode}
           </p>
           {cita.status === "failed" ? (
-            <p className="m-0 mt-3 rounded-xl border border-[#FFC600]/30 bg-[#FFC600]/10 px-3 py-2.5 text-[13px] text-[#FFD34A]">
+            <p className="m-0 mt-3 rounded-xl border border-[#f3dc8a] bg-[#fff6d6] px-3 py-2.5 text-[13px] text-[#7a5a00]">
               Ese horario se ocupó mientras pagabas. Tu pago está registrado:
               elige otro horario para tu instalación.
             </p>
           ) : cita.status === "pending" ? (
-            <p className="m-0 mt-2 text-[12px] text-white/40">
+            <p className="m-0 mt-2 text-[12px] text-[#8a8a8a]">
               Estamos apartando tu horario; te lo confirmamos por WhatsApp.
             </p>
           ) : null}
@@ -905,11 +902,11 @@ function Confirmacion({
       ) : null}
 
       {order.fulfillment === "delivery" && dir ? (
-        <div className="rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3.5">
-          <p className="m-0 text-[10px] font-bold uppercase tracking-[0.18em] text-white/40">
+        <div className="rounded-2xl border border-[#eaeaea] bg-[#f7f7f5] px-4 py-3.5">
+          <p className="m-0 text-[10px] font-bold uppercase tracking-[0.18em] text-[#8a8a8a]">
             Envío a domicilio · 2 a 5 días
           </p>
-          <p className="m-0 mt-1 text-[14px] text-white">
+          <p className="m-0 mt-1 text-[14px] text-[#0f0f0f]">
             {[
               dir.address?.line1,
               dir.address?.line2,
@@ -938,8 +935,8 @@ function Confirmacion({
 
 function Resumen({ lines, total }: { lines: SummaryLine[]; total: number }) {
   return (
-    <aside className="rounded-[28px] border border-white/10 bg-[#141414] p-5 sm:p-6 lg:sticky lg:top-32">
-      <h2 className="m-0 text-[11px] font-bold uppercase tracking-[0.18em] text-white/45">
+    <aside className="rounded-[24px] border border-[#0f0f0f] bg-[#0f0f0f] p-5 text-white sm:p-6 lg:sticky lg:top-32">
+      <h2 className="m-0 text-[11px] font-extrabold uppercase tracking-[0.18em] text-[#FFC600]">
         Tu pedido
       </h2>
       <ul className="m-0 mt-4 flex list-none flex-col gap-4 p-0">
@@ -976,7 +973,7 @@ function Resumen({ lines, total }: { lines: SummaryLine[]; total: number }) {
       </ul>
       <div className="mt-5 flex items-center justify-between border-t border-white/10 pt-4">
         <span className="text-[13px] text-white/55">Total (IVA incluido)</span>
-        <strong className="text-xl text-white">{formatMXN(total)}</strong>
+        <strong className="text-2xl text-[#FFC600]">{formatMXN(total)}</strong>
       </div>
     </aside>
   );
@@ -995,16 +992,16 @@ function Stepper({ paso }: { paso: Paso }) {
           <li key={p.id} className="flex flex-1 flex-col gap-2">
             <span
               className={`h-1 w-full rounded-full transition-colors ${
-                hecho || activo ? "bg-[#FFC600]" : "bg-white/10"
+                hecho || activo ? "bg-[#FFC600]" : "bg-[#e6e6e3]"
               }`}
             />
             <span
               className={`text-[10px] font-bold uppercase tracking-[0.12em] transition-colors ${
                 activo
-                  ? "text-[#FFC600]"
+                  ? "text-[#b38600]"
                   : hecho
-                    ? "text-white/55"
-                    : "text-white/25"
+                    ? "text-[#6b6b6b]"
+                    : "text-[#b5b5b5]"
               }`}
             >
               {p.label}
@@ -1021,7 +1018,7 @@ function Aviso({ error }: { error: string }) {
   return (
     <p
       role="alert"
-      className="m-0 mb-5 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200"
+      className="m-0 mb-5 rounded-xl border border-[#f5c6c1] bg-[#fdecea] px-4 py-3 text-sm text-[#b71c1c]"
     >
       {error}
     </p>
@@ -1032,12 +1029,12 @@ function Encabezado({ titulo, sub }: { titulo: string; sub: string }) {
   return (
     <div>
       <h2
-        className="m-0 text-[28px] font-black uppercase leading-none tracking-[0.04em] text-white"
+        className="m-0 text-[28px] font-black uppercase leading-none tracking-[0.04em] text-[#0f0f0f]"
         style={{ fontFamily: DISPLAY_FONT }}
       >
         {titulo}
       </h2>
-      <p className="m-0 mt-2 text-[14px] leading-relaxed text-white/50">
+      <p className="m-0 mt-2 text-[14px] leading-relaxed text-[#6b6b6b]">
         {sub}
       </p>
     </div>
@@ -1045,7 +1042,7 @@ function Encabezado({ titulo, sub }: { titulo: string; sub: string }) {
 }
 
 const BOTON =
-  "inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#FFC600] px-6 py-4 text-sm font-bold uppercase tracking-wider text-black transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#FFD34A] hover:shadow-[0_18px_50px_rgba(255,211,74,0.35)] disabled:pointer-events-none disabled:bg-white/10 disabled:text-white/35";
+  "inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#FFC600] px-6 py-4 text-sm font-bold uppercase tracking-wider text-black transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#FFD34A] hover:shadow-[0_18px_50px_rgba(255,211,74,0.35)] disabled:pointer-events-none disabled:bg-[#ececea] disabled:text-[#a3a3a3]";
 
 function Boton({
   children,
@@ -1090,7 +1087,7 @@ function Atras({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="self-start text-[13px] text-white/45 transition-colors hover:text-white disabled:opacity-40"
+      className="self-start text-[13px] text-[#6b6b6b] transition-colors hover:text-[#0f0f0f] disabled:opacity-40"
     >
       {children}
     </button>
@@ -1155,23 +1152,23 @@ function Opcion({
       } ${
         seleccionada
           ? "border-[#FFC600] bg-[#FFC600]/10"
-          : "border-white/10 bg-white/[0.02] hover:border-white/25"
+          : "border-[#e2e2e2] bg-white hover:border-[#c9c9c9]"
       }`}
     >
       <span
         className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 ${
-          seleccionada ? "border-[#FFC600]" : "border-white/25"
+          seleccionada ? "border-[#0f0f0f]" : "border-[#c9c9c9]"
         }`}
       >
         {seleccionada ? (
-          <span className="h-2.5 w-2.5 rounded-full bg-[#FFC600]" />
+          <span className="h-2.5 w-2.5 rounded-full bg-[#0f0f0f]" />
         ) : null}
       </span>
       <span className="min-w-0">
-        <span className="block text-[15px] font-semibold text-white">
+        <span className="block text-[15px] font-semibold text-[#0f0f0f]">
           {titulo}
         </span>
-        <span className="block text-[12px] text-white/45">{sub}</span>
+        <span className="block text-[12px] text-[#8a8a8a]">{sub}</span>
       </span>
     </button>
   );
