@@ -665,21 +665,54 @@ webhook marca pagado, Apple Pay/Google Pay, el diseño y los pasos de `/pago`.
 
 #### Tareas: backend (`diego-stripe-4`)
 
-- [ ] `crearCobro` (PaymentIntent) en lugar de `crearSesion` en
+- [x] `crearCobro` (PaymentIntent) en lugar de `crearSesion` en
       `shopCheckout.service.js`, para carrito y ligas.
-- [ ] Expiración propia: proceso que cancela PIs vencidos + reintento cancela
+- [x] Expiración propia: proceso que cancela PIs vencidos + reintento cancela
       el anterior.
-- [ ] Webhook `payment_intent.succeeded | canceled | payment_failed`,
+- [x] Webhook `payment_intent.succeeded | canceled | payment_failed`,
       conservando `checkout.session.*`.
-- [ ] Rutas `by-session/:id` aceptan `pi_…`; contacto actualiza
+- [x] Rutas `by-session/:id` aceptan `pi_…`; contacto actualiza
       `receipt_email`.
-- [ ] `shopFactura.service.js`: forma de pago desde el cargo del PI.
-- [ ] Pruebas: adaptar `tests/shopCheckout.test.js` y
+- [x] `shopFactura.service.js`: forma de pago desde el cargo del PI. *(Ya lo
+      leía del `latest_charge` del PI; solo cambió la búsqueda del pedido.)*
+- [x] Pruebas: adaptar `tests/shopCheckout.test.js` y
       `tests/shopFactura.test.js` (pago, monto distinto, evento repetido,
       última pieza, reintento, expiración, MSI con 1 y 2+ llantas).
+      *(100 pruebas de la tienda en verde y `check:boot` OK.)*
 - [ ] Mensaje para el programador del backend: migración (si hay),
       variables y **agregar los eventos `payment_intent.*` al endpoint del
       webhook en Stripe** (STG y después producción).
+
+**Hecho en el backend (2026-10-27, `diego-stripe-4` f48d69e, sin push):**
+- Sin migración: se usan `stripe_payment_intent_id` y `stripe_client_secret`.
+  `shop_orders.expires_at` pasa a ser el **plazo para pagar** (31 min); la
+  reserva vence 5 min después (36). `getOrderBySession` sigue usando
+  `expires_at` para `clientSecret`/"Tienes hasta las…".
+- `startCartCheckout`/`startQuoteCheckout` responden `{ orderId, paymentId,
+  sessionId (alias = paymentId), clientSecret, returnUrl }`. `returnUrl` ya
+  armado: `<origen>/pago` (checkout del sitio y ligas) o
+  `<origen>/agendar-cita` (checkout anterior del modal); `confirmPayment` le
+  agrega `?payment_intent=pi_…&redirect_status=…`.
+- El PI lleva `description` con los renglones, `shipping` con la dirección
+  del sitio (sin referencias ni vacíos) y `idempotencyKey:
+  shop-order-<id>-pi`. Verificado con la CLI en modo prueba: Stripe acepta
+  los parámetros, `installments.enabled: false/true` no choca con
+  `automatic_payment_methods`.
+- `GET /orders/by-session/:id` acepta `pi_…`/`cs_…` y agrega `flow`
+  (`payment_intent` | `checkout_session`) y `paymentId`: el frontend elige
+  `Elements` o `CheckoutElementsProvider` según `flow`.
+- Expiración: `startExpiracionDeCobros()` en `server.js` (cada 60 s,
+  `setInterval` como el de OAuth) → `expirarCobrosVencidos()` cancela el PI
+  y pasa el pedido a `expired` en el momento; el `payment_intent.canceled`
+  posterior ya no cambia nada. Si Stripe no lo deja cancelar (ya pagado),
+  gana el pago. Ojo 5B: Stripe **sí** deja cancelar un PI en `processing`;
+  para OXXO/SPEI el plazo (`expires_at` 24 h) debe ser el del voucher.
+- Webhook: un pedido viejo con sesión también emite `payment_intent.*` (el PI
+  de su sesión): se ignoran, los atiende `checkout.session.*`. La dirección
+  del sitio gana a la de Stripe (`COALESCE(shipping_address, …)`).
+- Checkout anterior del modal con envío: la dirección ya no la pide Stripe;
+  si se conserva, el frontend la manda en `confirmPayment({ shipping })`
+  (Address Element) y el webhook la copia de `pi.shipping`.
 
 #### Tareas: frontend (`diego-stripe`)
 
@@ -813,7 +846,8 @@ _(vacío)_
 
 ## Cómo retomar (estado al 2026-10-27)
 
-**Siguiente paso: Fase 5A** — migrar el cobro de Checkout Sessions a
+**Siguiente paso: Fase 5A, frontend** (el backend ya está en `diego-stripe-4`
+f48d69e, sin push) — migrar el cobro de Checkout Sessions a
 PaymentIntents (ver "5A · Cobro con PaymentIntents": diseño, tareas y
 pruebas). Backend en `diego-stripe-4` (desde `staging`, commit 5a93a9d con
 MSI por cantidad de llantas); frontend en `diego-stripe` (cf11747). Después:
@@ -1037,3 +1071,9 @@ Formato: `AAAA-MM-DD · Fase N · qué se hizo / qué se decidió / qué quedó 
   **Hallazgo:** con Checkout Sessions `ui_mode: "elements"` el Payment
   Element no muestra MSI (sí con PaymentIntent y con el Checkout alojado).
   **Decisión:** migrar el cobro a PaymentIntents antes de OXXO/SPEI (5A).
+- 2026-10-27 · Fase 5A · Backend listo en `diego-stripe-4` (f48d69e, sin
+  push): PaymentIntent por pedido, expiración propia cada minuto, webhook
+  `payment_intent.*` (se conservan `checkout.session.*`), rutas
+  `by-session/:id` con `pi_…`, `receipt_email`. Sin migración. 100 pruebas
+  en verde. Siguiente: frontend (`Elements` + `PaymentElement`), luego push y
+  mensaje al programador (eventos del webhook en Stripe).
