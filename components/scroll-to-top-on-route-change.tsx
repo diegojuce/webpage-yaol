@@ -11,15 +11,20 @@ const bloqueado = () => {
   );
 };
 
-// Sube al inicio con scroll suave. Si un Dialog (menú móvil, carrito) tiene
+// Sube al inicio: "instant" salta sin animación (cambio de página) y "smooth"
+// se desliza (pasos del checkout). Si un Dialog (menú móvil, carrito) tiene
 // bloqueado el scroll, espera a que se cierre: mientras está abierto el
-// scrollTo no hace nada y al cerrarse restaura la posición anterior.
-export function scrollAlInicio() {
+// scrollTo no hace nada, y en iOS Headless UI regresa a la posición que tenía
+// la página al abrirlo. Por eso el salto se repite un momento después.
+export function scrollAlInicio(behavior: "instant" | "smooth" = "smooth") {
   const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const subir = () =>
-    requestAnimationFrame(() =>
-      window.scrollTo({ top: 0, behavior: reduce ? "auto" : "smooth" }),
-    );
+  const modo = reduce ? "instant" : behavior;
+  const subir = () => {
+    window.scrollTo({ top: 0, behavior: modo });
+    if (modo !== "instant") return;
+    requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: modo }));
+    window.setTimeout(() => window.scrollTo({ top: 0, behavior: modo }), 120);
+  };
 
   if (!bloqueado()) {
     subir();
@@ -43,8 +48,8 @@ export function scrollAlInicio() {
   observer.observe(document.body, opciones);
 }
 
-// Regla general del sitio: al cambiar de página se sube al inicio con scroll
-// suave. Sólo cuenta el pathname: cambiar filtros o variantes (search params)
+// Regla general del sitio: al cambiar de página se carga desde arriba, sin
+// animación. Sólo cuenta el pathname: cambiar filtros o variantes (search params)
 // no mueve la página, y una liga con #ancla deja que el navegador la resuelva.
 export function ScrollToTopOnRouteChange() {
   const pathname = usePathname();
@@ -54,7 +59,7 @@ export function ScrollToTopOnRouteChange() {
     if (previous.current === pathname) return;
     previous.current = pathname;
     if (window.location.hash) return;
-    scrollAlInicio();
+    scrollAlInicio("instant");
   }, [pathname]);
 
   return null;

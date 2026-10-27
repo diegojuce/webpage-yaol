@@ -130,7 +130,7 @@ export default async function RootLayout({
   const cart = getCart();
 
   return (
-    <html lang="es">
+    <html lang="es" data-scroll-behavior="smooth">
       <body className="bg-[#0f0f0f] text-white selection:bg-teal-300 dark:bg-[#0f0f0f] dark:text-white dark:selection:bg-pink-500 dark:selection:text-white">
         <script
           type="application/ld+json"
