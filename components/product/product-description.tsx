@@ -6,6 +6,7 @@ import Price from "components/price";
 import { Product } from "lib/commerce/types";
 import { useState } from "react";
 import { BenefitsCard } from "./benefits-card";
+import { PaymentOptions } from "./payment-options";
 
 export function ProductDescription({
   product,
@@ -44,8 +45,8 @@ export function ProductDescription({
       </div>
 
       <AddToCart product={product} />
-      {/* <PaymentOptions product={product} /> */}
       <BenefitsCard />
+      <PaymentOptions product={product} />
       {productDescriptions.length > 0 ? (
         <div className="relative my-6 rounded-sm bg-neutral-100 rounded-xl px-5 py-3 shadow-sm">
           <div className="relative pr-10">

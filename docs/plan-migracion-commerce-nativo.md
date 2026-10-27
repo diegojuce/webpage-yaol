@@ -28,7 +28,7 @@
 | 3 | Checkout Stripe, webhook y cita | 2–3 sem | **Sí, con tarjeta** | ✅ Terminada (en staging; prueba de la liga de pago pendiente para el final) |
 | 3.5 | Ajuste de flujo: checkout en pasos (`/pago`) | 2–3 días | Sí | ✅ Terminada (en staging) |
 | 4 | CFDI 4.0 | 1.5–2 sem | Sí, con factura | ✅ Terminada (en staging; reembolsos en la Fase 5) |
-| 5 | MSI, OXXO, SPEI, reembolsos, carritos abandonados | 2–3 sem | Sí, completo | ⬜ Pendiente |
+| 5 | MSI, OXXO, SPEI, reembolsos, carritos abandonados | 2–3 sem | Sí, completo | 🟨 En curso |
 | 6 | Producción y retiro de Shopify | 1 sem | — | ⬜ Pendiente |
 
 Leyenda: ⬜ Pendiente · 🟨 En curso · ✅ Terminada · ⛔ Bloqueada
@@ -649,6 +649,32 @@ cita se elige ANTES de pagar.
 
 ### Notas y decisiones
 
+- **Decisión (2026-10-27):** MSI solo a **3 meses** (único plazo habilitado
+  en Stripe). La comisión la absorbe Yantissimo: es MSI real, al mismo
+  precio.
+- **Decisión (2026-10-27):** OXXO y SPEI **solo para envío a domicilio**
+  (instalar en sucursal sigue siendo solo tarjeta y wallets, con la cita
+  elegida antes de pagar). El stock se aparta **24 h**; el voucher de OXXO y
+  la referencia SPEI vencen a las 24 h.
+- **Decisión (2026-10-27):** el aviso de pago pendiente (OXXO/SPEI) va por
+  una plantilla de WhatsApp nueva, `pago_pendiente`, que Diego da de alta en
+  Meta Business Suite.
+- **Decisión (2026-10-27):** reembolsos y notas de crédito se hacen desde el
+  ERP (`/facturacion`), con las funciones que ya existen
+  (`reembolsos.service.js`, notas de crédito). Al reembolsar se regresa el
+  stock y se cancela la cita si no se instaló. Cancelar CFDI vs. nota de
+  crédito queda a criterio técnico: cancelar si es reembolso total en el
+  mismo mes del CFDI; nota de crédito (egreso) en los demás casos.
+- **Decisión (2026-10-27):** el reembolso del ERP **no** llama a Stripe: se
+  registra en `/facturacion` y el dinero se regresa a mano en el Dashboard de
+  Stripe. El webhook `charge.refunded` solo deja constancia en el pedido web
+  (para conciliar), sin crear otro reembolso en el ERP.
+- **Decisión (2026-10-27):** MSI se ofrece por **cantidad de llantas**, no
+  por monto: pedidos con **2 o más llantas**.
+- Plantilla `pago_pendiente` aprobada por Meta el 2026-10-27 (Utilidad,
+  es_MX, encabezado "Tu pedido está apartado"; cuerpo {{1}} nombre, {{2}}
+  pedido, {{3}} monto, {{4}} dónde/cómo pagar, {{5}} fecha límite; botón URL
+  dinámica `https://yantissimo.com/{{1}}` → `pago?session_id=…`).
 - Apple Pay y Google Pay son pagos con tarjeta para Stripe: el webhook, el
   apartado, la cotización y la cita no cambian, y la forma de pago del CFDI
   (04/28) se sigue sacando de `card.funding`. Las wallets no ofrecen MSI:
@@ -891,3 +917,7 @@ Formato: `AAAA-MM-DD · Fase N · qué se hizo / qué se decidió / qué quedó 
   primero y el contacto se guarda en paralelo (`/pago` y `/pago/<sesión>`).
 - 2026-10-27 · Fase 5 · Apple Pay funciona en iPhone en el preview (commit
   ab0f3d7). Falta: Google Pay en Android y dominios de producción.
+- 2026-10-27 · Fase 5 · Decisiones: MSI solo 3 meses (absorbe Yantissimo);
+  OXXO y SPEI solo para envío, apartado de 24 h, aviso con la plantilla
+  `pago_pendiente`; reembolsos y notas de crédito desde `/facturacion` del
+  ERP con lo que ya existe; cancelar CFDI vs. egreso a criterio técnico.
