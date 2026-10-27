@@ -616,6 +616,17 @@ cita se elige ANTES de pagar.
       (1–3 días), estado `awaiting_payment` y aviso por WhatsApp.
 - [ ] **SPEI:** transferencia con `customer_balance`, mismo manejo de pago
       tardío.
+- [ ] **Apple Pay y Google Pay:** salen solos en el Payment Element de
+      `/pago` (no tiene `wallets` restringido). *(Habilitados en el Dashboard
+      de Stripe el 2026-10-26.)* Dominios en Stripe → Dominios de métodos de
+      pago: preview
+      `commerce-main-git-diego-stripe-adminyaols-projects.vercel.app`
+      registrado el 2026-10-26 (modo prueba); falta `yantissimo.com` y `www`
+      en producción (Fase 6). Apple exige el archivo de Stripe en
+      `public/.well-known/apple-developer-merchantid-domain-association`
+      (sin él sale la opción pero falla con "No se puede mostrar Apple Pay").
+      Falta probar en iPhone/Mac y Android. Opcional: botón rápido arriba del
+      formulario (Express Checkout Element).
 
 ### Tareas: operación
 
@@ -635,7 +646,11 @@ cita se elige ANTES de pagar.
 
 ### Notas y decisiones
 
-_(vacío)_
+- Apple Pay y Google Pay son pagos con tarjeta para Stripe: el webhook, el
+  apartado, la cotización y la cita no cambian, y la forma de pago del CFDI
+  (04/28) se sigue sacando de `card.funding`. Las wallets no ofrecen MSI:
+  quien quiera meses captura la tarjeta a mano (aclararlo en
+  `payment-options.tsx`).
 
 ---
 
@@ -863,3 +878,8 @@ Formato: `AAAA-MM-DD · Fase N · qué se hizo / qué se decidió / qué quedó 
 - 2026-10-26 · Fase 4 · **Terminada en staging.** La adopción en el ERP
   funciona (cotización 11204 cobrada con la factura WEB-1). UI: botón
   "Facturar" negro con hover gris y la fecha límite arriba del botón.
+- 2026-10-26 · Fase 5 · Se agrega Apple Pay y Google Pay a la fase; ya
+  están habilitados en el Dashboard de Stripe. Dominio del preview
+  registrado. En iPhone salía "No se puede mostrar Apple Pay": faltaba el
+  archivo de verificación de Apple en `/.well-known/` (se agrega en
+  `public/`).
