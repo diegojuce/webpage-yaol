@@ -2,6 +2,7 @@ import { CartProvider } from "components/cart/cart-context";
 import HomepageLoaderGate from "components/home/homepage-loader-gate";
 import { HideOnPathPrefixes } from "components/layout/hide-on-path-prefixes";
 import { Navbar } from "components/layout/navbar";
+import { ScrollToTopOnRouteChange } from "components/scroll-to-top-on-route-change";
 import { WelcomeToast } from "components/welcome-toast";
 import { BRANCHES, COMPANY, SOCIALS } from "lib/company";
 import { getCart } from "lib/commerce";
@@ -135,6 +136,7 @@ export default async function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
         />
+        <ScrollToTopOnRouteChange />
         <CartProvider cartPromise={cart}>
           <HomepageLoaderGate>
             <HideOnPathPrefixes prefixes={["/encuesta"]}>

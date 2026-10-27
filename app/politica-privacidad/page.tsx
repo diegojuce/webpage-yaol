@@ -1,4 +1,3 @@
-import { ScrollToTopOnMount } from "components/scroll-to-top-on-mount";
 import { COMPANY, WHATSAPP_DISPLAY } from "lib/company";
 import type { ReactNode } from "react";
 
@@ -40,7 +39,6 @@ function List({ items, ordered }: { items: ReactNode[]; ordered?: boolean }) {
 export default function PrivacyPolicyPage() {
   return (
     <div className="mt-28 min-h-screen bg-white text-[#0F0F0F]">
-      <ScrollToTopOnMount behavior="auto" />
       <article className="mx-auto max-w-3xl px-6 pb-24 pt-16 md:pt-20">
         <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#D19D00] md:text-sm">
           Legal

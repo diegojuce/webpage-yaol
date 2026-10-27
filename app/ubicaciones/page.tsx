@@ -1,4 +1,3 @@
-import { ScrollToTopOnMount } from "components/scroll-to-top-on-mount";
 import {
   ArrowIcon,
   ClockIcon,
@@ -88,7 +87,6 @@ export default function UbicacionesPage() {
 
   return (
     <div className="mt-28 min-h-screen bg-white text-[#0F0F0F]">
-      <ScrollToTopOnMount behavior="auto" />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}

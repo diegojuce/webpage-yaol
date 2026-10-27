@@ -1,6 +1,5 @@
 "use client";
 
-import { XMarkIcon } from "@heroicons/react/24/outline";
 import { removeItem } from "components/cart/actions";
 import type { CartItem } from "lib/commerce/types";
 import { useActionState } from "react";
@@ -26,9 +25,9 @@ export function DeleteItemButton({
       <button
         type="submit"
         aria-label="Eliminar producto del carrito"
-        className="flex h-[24px] w-[24px] items-center justify-center rounded-full bg-neutral-500"
+        className="text-[12px] text-white/40 underline-offset-2 transition-colors hover:text-[#FFC600] hover:underline"
       >
-        <XMarkIcon className="mx-[1px] h-4 w-4 text-white dark:text-black" />
+        Eliminar
       </button>
       <p aria-live="polite" className="sr-only" role="status">
         {message}

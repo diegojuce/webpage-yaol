@@ -1,4 +1,3 @@
-import { ScrollToTopOnMount } from "components/scroll-to-top-on-mount";
 import { WhatsappIcon } from "components/yantissimo/icons";
 import { whatsappHref, WHATSAPP_DISPLAY } from "lib/company";
 import fs from "node:fs";
@@ -362,7 +361,6 @@ function buildServicesJsonLd() {
 export default function ServiciosPage() {
   return (
     <div className="mt-28 min-h-screen bg-[#FAFAFA] text-[#0F0F0F]">
-      <ScrollToTopOnMount behavior="auto" />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(buildServicesJsonLd()) }}

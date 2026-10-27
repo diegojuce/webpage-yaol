@@ -2,9 +2,8 @@
 
 import { Dialog, Transition } from "@headlessui/react";
 import { ShoppingCartIcon, XMarkIcon } from "@heroicons/react/24/outline";
-import clsx from "clsx";
 import LoadingDots from "components/loading-dots";
-import Price from "components/price";
+import LogoSquare from "components/logo-square";
 import {
   COMMERCE_DISABLED_MESSAGE,
   COMMERCE_ENABLED,
@@ -34,6 +33,11 @@ const setActiveCartModalId = (nextId: string | null) => {
   activeCartModalId = nextId;
   activeCartModalListeners.forEach((listener) => listener(activeCartModalId));
 };
+
+const formatMXN = (amount: number) =>
+  new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(
+    amount,
+  );
 
 type MerchandiseSearchParams = {
   [key: string]: string;
@@ -335,163 +339,142 @@ export default function CartModal({ isWhite = false }) {
             leaveFrom="translate-x-0"
             leaveTo="translate-x-full"
           >
-            <Dialog.Panel className="fixed bottom-0 right-0 top-0 z-[220] flex h-full w-full flex-col border-l border-neutral-200 bg-white/80 p-6 text-black backdrop-blur-xl md:w-[460px] dark:border-neutral-700 dark:bg-black/80 dark:text-white">
-              <div className="flex items-center justify-between">
-                <p className="text-lg font-semibold">Mi carrito</p>
-                <button aria-label="Cerrar carrito" onClick={closeCart}>
-                  <CloseCart />
+            <Dialog.Panel
+              className="fixed bottom-0 right-0 top-0 z-[220] flex h-full w-full flex-col bg-[#0F0F10] text-white md:w-[460px]"
+              style={{ fontFamily: "var(--font-geist-sans, system-ui)" }}
+            >
+              <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
+                <LogoSquare variant="white" />
+                <button
+                  className="flex h-11 w-11 items-center justify-center rounded-full border border-white/15 text-white transition-colors hover:border-[#FFC600] hover:text-[#FFC600]"
+                  onClick={closeCart}
+                  aria-label="Cerrar carrito"
+                >
+                  <XMarkIcon className="h-5" />
                 </button>
               </div>
 
               {!cart || cart.lines.length === 0 ? (
-                <div className="mt-20 flex w-full flex-col items-center justify-center overflow-hidden">
-                  <ShoppingCartIcon className="h-16" />
-                  <p className="mt-6 text-center text-2xl font-bold">
+                <div className="flex flex-1 flex-col items-center justify-center px-5 text-center">
+                  <ShoppingCartIcon className="h-14 text-white/30" />
+                  <p className="mt-6 text-2xl font-bold">
                     Tu carrito está vacío.
                   </p>
                 </div>
               ) : (
-                <div className="flex h-full flex-col justify-between overflow-hidden p-1">
-                  <ul className="grow overflow-auto py-4">
-                    {cart.lines
-                      .sort((a, b) =>
-                        a.merchandise.product.title.localeCompare(
-                          b.merchandise.product.title,
-                        ),
-                      )
-                      .map((item, i) => {
-                        const merchandiseSearchParams =
-                          {} as MerchandiseSearchParams;
+                <div className="flex min-h-0 flex-1 flex-col">
+                  <div className="min-h-0 flex-1 overflow-y-auto px-5 pt-6">
+                    <h2 className="m-0 text-[11px] font-extrabold uppercase tracking-[0.18em] text-[#FFC600]">
+                      Tu pedido
+                    </h2>
+                    <ul className="m-0 mt-4 flex list-none flex-col p-0">
+                      {cart.lines
+                        .sort((a, b) =>
+                          a.merchandise.product.title.localeCompare(
+                            b.merchandise.product.title,
+                          ),
+                        )
+                        .map((item, i) => {
+                          const merchandiseSearchParams =
+                            {} as MerchandiseSearchParams;
 
-                        item.merchandise.selectedOptions.forEach(
-                          ({ name, value }) => {
-                            if (value !== DEFAULT_OPTION) {
-                              merchandiseSearchParams[name.toLowerCase()] =
-                                value;
-                            }
-                          },
-                        );
+                          item.merchandise.selectedOptions.forEach(
+                            ({ name, value }) => {
+                              if (value !== DEFAULT_OPTION) {
+                                merchandiseSearchParams[name.toLowerCase()] =
+                                  value;
+                              }
+                            },
+                          );
 
-                        const merchandiseUrl = createUrl(
-                          `/product/${item.merchandise.product.handle}`,
-                          new URLSearchParams(merchandiseSearchParams),
-                        );
+                          const merchandiseUrl = createUrl(
+                            `/product/${item.merchandise.product.handle}`,
+                            new URLSearchParams(merchandiseSearchParams),
+                          );
+                          const productAny = (item?.merchandise?.product ??
+                            {}) as any;
+                          const amount =
+                            item?.cost?.totalAmount?.amount ||
+                            productAny?.priceRange?.minVariantPrice?.amount ||
+                            "0";
 
-                        return (
-                          <li
-                            key={i}
-                            className="flex w-full flex-col border-b border-neutral-300 dark:border-neutral-700"
-                          >
-                            <div className="relative flex w-full flex-row justify-between px-1 py-4">
-                              <div className="absolute z-40 -ml-1 -mt-2">
-                                <DeleteItemButton
-                                  item={item}
-                                  optimisticUpdate={updateCartItem}
+                          return (
+                            <li
+                              key={i}
+                              className="flex items-start gap-3 border-b border-white/10 py-4 first:pt-0"
+                            >
+                              <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-white">
+                                <Image
+                                  className="h-full w-full object-contain"
+                                  width={64}
+                                  height={64}
+                                  alt={
+                                    item.merchandise?.product?.featuredImage
+                                      ?.altText ||
+                                    item.merchandise.product.title
+                                  }
+                                  src={
+                                    item.merchandise?.product?.featuredImage
+                                      ?.url
+                                  }
                                 />
+                                <span className="absolute right-0.5 top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-[#FFC600] px-1 text-[11px] font-bold text-black">
+                                  {item.quantity}
+                                </span>
                               </div>
-                              <div className="flex flex-row">
-                                <div className="relative h-16 w-16 overflow-hidden rounded-md border border-neutral-300 bg-neutral-300 dark:border-neutral-700 dark:bg-neutral-900 dark:hover:bg-neutral-800">
-                                  <Image
-                                    className="h-full w-full object-cover"
-                                    width={64}
-                                    height={64}
-                                    alt={
-                                      item.merchandise?.product?.featuredImage
-                                        ?.altText ||
-                                      item.merchandise.product.title
-                                    }
-                                    src={
-                                      item.merchandise?.product?.featuredImage
-                                        ?.url
-                                    }
-                                  />
-                                </div>
+                              <div className="min-w-0 flex-1">
                                 <Link
                                   href={merchandiseUrl}
                                   onClick={closeCart}
-                                  className="z-30 ml-2 flex flex-row space-x-4"
+                                  className="m-0 block text-[14px] leading-snug text-white transition-colors hover:text-[#FFC600]"
                                 >
-                                  <div className="flex flex-1 flex-col text-base">
-                                    <span className="leading-tight">
-                                      {item.merchandise.product.title}
-                                    </span>
-                                  </div>
+                                  {item.merchandise.product.title}
                                 </Link>
-                              </div>
-                              <div className="flex h-16 flex-col justify-between">
-                                {(() => {
-                                  const productAny = (item?.merchandise
-                                    ?.product ?? {}) as any;
-                                  const fallbackAmount =
-                                    productAny?.priceRange?.minVariantPrice
-                                      ?.amount;
-                                  const fallbackCurrency =
-                                    productAny?.priceRange?.minVariantPrice
-                                      ?.currencyCode;
-                                  const amount =
-                                    item?.cost?.totalAmount?.amount ||
-                                    fallbackAmount ||
-                                    "0";
-                                  const currencyCode =
-                                    item?.cost?.totalAmount?.currencyCode ||
-                                    fallbackCurrency ||
-                                    "MXN";
-                                  return (
-                                    <Price
-                                      className="flex justify-end space-y-2 text-right text-sm"
-                                      amount={amount}
-                                      currencyCode={currencyCode}
+                                <p className="m-0 text-[12px] text-white/40">
+                                  Instalación o envío GRATIS
+                                </p>
+                                <div className="mt-2 flex items-center gap-3">
+                                  <div className="flex h-8 items-center rounded-full border border-white/15">
+                                    <EditItemQuantityButton
+                                      item={item}
+                                      type="minus"
+                                      optimisticUpdate={updateCartItem}
                                     />
-                                  );
-                                })()}
-                                <div className="ml-auto flex h-9 flex-row items-center rounded-full border border-neutral-200 dark:border-neutral-700">
-                                  <EditItemQuantityButton
-                                    item={item}
-                                    type="minus"
-                                    optimisticUpdate={updateCartItem}
-                                  />
-                                  <p className="w-6 text-center">
-                                    <span className="w-full text-sm">
+                                    <span className="w-6 text-center text-[13px]">
                                       {item.quantity}
                                     </span>
-                                  </p>
-                                  <EditItemQuantityButton
+                                    <EditItemQuantityButton
+                                      item={item}
+                                      type="plus"
+                                      optimisticUpdate={updateCartItem}
+                                    />
+                                  </div>
+                                  <DeleteItemButton
                                     item={item}
-                                    type="plus"
                                     optimisticUpdate={updateCartItem}
                                   />
                                 </div>
                               </div>
-                            </div>
-                          </li>
-                        );
-                      })}
-                  </ul>
-                  <div className="py-4 text-sm text-neutral-500 dark:text-neutral-400">
-                    {/* <div className="mb-3 flex items-center justify-between border-b border-neutral-200 pb-1 dark:border-neutral-700">
-                      <p>Taxes</p>
-                      <Price
-                        className="text-right text-base text-black dark:text-white"
-                        amount={cart.cost.totalTaxAmount.amount}
-                        currencyCode={cart.cost.totalTaxAmount.currencyCode}
-                      />
-                    </div> */}
-
-                    <div className="mb-3 flex items-center justify-between border-b border-neutral-200 pb-1 pt-1 dark:border-neutral-700">
-                      <p>Instalación o envío</p>
-                      <p className="text-right">GRATIS</p>
-                    </div>
-                    <div className="mb-3 flex items-center justify-between border-b border-neutral-200 pb-1 pt-1 dark:border-neutral-700">
-                      <p>Total</p>
-                      <Price
-                        className="text-right text-base text-black dark:text-white"
-                        amount={cart.cost.totalAmount.amount}
-                        currencyCode={cart.cost.totalAmount.currencyCode}
-                      />
-                    </div>
+                              <span className="shrink-0 text-[14px] font-semibold text-white">
+                                {formatMXN(Number(amount))}
+                              </span>
+                            </li>
+                          );
+                        })}
+                    </ul>
                   </div>
-                  <div className="py-4">
-                    <CheckoutButton onClose={closeCart} />
+                  <div className="border-t border-white/10 px-5 pb-6 pt-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[13px] text-white/55">
+                        Total (IVA incluido)
+                      </span>
+                      <strong className="text-2xl text-[#FFC600]">
+                        {formatMXN(Number(cart.cost.totalAmount.amount))}
+                      </strong>
+                    </div>
+                    <div className="mt-4">
+                      <CheckoutButton onClose={closeCart} />
+                    </div>
                   </div>
                 </div>
               )}
@@ -500,19 +483,6 @@ export default function CartModal({ isWhite = false }) {
         </Dialog>
       </Transition>
     </>
-  );
-}
-
-function CloseCart({ className }: { className?: string }) {
-  return (
-    <div className="relative flex h-11 w-11 items-center justify-center bg-white dark:bg-black rounded-md border border-neutral-200 text-black transition-colors dark:border-neutral-700 dark:text-white">
-      <XMarkIcon
-        className={clsx(
-          "h-6 transition-all ease-in-out hover:scale-110",
-          className,
-        )}
-      />
-    </div>
   );
 }
 
@@ -573,12 +543,12 @@ function CheckoutButton({ onClose }: { onClose: () => void }) {
 
   return (
     <button
-      className="block w-full rounded-full bg-yellow-500 p-3 text-center text-sm font-medium text-white opacity-90 hover:opacity-100 disabled:cursor-not-allowed"
+      className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#FFC600] px-6 py-4 text-sm font-bold uppercase tracking-wider text-black transition-colors duration-200 hover:bg-[#FFD34A] disabled:cursor-not-allowed"
       type="button"
       onClick={handleCheckout}
       disabled={pending}
     >
-      {pending ? <LoadingDots className="bg-white" /> : "Completar Pago"}
+      {pending ? <LoadingDots className="bg-black" /> : "Completar pago"}
     </button>
   );
 }

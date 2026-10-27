@@ -2,7 +2,6 @@
 //
 // Los beneficios se traen en el servidor para que la landing pinte completa al
 // primer render; el resto del flujo (código, vehículo, tarjeta) es del cliente.
-import { ScrollToTopOnMount } from "components/scroll-to-top-on-mount";
 import { ShieldIcon, WhatsappIcon } from "components/yantissimo/icons";
 import { fetchBeneficios } from "lib/api/club";
 import { BRANCHES, COMPANY, WHATSAPP_DISPLAY, whatsappHref } from "lib/company";
@@ -93,7 +92,6 @@ export default async function ClubPage() {
 
   return (
     <div className="mt-28 min-h-screen bg-[#0F0F0F] text-white">
-      <ScrollToTopOnMount />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}

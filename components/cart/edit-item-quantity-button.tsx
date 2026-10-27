@@ -2,7 +2,6 @@
 import { cartLineVariants } from "lib/commerce/variant-utils";
 
 import { MinusIcon, PlusIcon } from "@heroicons/react/24/outline";
-import clsx from "clsx";
 import { updateItemQuantity } from "components/cart/actions";
 import type { CartItem } from "lib/commerce/types";
 import { useActionState } from "react";
@@ -16,17 +15,12 @@ function SubmitButton({ type }: { type: "plus" | "minus" }) {
           ? "Aumentar cantidad del producto"
           : "Disminuir cantidad del producto"
       }
-      className={clsx(
-        "ease flex h-full min-w-[36px] max-w-[36px] flex-none items-center justify-center rounded-full p-2 transition-all duration-200 hover:border-neutral-800 hover:opacity-80",
-        {
-          "ml-auto": type === "minus",
-        },
-      )}
+      className="flex h-full w-8 flex-none items-center justify-center rounded-full text-white/70 transition-colors duration-200 hover:text-[#FFC600]"
     >
       {type === "plus" ? (
-        <PlusIcon className="h-4 w-4 dark:text-neutral-500" />
+        <PlusIcon className="h-3.5 w-3.5" />
       ) : (
-        <MinusIcon className="h-4 w-4 dark:text-neutral-500" />
+        <MinusIcon className="h-3.5 w-3.5" />
       )}
     </button>
   );
