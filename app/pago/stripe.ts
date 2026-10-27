@@ -10,9 +10,20 @@ let stripePromise: ReturnType<typeof loadStripe> | null = null;
 export const getStripe = () =>
   (stripePromise ??= loadStripe(PUBLISHABLE_KEY, { locale: "es-419" }));
 
+// Meses sin intereses (Fase 5): el backend los prende en pedidos con 2
+// llantas o más (MSI_MIN_LLANTAS de shopCheckout.service.js).
+export const MSI_MIN_LLANTAS = 2;
+
+// Confirmación del pago en /pago (factura y "Elegir horario"). `pi_…` desde la
+// Fase 5A; los pedidos anteriores se identifican con su sesión (`cs_…`).
+export const confirmacionUrl = (paymentId: string) =>
+  paymentId.startsWith("cs_")
+    ? `/pago?session_id=${encodeURIComponent(paymentId)}`
+    : `/pago?payment_intent=${encodeURIComponent(paymentId)}`;
+
 const FONT = 'Inter, system-ui, -apple-system, "Segoe UI", sans-serif';
 
-// Misma paleta que /agendar-cita, fondo claro (/pago y /pago/<sesión>).
+// Misma paleta que /agendar-cita, fondo claro (/pago y /pago/<pago>).
 export const APPEARANCE_LIGHT: Appearance = {
   theme: "stripe",
   variables: {

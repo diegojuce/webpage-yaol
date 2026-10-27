@@ -22,7 +22,7 @@ export default function PayButton({
     try {
       const result = await payQuote(token);
       if (result.ok) {
-        router.push(`/pago/${result.sessionId}`);
+        router.push(`/pago/${result.paymentId}`);
         return;
       }
       setError(result.message);

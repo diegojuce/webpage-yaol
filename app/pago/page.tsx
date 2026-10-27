@@ -1,11 +1,12 @@
 // Checkout del sitio para el carrito: tus datos → cita o envío → pago →
 // confirmación, con la tarjeta de pasos de /club. "Completar pago" del carrito
-// llega aquí; al pagar, la URL pasa a /pago?session_id=… (el webhook marca el
-// pedido pagado y agenda la cita). Las ligas de cotización pagan en
-// /pago/<sesión> y también terminan en esta confirmación, donde se pide la
-// factura.
+// llega aquí; al pagar, la URL pasa a /pago?payment_intent=pi_… (el webhook
+// marca el pedido pagado y agenda la cita; `session_id=cs_…` en los pedidos
+// anteriores a la Fase 5A). Las ligas de cotización pagan en /pago/<pi_…> y
+// también terminan en esta confirmación, donde se pide la factura.
 import type { Metadata } from "next";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { getCart, getOrderBySession } from "lib/commerce";
 import { COMMERCE_PROVIDER } from "lib/commerce-status";
 import Checkout, { type SummaryLine } from "./checkout";
@@ -66,9 +67,16 @@ function Screen({
 }
 
 export default async function PagoPage(props: {
-  searchParams: Promise<{ session_id?: string }>;
+  searchParams: Promise<{
+    payment_intent?: string;
+    session_id?: string;
+    redirect_status?: string;
+  }>;
 }) {
-  const { session_id: sessionId } = await props.searchParams;
+  const sp = await props.searchParams;
+  // Stripe regresa con ?payment_intent=…&redirect_status=… si el pago salió
+  // del sitio (no pasa con tarjeta: el 3D Secure va en un modal).
+  const paymentId = sp.payment_intent ?? sp.session_id;
 
   if (COMMERCE_PROVIDER !== "native") {
     return (
@@ -81,8 +89,8 @@ export default async function PagoPage(props: {
   }
 
   // Confirmación: después de pagar (o al recargar la página).
-  if (sessionId) {
-    const order = await getOrderBySession(sessionId).catch((e) => {
+  if (paymentId) {
+    const order = await getOrderBySession(paymentId).catch((e) => {
       console.error("[pago] getOrderBySession", e);
       return undefined;
     });
@@ -96,13 +104,21 @@ export default async function PagoPage(props: {
         />
       );
     }
+    // El pago fuera del sitio falló: se reintenta con el mismo cobro.
+    if (
+      sp.redirect_status === "failed" &&
+      order.status === "pending_payment" &&
+      order.clientSecret
+    ) {
+      redirect(`/pago/${encodeURIComponent(paymentId)}`);
+    }
     const { clientSecret: _secret, ...publicOrder } = order;
     return (
       <Shell>
         <Checkout
-          key={sessionId}
+          key={paymentId}
           mode="confirm"
-          sessionId={sessionId}
+          paymentId={paymentId}
           order={publicOrder}
         />
       </Shell>

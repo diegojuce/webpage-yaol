@@ -1,6 +1,7 @@
-// Descarga del PDF o XML de la factura de un pedido. El id de la sesión de
-// Stripe es la llave, igual que en /pago?session_id=…; el backend se llama
-// desde el servidor con BACKEND_API_TOKEN.
+// Descarga del PDF o XML de la factura de un pedido. El id del pago en Stripe
+// (`pi_…`, o `cs_…` en pedidos anteriores a la Fase 5A) es la llave, igual que
+// en la confirmación de /pago; el backend se llama desde el servidor con
+// BACKEND_API_TOKEN.
 import { fetchInvoiceFile } from "lib/commerce";
 
 export const dynamic = "force-dynamic";

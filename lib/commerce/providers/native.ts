@@ -521,16 +521,22 @@ export async function updateCartAttributes(
   return cartMutation(`/carts/${id}`, "PATCH", attributesToFields(attributes));
 }
 
-// --- Checkout con Stripe (Fase 3) -------------------------------------------
-// Stripe Checkout en modo `elements`: el backend abre la sesión y el sitio
-// pinta el formulario de pago en /pago/<sessionId>, sin salir a Stripe.
-// `returnUrl`: origen del sitio (solo para pagos que necesiten redirigir).
-// El pedido solo se marca pagado desde el webhook del backend.
+// --- Checkout con Stripe (Fase 3; PaymentIntents desde la 5A) ---------------
+// El backend abre un PaymentIntent y el sitio pinta el Payment Element (en /pago
+// o /pago/<paymentId>), sin salir a Stripe. `returnUrl` (lo manda el sitio):
+// origen; el backend responde la URL completa a la que Stripe regresa si el
+// pago necesita salir del sitio. El pedido solo se marca pagado desde el
+// webhook del backend.
+
+// Identificador público del pago: PaymentIntent (`pi_…`) o la sesión de
+// Checkout de los pedidos anteriores a la 5A (`cs_…`).
+export const isPaymentId = (id: string) => /^(pi|cs)_[A-Za-z0-9_]+$/.test(id);
 
 export type CheckoutSession = {
   orderId: number;
-  sessionId: string;
+  paymentId: string;
   clientSecret: string;
+  returnUrl: string;
 };
 
 // Lo que el checkout del sitio (/pago) pide antes de pagar; vale para todo
@@ -598,9 +604,12 @@ export async function startQuoteCheckout(
   return res!;
 }
 
-// Página de pago (/pago/<sessionId>) y regreso a /agendar-cita.
+// Página de pago (/pago/<paymentId>) y regreso a /agendar-cita.
 export type CheckoutOrder = {
   orderId: number;
+  // 'checkout_session': pedido anterior a la 5A (ya no se puede pagar aquí).
+  flow: "payment_intent" | "checkout_session";
+  paymentId: string;
   kind: "cart" | "quote";
   status:
     | "pending_payment"
@@ -680,7 +689,7 @@ export type InvoiceRequest = {
 };
 
 export async function getOrderBySession(sessionId: string): Promise<CheckoutOrder | undefined> {
-  if (!/^cs_[A-Za-z0-9_]+$/.test(sessionId)) return undefined;
+  if (!isPaymentId(sessionId)) return undefined;
   const res = await shopFetch<{ order: CheckoutOrder }>(
     `/orders/by-session/${encodeURIComponent(sessionId)}`,
   );
@@ -723,7 +732,7 @@ export async function fetchInvoiceFile(
   sessionId: string,
   formato: "pdf" | "xml",
 ): Promise<Response | null> {
-  if (!/^cs_[A-Za-z0-9_]+$/.test(sessionId)) return null;
+  if (!isPaymentId(sessionId)) return null;
   const res = await fetch(
     `${BACKEND_URL}/bypass/shop/orders/by-session/${encodeURIComponent(sessionId)}/invoice/${formato}`,
     {

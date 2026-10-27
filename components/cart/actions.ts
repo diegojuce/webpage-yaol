@@ -27,8 +27,8 @@ import { redirect } from "next/navigation";
 
 // cartId cookie: persistente para que el cart sobreviva refreshes y entre
 // sesiones del mismo navegador. El regreso del pago NO depende de esta
-// cookie: Stripe regresa a /agendar-cita?session_id=… y el pedido se busca
-// por la sesión.
+// cookie: el pago termina en /pago?payment_intent=… y el pedido se busca por
+// su PaymentIntent.
 const CART_COOKIE_OPTIONS = {
   maxAge: 60 * 60 * 24 * 30, // 30 days
   sameSite: "lax" as const,
@@ -477,11 +477,24 @@ async function returnOrigin() {
   return `${proto}://${host}`;
 }
 
-// Nativo: `sessionId` (y `clientSecret` para pintar el Payment Element en
-// /pago). Shopify (legado): `url` de su checkout.
+// Nativo: `paymentId` (PaymentIntent), `clientSecret` para pintar el Payment
+// Element en /pago y `returnUrl` por si el pago sale del sitio. Shopify
+// (legado): `url` de su checkout.
 export type StartCheckoutResult =
-  | { ok: true; sessionId: string; clientSecret: string; url?: undefined }
-  | { ok: true; url: string; sessionId?: undefined; clientSecret?: undefined }
+  | {
+      ok: true;
+      paymentId: string;
+      clientSecret: string;
+      returnUrl: string;
+      url?: undefined;
+    }
+  | {
+      ok: true;
+      url: string;
+      paymentId?: undefined;
+      clientSecret?: undefined;
+      returnUrl?: undefined;
+    }
   | {
       ok: false;
       error: "empty_cart" | "unavailable" | "missing_phone" | "missing_branch" | "error";
@@ -490,7 +503,7 @@ export type StartCheckoutResult =
     };
 
 // Paso de pago de /pago: con el carrito nativo el backend valida stock, aparta
-// las piezas y abre la sesión de Stripe con la entrega elegida (`details`);
+// las piezas y abre el cobro de Stripe con la entrega elegida (`details`);
 // con Shopify (legado) se valida y se usa su checkoutUrl.
 export async function startCheckout(
   details?: CheckoutDetails,
@@ -505,11 +518,12 @@ export async function startCheckout(
   }
 
   try {
-    const session = await startNativeCheckout(await returnOrigin(), details);
+    const cobro = await startNativeCheckout(await returnOrigin(), details);
     return {
       ok: true,
-      sessionId: session.sessionId,
-      clientSecret: session.clientSecret,
+      paymentId: cobro.paymentId,
+      clientSecret: cobro.clientSecret,
+      returnUrl: cobro.returnUrl,
     };
   } catch (e) {
     if (!(e instanceof ShopApiError)) {
@@ -556,9 +570,10 @@ export async function startCheckout(
   }
 }
 
-// Regreso del pago (/agendar-cita?session_id=…): estado del pedido. null si
-// la sesión no existe (o no es del proveedor nativo). Sin el client secret:
-// esto viaja al navegador.
+// Regreso del pago (confirmación de /pago y /agendar-cita): estado del pedido
+// por su PaymentIntent (`pi_…`) o sesión (`cs_…`, pedidos viejos). null si no
+// existe (o no es del proveedor nativo). Sin el client secret: esto viaja al
+// navegador.
 export async function lookupCheckoutSession(sessionId: string) {
   if (COMMERCE_PROVIDER !== "native") return null;
   try {

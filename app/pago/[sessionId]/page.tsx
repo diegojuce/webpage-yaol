@@ -1,15 +1,17 @@
-// Página de pago dentro del sitio, para los dos flujos: el carrito (comprar →
-// agendar) y la liga de una cotización (agendar → pagar) llegan aquí con la
-// sesión de Stripe que abrió el backend. Al pagar se sigue a la confirmación
-// de /pago (factura y "Elegir horario").
+// Página de pago dentro del sitio para la liga de una cotización (agendar →
+// pagar), con el PaymentIntent que abrió el backend (`pi_…`). También retoma un
+// pago del carrito que salió del sitio y no se completó (/pago lo manda aquí).
+// Al pagar se sigue a la confirmación de /pago (factura y "Elegir horario").
 import "../../agendar-cita/agendar-cita.css";
 import "../pago.css";
 
 import type { Metadata } from "next";
 import Link from "next/link";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { getOrderBySession } from "lib/commerce";
 import { COMMERCE_PROVIDER } from "lib/commerce-status";
+import { confirmacionUrl, MSI_MIN_LLANTAS } from "../stripe";
 import PaymentForm from "./payment-form";
 
 export const metadata: Metadata = {
@@ -61,6 +63,14 @@ const backToCart = (
   </Link>
 );
 
+// Origen del sitio (preview, producción o local) al que Stripe regresa.
+async function siteOrigin() {
+  const h = await headers();
+  const host = h.get("x-forwarded-host") ?? h.get("host");
+  const proto = h.get("x-forwarded-proto") ?? "https";
+  return `${proto}://${host}`;
+}
+
 export default async function PagoPage(props: {
   params: Promise<{ sessionId: string }>;
 }) {
@@ -92,11 +102,11 @@ export default async function PagoPage(props: {
     );
   }
 
-  if (order.status === "paid") {
-    redirect(`/pago?session_id=${encodeURIComponent(sessionId)}`);
-  }
+  if (order.status === "paid") redirect(confirmacionUrl(sessionId));
 
-  if (!order.clientSecret) {
+  // Los pedidos anteriores a la 5A (Checkout Session) vencen a los 31 min y
+  // ya no se pagan aquí.
+  if (!order.clientSecret || order.flow !== "payment_intent") {
     return (
       <Screen
         eyebrow="PAGO VENCIDO"
@@ -160,10 +170,18 @@ export default async function PagoPage(props: {
           </aside>
 
           <section className="pago-card">
+            {order.kind === "cart" &&
+            order.lines.reduce((sum, l) => sum + l.quantity, 0) >=
+              MSI_MIN_LLANTAS ? (
+              <p className="pago-alert pago-alert--info">
+                Puedes pagar a <strong>3 meses sin intereses</strong> con
+                tarjeta de crédito.
+              </p>
+            ) : null}
             <PaymentForm
-              sessionId={sessionId}
+              paymentId={sessionId}
               clientSecret={order.clientSecret}
-              hasDelivery={order.hasDelivery}
+              returnUrl={`${await siteOrigin()}/pago`}
               totalLabel={formatMXN(order.totalCents)}
               defaultName={order.customerName ?? ""}
               defaultEmail={order.customerEmail ?? ""}

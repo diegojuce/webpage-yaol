@@ -151,7 +151,11 @@ export default function AgendarCitaPage() {
   const router = useRouter();
   const pathname = usePathname();
   const quoteIdFromQuery = searchParams.get("quote_id") ?? undefined;
-  const sessionIdFromQuery = searchParams.get("session_id") ?? undefined;
+  // `payment_intent=pi_…` desde la Fase 5A; `session_id=cs_…` antes.
+  const sessionIdFromQuery =
+    searchParams.get("payment_intent") ??
+    searchParams.get("session_id") ??
+    undefined;
   const { cart } = useCart();
 
   const [today, setToday] = useState<Date | null>(null);
@@ -211,7 +215,7 @@ export default function AgendarCitaPage() {
     }));
   }, [phoneFromCart, branchNameFromCart, branchCodeFromCart]);
 
-  // Regreso de Stripe: `?session_id=cs_…` → `?quote_id=`. El pedido solo
+  // Regreso de Stripe: `?payment_intent=pi_…` (o `?session_id=cs_…`) → `?quote_id=`. El pedido solo
   // pasa a pagado desde el webhook, que suele tardar unos segundos: mientras
   // siga pendiente se reintenta con backoff. Si todo va a domicilio no hay
   // cita: se muestra la confirmación del pedido.
@@ -237,7 +241,14 @@ export default function AgendarCitaPage() {
               return;
             }
             const nextParams = new URLSearchParams(searchParams.toString());
-            nextParams.delete("session_id");
+            for (const k of [
+              "session_id",
+              "payment_intent",
+              "payment_intent_client_secret",
+              "redirect_status",
+            ]) {
+              nextParams.delete(k);
+            }
             nextParams.set("quote_id", order.quoteId);
             router.replace(`${pathname}?${nextParams.toString()}`, {
               scroll: false,

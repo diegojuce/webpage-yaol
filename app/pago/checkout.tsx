@@ -6,15 +6,16 @@
 //   datos (nombre y teléfono) → cita (sucursal, día y hora) o envío (dirección)
 //   → pago (Stripe Elements) → confirmación
 //
-// Al pasar al pago se abre la sesión de Stripe con todo lo elegido: el backend
-// aparta las llantas y guarda la entrega en el pedido; al pagar, el webhook crea
-// la cotización y agenda la cita. La confirmación vive en /pago?session_id=…
-// para que sobreviva a una recarga.
+// Al pasar al pago se abre el cobro de Stripe (PaymentIntent) con todo lo
+// elegido: el backend aparta las llantas y guarda la entrega en el pedido; al
+// pagar, el webhook crea la cotización y agenda la cita. La confirmación vive
+// en /pago?payment_intent=… para que sobreviva a una recarga.
 import {
-  CheckoutElementsProvider,
+  Elements,
   PaymentElement,
-  useCheckoutElements,
-} from "@stripe/react-stripe-js/checkout";
+  useElements,
+  useStripe,
+} from "@stripe/react-stripe-js";
 import {
   lookupCheckoutSession,
   setCartAttributes,
@@ -45,7 +46,13 @@ import {
   requestOrderInvoice,
   saveCheckoutContact,
 } from "./[sessionId]/actions";
-import { APPEARANCE_LIGHT, getStripe, PUBLISHABLE_KEY } from "./stripe";
+import {
+  APPEARANCE_LIGHT,
+  confirmacionUrl,
+  getStripe,
+  MSI_MIN_LLANTAS,
+  PUBLISHABLE_KEY,
+} from "./stripe";
 
 export type SummaryLine = {
   key: string;
@@ -66,7 +73,7 @@ type Props =
       initialPhone: string;
       initialBranchCode: string;
     }
-  | { mode: "confirm"; sessionId: string; order: PublicOrder };
+  | { mode: "confirm"; paymentId: string; order: PublicOrder };
 
 type Paso = "datos" | "entrega" | "pago" | "listo";
 type Modo = "install" | "delivery";
@@ -184,7 +191,7 @@ export default function Checkout(props: Props) {
               <>
                 <Stepper paso="listo" />
                 <Confirmacion
-                  sessionId={props.sessionId}
+                  paymentId={props.paymentId}
                   initialOrder={props.order}
                 />
               </>
@@ -204,11 +211,13 @@ export default function Checkout(props: Props) {
 // --- Pasos 1 a 3 --------------------------------------------------------------
 
 function CartFlow({
+  lines,
   initialPhone,
   initialBranchCode,
   total,
 }: Extract<Props, { mode: "cart" }> & { total: number }) {
   const [paso, setPaso] = useState<Paso>("datos");
+  const llantas = lines.reduce((sum, l) => sum + l.quantity, 0);
   const [error, setError] = useState("");
 
   // Cada paso del checkout se ve desde arriba, como una página nueva.
@@ -246,8 +255,9 @@ function CartFlow({
   });
 
   const [sesion, setSesion] = useState<{
-    sessionId: string;
+    paymentId: string;
     clientSecret: string;
+    returnUrl: string;
     key: string;
   } | null>(null);
 
@@ -340,11 +350,16 @@ function CartFlow({
         setError(mensajeCheckout(r));
         return;
       }
-      if (!r.sessionId || !r.clientSecret) {
+      if (!r.paymentId || !r.clientSecret) {
         setError("No se pudo iniciar el pago. Inténtalo de nuevo.");
         return;
       }
-      setSesion({ sessionId: r.sessionId, clientSecret: r.clientSecret, key });
+      setSesion({
+        paymentId: r.paymentId,
+        clientSecret: r.clientSecret,
+        returnUrl: r.returnUrl,
+        key,
+      });
       irA("pago");
     } catch (e) {
       console.error("[pago] startCheckout", e);
@@ -601,10 +616,12 @@ function CartFlow({
             }
             onCambiar={() => irA("entrega")}
           />
+          {llantas >= MSI_MIN_LLANTAS ? <AvisoMsi /> : null}
           <StripePago
-            key={sesion.sessionId}
-            sessionId={sesion.sessionId}
+            key={sesion.paymentId}
+            paymentId={sesion.paymentId}
             clientSecret={sesion.clientSecret}
+            returnUrl={sesion.returnUrl}
             nombre={nombreLimpio}
             totalLabel={formatMXN(total)}
             onError={setError}
@@ -653,19 +670,28 @@ function ResumenEntrega({
   );
 }
 
+// Pedidos con 2 llantas o más: el backend prende los meses sin intereses en
+// el cobro y el Payment Element ofrece "Pagar en cuotas" con tarjeta de crédito.
+function AvisoMsi() {
+  return (
+    <p className="m-0 rounded-xl border border-[#FFC600]/60 bg-[#FFC600]/10 px-4 py-3 text-[14px] text-[#3a3a3a]">
+      Puedes pagar a <strong>3 meses sin intereses</strong> con tarjeta de
+      crédito.
+    </p>
+  );
+}
+
 function StripePago(props: {
-  sessionId: string;
+  paymentId: string;
   clientSecret: string;
+  returnUrl: string;
   nombre: string;
   totalLabel: string;
   onError: (message: string) => void;
   onAtras: () => void;
 }) {
   const options = useMemo(
-    () => ({
-      clientSecret: props.clientSecret,
-      elementsOptions: { appearance: APPEARANCE_LIGHT },
-    }),
+    () => ({ clientSecret: props.clientSecret, appearance: APPEARANCE_LIGHT }),
     [props.clientSecret],
   );
 
@@ -678,42 +704,38 @@ function StripePago(props: {
   }
 
   return (
-    <CheckoutElementsProvider stripe={getStripe()} options={options}>
+    <Elements stripe={getStripe()} options={options}>
       <PagoForm {...props} />
-    </CheckoutElementsProvider>
+    </Elements>
   );
 }
 
 function PagoForm({
-  sessionId,
+  paymentId,
+  returnUrl,
   nombre,
   totalLabel,
   onError,
   onAtras,
 }: {
-  sessionId: string;
+  paymentId: string;
+  returnUrl: string;
   nombre: string;
   totalLabel: string;
   onError: (message: string) => void;
   onAtras: () => void;
 }) {
-  const state = useCheckoutElements();
+  const stripe = useStripe();
+  const elements = useElements();
   const router = useRouter();
   const [email, setEmail] = useState("");
+  const [listo, setListo] = useState(false);
   const [pagando, setPagando] = useState(false);
 
-  if (state.type === "error") {
-    return (
-      <p className="m-0 rounded-xl border border-[#f5c6c1] bg-[#fdecea] px-4 py-3 text-sm text-[#b71c1c]">
-        {state.error.message || "No se pudo cargar el formulario de pago."}
-      </p>
-    );
-  }
-
-  const cargando = state.type === "loading";
+  const cargando = !stripe || !elements || !listo;
 
   async function onPagar() {
-    if (state.type !== "success" || pagando) return;
+    if (!stripe || !elements || pagando) return;
     const cleanEmail = email.trim();
     if (!EMAIL_RE.test(cleanEmail)) {
       onError("Escribe un email válido.");
@@ -725,28 +747,35 @@ function PagoForm({
       onError(message || "No se pudo completar el pago. Inténtalo de nuevo.");
       setPagando(false);
     };
-    // confirm() va antes de cualquier await: Apple Pay solo abre dentro del
-    // gesto del clic. El contacto se guarda en paralelo (el nombre ya se mandó
-    // al crear el checkout y el email también va en confirm).
-    const guardado = saveCheckoutContact(sessionId, {
+    // confirmPayment() va antes de cualquier await: Apple Pay solo abre dentro
+    // del gesto del clic. El contacto se guarda en paralelo (el nombre ya se
+    // mandó al crear el cobro; el email también va en receipt_email).
+    const pago = stripe.confirmPayment({
+      elements,
+      redirect: "if_required",
+      confirmParams: {
+        return_url: returnUrl,
+        receipt_email: cleanEmail,
+        payment_method_data: {
+          billing_details: { name: nombre, email: cleanEmail },
+        },
+      },
+    });
+    const guardado = saveCheckoutContact(paymentId, {
       name: nombre,
       email: cleanEmail,
     }).catch((e) => ({ ok: false as const, message: String(e) }));
     try {
-      // Sin returnUrl: ya viene en la sesión (Stripe lo rechaza si se repite).
-      const result = await state.checkout.confirm({
-        email: cleanEmail,
-        redirect: "if_required",
-      });
-      if (result.type === "error") return fallo(result.error.message);
+      const result = await pago;
+      if (result.error) return fallo(result.error.message);
       const saved = await guardado;
       if (!saved.ok) console.error("[pago] contacto", saved.message);
     } catch (e) {
-      console.error("[pago] confirm", e);
+      console.error("[pago] confirmPayment", e);
       return fallo();
     }
     // Se queda en "procesando" mientras navega a la confirmación.
-    router.replace(`/pago?session_id=${encodeURIComponent(sessionId)}`);
+    router.replace(confirmacionUrl(paymentId));
   }
 
   return (
@@ -775,7 +804,15 @@ function PagoForm({
             aria-hidden
           />
         ) : null}
-        <PaymentElement options={{ layout: "tabs" }} />
+        <PaymentElement
+          options={{ layout: "tabs" }}
+          onReady={() => setListo(true)}
+          onLoadError={(e) =>
+            onError(
+              e.error.message || "No se pudo cargar el formulario de pago.",
+            )
+          }
+        />
       </div>
       <Boton onClick={onPagar} disabled={cargando || pagando}>
         {pagando ? "Procesando…" : `Pagar ${totalLabel}`}
@@ -798,10 +835,10 @@ function PagoForm({
 const REINTENTOS_MS = [1000, 2000, 3000, 4000, 5000, 8000, 12000];
 
 function Confirmacion({
-  sessionId,
+  paymentId,
   initialOrder,
 }: {
-  sessionId: string;
+  paymentId: string;
   initialOrder: PublicOrder;
 }) {
   const router = useRouter();
@@ -817,7 +854,7 @@ function Confirmacion({
     let cancelado = false;
     let timer: ReturnType<typeof setTimeout> | null = null;
     const intento = (i: number) => {
-      lookupCheckoutSession(sessionId)
+      lookupCheckoutSession(paymentId)
         .then((o) => {
           if (cancelado || !o) return;
           setOrder(o);
@@ -833,7 +870,7 @@ function Confirmacion({
       cancelado = true;
       if (timer) clearTimeout(timer);
     };
-  }, [sessionId, initialOrder]);
+  }, [paymentId, initialOrder]);
 
   // El carrito ya se pagó: el ícono del carrito se actualiza.
   const pagado = order.status === "paid";
@@ -955,7 +992,7 @@ function Confirmacion({
         </div>
       ) : null}
 
-      <Factura sessionId={sessionId} invoice={order.invoice} />
+      <Factura paymentId={paymentId} invoice={order.invoice} />
 
       {agendar &&
       ((order.fulfillment === "install" && cita?.status === "failed") ||
@@ -983,10 +1020,10 @@ const formatFechaLimite = (iso: string) =>
   }).format(new Date(new Date(iso).getTime() - 1));
 
 function Factura({
-  sessionId,
+  paymentId,
   invoice,
 }: {
-  sessionId: string;
+  paymentId: string;
   invoice: OrderInvoice | null | undefined;
 }) {
   const [emitida, setEmitida] = useState<OrderInvoice | null>(null);
@@ -995,7 +1032,7 @@ function Factura({
   if (!estado) return null;
 
   if (estado.status === "issued") {
-    const base = `/api/factura/${encodeURIComponent(sessionId)}`;
+    const base = `/api/factura/${encodeURIComponent(paymentId)}`;
     return (
       <div className="rounded-2xl border border-[#eaeaea] bg-[#f7f7f5] px-4 py-3.5">
         <p className="m-0 text-[10px] font-bold uppercase tracking-[0.18em] text-[#8a8a8a]">
@@ -1050,7 +1087,7 @@ function Factura({
 
   return (
     <FacturaForm
-      sessionId={sessionId}
+      paymentId={paymentId}
       onCancelar={() => setAbierto(false)}
       onEmitida={setEmitida}
     />
@@ -1058,11 +1095,11 @@ function Factura({
 }
 
 function FacturaForm({
-  sessionId,
+  paymentId,
   onCancelar,
   onEmitida,
 }: {
-  sessionId: string;
+  paymentId: string;
   onCancelar: () => void;
   onEmitida: (invoice: OrderInvoice) => void;
 }) {
@@ -1118,7 +1155,7 @@ function FacturaForm({
     setError("");
     setEnviando(true);
     try {
-      const r = await requestOrderInvoice(sessionId, {
+      const r = await requestOrderInvoice(paymentId, {
         rfc: rfcLimpio,
         razonSocial: razonSocial.trim(),
         regimenFiscal: regimen,

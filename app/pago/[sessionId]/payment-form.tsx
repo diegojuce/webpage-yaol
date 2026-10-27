@@ -1,28 +1,33 @@
 "use client";
 
-// Formulario de pago de las ligas de cotización (agendar → pagar): Stripe
-// Checkout en modo `elements`. El carrito paga en /pago (checkout.tsx).
-// Los campos de tarjeta (y la dirección, si hay envío) son iframes de Stripe
-// con nuestro estilo; nombre y email son nuestros. confirm() resuelve el 3D
-// Secure en un modal, sin salir de la página, y al terminar se va a la
-// confirmación de /pago?session_id=… (el pedido lo marca pagado el webhook).
+// Formulario de pago de las ligas de cotización (agendar → pagar): Payment
+// Element sobre el PaymentIntent que abrió el backend. El carrito paga en /pago
+// (checkout.tsx). Los campos de tarjeta son iframes de Stripe con nuestro
+// estilo; nombre y email son nuestros. confirmPayment() resuelve el 3D Secure
+// en un modal, sin salir de la página, y al terminar se va a la confirmación
+// de /pago?payment_intent=… (el pedido lo marca pagado el webhook).
 import {
-  CheckoutElementsProvider,
+  Elements,
   PaymentElement,
-  ShippingAddressElement,
-  useCheckoutElements,
-} from "@stripe/react-stripe-js/checkout";
+  useElements,
+  useStripe,
+} from "@stripe/react-stripe-js";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, type FormEvent } from "react";
-import { APPEARANCE_LIGHT, getStripe, PUBLISHABLE_KEY } from "../stripe";
+import {
+  APPEARANCE_LIGHT,
+  confirmacionUrl,
+  getStripe,
+  PUBLISHABLE_KEY,
+} from "../stripe";
 import { saveCheckoutContact } from "./actions";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 type Props = {
-  sessionId: string;
+  paymentId: string;
   clientSecret: string;
-  hasDelivery: boolean;
+  returnUrl: string;
   totalLabel: string;
   defaultName: string;
   defaultEmail: string;
@@ -30,10 +35,7 @@ type Props = {
 
 export default function PaymentForm(props: Props) {
   const options = useMemo(
-    () => ({
-      clientSecret: props.clientSecret,
-      elementsOptions: { appearance: APPEARANCE_LIGHT },
-    }),
+    () => ({ clientSecret: props.clientSecret, appearance: APPEARANCE_LIGHT }),
     [props.clientSecret],
   );
 
@@ -46,40 +48,33 @@ export default function PaymentForm(props: Props) {
   }
 
   return (
-    <CheckoutElementsProvider stripe={getStripe()} options={options}>
+    <Elements stripe={getStripe()} options={options}>
       <CheckoutForm {...props} />
-    </CheckoutElementsProvider>
+    </Elements>
   );
 }
 
 function CheckoutForm({
-  sessionId,
-  hasDelivery,
+  paymentId,
+  returnUrl,
   totalLabel,
   defaultName,
   defaultEmail,
 }: Props) {
-  const state = useCheckoutElements();
+  const stripe = useStripe();
+  const elements = useElements();
   const router = useRouter();
   const [name, setName] = useState(defaultName);
   const [email, setEmail] = useState(defaultEmail);
+  const [listo, setListo] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  if (state.type === "error") {
-    return (
-      <p className="pago-alert" role="alert">
-        {state.error.message || "No se pudo cargar el formulario de pago."}
-      </p>
-    );
-  }
-
-  const loading = state.type === "loading";
-  const doneUrl = `/pago?session_id=${encodeURIComponent(sessionId)}`;
+  const loading = !stripe || !elements || !listo;
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
-    if (state.type !== "success" || submitting) return;
+    if (!stripe || !elements || submitting) return;
 
     const cleanName = name.trim().replace(/\s+/g, " ");
     const cleanEmail = email.trim();
@@ -100,30 +95,37 @@ function CheckoutForm({
       setSubmitting(false);
     };
 
-    // confirm() va antes de cualquier await: Apple Pay solo abre dentro del
-    // gesto del clic. El contacto se guarda en paralelo; termina mucho antes
-    // de que llegue el webhook.
-    const guardado = saveCheckoutContact(sessionId, {
+    // confirmPayment() va antes de cualquier await: Apple Pay solo abre dentro
+    // del gesto del clic. El contacto se guarda en paralelo; termina mucho
+    // antes de que llegue el webhook.
+    const pago = stripe.confirmPayment({
+      elements,
+      redirect: "if_required",
+      confirmParams: {
+        return_url: returnUrl,
+        receipt_email: cleanEmail,
+        payment_method_data: {
+          billing_details: { name: cleanName, email: cleanEmail },
+        },
+      },
+    });
+    const guardado = saveCheckoutContact(paymentId, {
       name: cleanName,
       email: cleanEmail,
     }).catch((e) => ({ ok: false as const, message: String(e) }));
 
     try {
-      // Sin returnUrl: ya viene en la sesión (Stripe lo rechaza si se repite).
-      const result = await state.checkout.confirm({
-        email: cleanEmail,
-        redirect: "if_required",
-      });
-      if (result.type === "error") return fail(result.error.message);
+      const result = await pago;
+      if (result.error) return fail(result.error.message);
       const saved = await guardado;
       if (!saved.ok) console.error("[pago] contacto", saved.message);
     } catch (e) {
-      console.error("[pago] confirm", e);
+      console.error("[pago] confirmPayment", e);
       return fail();
     }
 
     // Se queda en "procesando" mientras navega.
-    router.replace(doneUrl);
+    router.replace(confirmacionUrl(paymentId));
   };
 
   return (
@@ -157,17 +159,18 @@ function CheckoutForm({
         </label>
       </section>
 
-      {hasDelivery ? (
-        <section className="pago-section">
-          <h2 className="pago-section__title">Dirección de envío</h2>
-          <ShippingAddressElement />
-        </section>
-      ) : null}
-
       <section className="pago-section">
         <h2 className="pago-section__title">Pago con tarjeta</h2>
         {loading ? <div className="pago-skeleton" aria-hidden /> : null}
-        <PaymentElement options={{ layout: "tabs" }} />
+        <PaymentElement
+          options={{ layout: "tabs" }}
+          onReady={() => setListo(true)}
+          onLoadError={(e) =>
+            setError(
+              e.error.message || "No se pudo cargar el formulario de pago.",
+            )
+          }
+        />
       </section>
 
       {error ? (

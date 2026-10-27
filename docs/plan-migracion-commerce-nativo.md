@@ -716,24 +716,43 @@ webhook marca pagado, Apple Pay/Google Pay, el diseño y los pasos de `/pago`.
 
 #### Tareas: frontend (`diego-stripe`)
 
-- [ ] `app/pago/checkout.tsx` y `app/pago/[sessionId]/payment-form.tsx`:
+- [x] `app/pago/checkout.tsx` y `app/pago/[sessionId]/payment-form.tsx`:
       `Elements` con `clientSecret` + `PaymentElement` +
       `stripe.confirmPayment({ elements, redirect: "if_required",
       confirmParams: { return_url } })`. `confirmPayment` antes de cualquier
       `await` (Apple Pay).
-- [ ] Confirmación en `/pago?payment_intent=…` (y `session_id` para
+- [x] Confirmación en `/pago?payment_intent=…` (y `session_id` para
       pedidos viejos); `app/api/factura/[sessionId]` acepta `pi_…`.
-- [ ] `components/cart/actions.ts`, `app/pagar/[token]`,
+- [x] `components/cart/actions.ts`, `app/pagar/[token]`,
       `app/agendar-cita/page.tsx`, `lib/commerce/providers/native.ts`:
       renombrar/aceptar el id del pago.
-- [ ] Mensaje en `/pago` cuando hay 2+ llantas: "Puedes pagar a 3 meses sin
+- [x] Mensaje en `/pago` cuando hay 2+ llantas: "Puedes pagar a 3 meses sin
       intereses con tarjeta de crédito".
+
+**Hecho en el frontend (2026-10-27):** sin `CheckoutElementsProvider`; los
+dos formularios usan `Elements` + `PaymentElement` y `confirmPayment` con
+`receipt_email` y `billing_details` (nombre y email). `return_url` lo da el
+backend (`/pago`); si Stripe regresa con `redirect_status=failed`, `/pago`
+manda a `/pago/<pi>` para reintentar con el mismo cobro. Un pedido viejo
+(`flow: checkout_session`) pendiente ya no se paga en `/pago/<id>`: muestra
+"pago vencido" (vencen a los 31 min). Se quitó el `ShippingAddressElement`
+de `/pago/<id>`: solo lo usaba el checkout anterior del modal, que con el
+proveedor nativo ya manda a `/pago`. El aviso de MSI sale en el paso de pago
+del carrito y en `/pago/<id>` de pedidos de carrito (en ligas de cotización
+no se sabe cuántas llantas trae). `tsc`, `prettier` y `next build` OK.
 
 #### Pruebas (local con Playwright y luego STG)
 
 - [ ] 4242 éxito, rechazo, fondos insuficientes, 3D Secure en modal.
+      *(Local 2026-10-27, `/pago/<pi>` con PIs reales de modo prueba y
+      backend simulado: rechazo y fondos insuficientes muestran el error y
+      dejan reintentar con el mismo PI; 3D Secure abre en modal y termina en
+      `/pago?payment_intent=…` con el PI `succeeded`. Falta en STG.)*
 - [ ] MSI: 4000 0048 4000 0008 con 2 llantas muestra "Pagar en cuotas" y
-      cobra a 3 meses; con 1 llanta no lo muestra.
+      cobra a 3 meses; con 1 llanta no lo muestra. *(Local 2026-10-27: con 2
+      llantas sale el aviso y "Pagar en cuotas (meses sin intereses)"; el
+      cargo quedó con `installments.plan = 3 month`. Con 1 llanta no sale
+      ni el aviso ni la opción. Falta en STG.)*
 - [ ] Evento repetido, dos clientes por la última llanta, expiración que
       libera stock, reintento del mismo carrito.
 - [ ] Liga de pago de cotización, factura web (forma 04/28), Apple Pay en
@@ -846,8 +865,8 @@ _(vacío)_
 
 ## Cómo retomar (estado al 2026-10-27)
 
-**Siguiente paso: Fase 5A, frontend** (el backend ya está en `diego-stripe-4`
-f48d69e, sin push) — migrar el cobro de Checkout Sessions a
+**Siguiente paso: Fase 5A, despliegue y pruebas en STG** (backend
+`diego-stripe-4` f48d69e y frontend `diego-stripe`, ambos listos) — migrar el cobro de Checkout Sessions a
 PaymentIntents (ver "5A · Cobro con PaymentIntents": diseño, tareas y
 pruebas). Backend en `diego-stripe-4` (desde `staging`, commit 5a93a9d con
 MSI por cantidad de llantas); frontend en `diego-stripe` (cf11747). Después:
@@ -1077,3 +1096,9 @@ Formato: `AAAA-MM-DD · Fase N · qué se hizo / qué se decidió / qué quedó 
   `by-session/:id` con `pi_…`, `receipt_email`. Sin migración. 100 pruebas
   en verde. Siguiente: frontend (`Elements` + `PaymentElement`), luego push y
   mensaje al programador (eventos del webhook en Stripe).
+- 2026-10-27 · Fase 5A · Frontend listo en `diego-stripe` (`Elements` +
+  `PaymentElement`, `payment_intent` en la confirmación, aviso de MSI).
+  Probado en local contra Stripe en modo prueba: MSI a 3 meses cobrado,
+  rechazo, fondos insuficientes y 3D Secure. Siguiente: el programador
+  despliega `diego-stripe-4` en STG y agrega los eventos `payment_intent.*`
+  al webhook; luego pruebas en STG.
