@@ -624,9 +624,12 @@ cita se elige ANTES de pagar.
       registrado el 2026-10-26 (modo prueba); falta `yantissimo.com` y `www`
       en producción (Fase 6). Apple exige el archivo de Stripe en
       `public/.well-known/apple-developer-merchantid-domain-association`
-      (sin él sale la opción pero falla con "No se puede mostrar Apple Pay").
-      Falta probar en iPhone/Mac y Android. Opcional: botón rápido arriba del
-      formulario (Express Checkout Element).
+      (sin él sale la opción pero falla con "No se puede mostrar Apple Pay"),
+      y `confirm()` debe llamarse antes de cualquier `await` en "Pagar".
+      *(Apple Pay verificado en iPhone en el preview el 2026-10-27.)* Falta:
+      probar Google Pay en Android y registrar los dominios de producción.
+      Opcional: botón rápido arriba del formulario (Express Checkout
+      Element).
 
 ### Tareas: operación
 
@@ -886,3 +889,5 @@ Formato: `AAAA-MM-DD · Fase N · qué se hizo / qué se decidió / qué quedó 
   `saveCheckoutContact` antes de `confirm()` y Safari ya no dejaba abrir
   Apple Pay (solo abre dentro del gesto del clic). Ahora `confirm()` va
   primero y el contacto se guarda en paralelo (`/pago` y `/pago/<sesión>`).
+- 2026-10-27 · Fase 5 · Apple Pay funciona en iPhone en el preview (commit
+  ab0f3d7). Falta: Google Pay en Android y dominios de producción.
