@@ -100,19 +100,23 @@ function CheckoutForm({
       setSubmitting(false);
     };
 
-    try {
-      const saved = await saveCheckoutContact(sessionId, {
-        name: cleanName,
-        email: cleanEmail,
-      });
-      if (!saved.ok) return fail(saved.message);
+    // confirm() va antes de cualquier await: Apple Pay solo abre dentro del
+    // gesto del clic. El contacto se guarda en paralelo; termina mucho antes
+    // de que llegue el webhook.
+    const guardado = saveCheckoutContact(sessionId, {
+      name: cleanName,
+      email: cleanEmail,
+    }).catch((e) => ({ ok: false as const, message: String(e) }));
 
+    try {
       // Sin returnUrl: ya viene en la sesión (Stripe lo rechaza si se repite).
       const result = await state.checkout.confirm({
         email: cleanEmail,
         redirect: "if_required",
       });
       if (result.type === "error") return fail(result.error.message);
+      const saved = await guardado;
+      if (!saved.ok) console.error("[pago] contacto", saved.message);
     } catch (e) {
       console.error("[pago] confirm", e);
       return fail();

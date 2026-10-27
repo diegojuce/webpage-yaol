@@ -882,4 +882,7 @@ Formato: `AAAA-MM-DD · Fase N · qué se hizo / qué se decidió / qué quedó 
   están habilitados en el Dashboard de Stripe. Dominio del preview
   registrado. En iPhone salía "No se puede mostrar Apple Pay": faltaba el
   archivo de verificación de Apple en `/.well-known/` (se agrega en
-  `public/`).
+  `public/`). Con el archivo seguía el error: "Pagar" esperaba a
+  `saveCheckoutContact` antes de `confirm()` y Safari ya no dejaba abrir
+  Apple Pay (solo abre dentro del gesto del clic). Ahora `confirm()` va
+  primero y el contacto se guarda en paralelo (`/pago` y `/pago/<sesión>`).
