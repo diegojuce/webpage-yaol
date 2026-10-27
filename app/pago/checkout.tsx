@@ -608,6 +608,7 @@ function CartFlow({
             nombre={nombreLimpio}
             totalLabel={formatMXN(total)}
             onError={setError}
+            onAtras={() => irA("entrega")}
           />
         </div>
       ) : null}
@@ -658,6 +659,7 @@ function StripePago(props: {
   nombre: string;
   totalLabel: string;
   onError: (message: string) => void;
+  onAtras: () => void;
 }) {
   const options = useMemo(
     () => ({
@@ -687,11 +689,13 @@ function PagoForm({
   nombre,
   totalLabel,
   onError,
+  onAtras,
 }: {
   sessionId: string;
   nombre: string;
   totalLabel: string;
   onError: (message: string) => void;
+  onAtras: () => void;
 }) {
   const state = useCheckoutElements();
   const router = useRouter();
@@ -772,6 +776,9 @@ function PagoForm({
       <Boton onClick={onPagar} disabled={cargando || pagando}>
         {pagando ? "Procesando…" : `Pagar ${totalLabel}`}
       </Boton>
+      <Atras onClick={onAtras} disabled={pagando}>
+        ← Cambiar cita o envío
+      </Atras>
       <p className="m-0 text-center text-[12px] leading-relaxed text-[#8a8a8a]">
         Pago seguro procesado por Stripe. Yantissimo no guarda los datos de tu
         tarjeta.
