@@ -23,6 +23,7 @@ import {
 } from "components/cart/actions";
 import { CART_BRANCHES, backendBranchCode } from "components/cart/branches";
 import Image from "components/safe-image";
+import { scrollAlInicio } from "components/scroll-to-top-on-route-change";
 import { fetchAvailableTimes } from "lib/api/appointments";
 import {
   buildStartAtInCdmx,
@@ -38,7 +39,7 @@ import type {
 } from "lib/commerce";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   loadFiscalCatalog,
   requestOrderInvoice,
@@ -209,6 +210,16 @@ function CartFlow({
 }: Extract<Props, { mode: "cart" }> & { total: number }) {
   const [paso, setPaso] = useState<Paso>("datos");
   const [error, setError] = useState("");
+
+  // Cada paso del checkout se ve desde arriba, como una página nueva.
+  const pasoInicial = useRef(true);
+  useEffect(() => {
+    if (pasoInicial.current) {
+      pasoInicial.current = false;
+      return;
+    }
+    scrollAlInicio();
+  }, [paso]);
   const [enviando, setEnviando] = useState(false);
 
   const [nombre, setNombre] = useState("");
