@@ -605,6 +605,107 @@ cita se elige ANTES de pagar.
 
 ## Fase 5 · Métodos de pago mexicanos y operación (2–3 semanas)
 
+### 5A · Cobro con PaymentIntents (primero; 3–4 días)
+
+**Decisión (2026-10-27):** el cobro deja Checkout Sessions
+(`ui_mode: "elements"`) y pasa a **PaymentIntents + Payment Element**.
+Motivo: probado con la tarjeta de MSI 4000 0048 4000 0008 en modo prueba, el
+Payment Element **no muestra "Pagar en cuotas"** con una Checkout Session
+(aunque traiga `installments.enabled: true`). Con PaymentIntent y con el
+Checkout alojado sí. PaymentIntents además cubre OXXO, SPEI y wallets con el
+mismo formulario, y el apartado y la expiración quedan bajo nuestro control.
+Se hace **antes** de OXXO/SPEI para construirlos una sola vez.
+
+**Puntos de regreso:** frontend `cf11747` (`diego-stripe`), backend
+`5a93a9d` (`diego-stripe-4`).
+
+**Qué no cambia:** `shop_orders` y sus renglones, el apartado de stock, la
+cotización, la cita, la factura web y su adopción, la regla de que solo el
+webhook marca pagado, Apple Pay/Google Pay, el diseño y los pasos de `/pago`.
+
+#### Diseño
+
+- **Crear el cobro:** `paymentIntents.create({ amount: total_cents,
+  currency: "mxn", automatic_payment_methods: { enabled: true }, metadata:
+  { shop_order_id, kind, quote_id? }, description, shipping? ,
+  payment_method_options: { card: { installments: { enabled: llantas >= 2 } } } })`
+  con `idempotencyKey: shop-order-<id>`. Se guarda
+  `stripe_payment_intent_id` y `stripe_client_secret` (columnas que ya
+  existen; verificar si hace falta migración, p. ej. índice o columna de
+  "flujo").
+- **Expiración propia:** `shop_orders.expires_at` (31 min tarjeta). Un
+  proceso periódico cancela los PaymentIntents vencidos
+  (`paymentIntents.cancel`) y el webhook `payment_intent.canceled` libera
+  el apartado. Si el cancel falla porque ya se pagó, gana el pago.
+  Reintentar el pago del mismo carrito o cotización cancela el PI anterior
+  (hoy expira la sesión).
+- **Webhook** (`/bypass/stripe/webhook`):
+  - `payment_intent.succeeded` → los mismos efectos que hoy
+    `checkout.session.completed` (pagado, reserva consumida, cotización o
+    anticipo, carrito convertido, confirmación, cita, WhatsApp).
+  - `payment_intent.canceled` → `expired`, reservas `released`.
+  - `payment_intent.payment_failed` → solo log (el cliente reintenta con el
+    mismo PI).
+  - `payment_intent.processing` → reservado para OXXO/SPEI (5B).
+  - Se conservan los handlers `checkout.session.*` mientras existan pedidos
+    viejos con sesión.
+  - Idempotencia igual (`stripe_events`), pedido por
+    `metadata.shop_order_id`, validar monto.
+- **Identificador público:** las rutas `…/orders/by-session/:id` (lectura,
+  contacto, factura, PDF/XML) aceptan `cs_…` (pedidos viejos) y `pi_…`.
+  `confirmPayment` agrega `payment_intent=pi_…` al `return_url`; la
+  confirmación de `/pago` lee `payment_intent` además de `session_id`.
+- **Contacto:** `PATCH …/contact` además actualiza el PI
+  (`receipt_email` para el comprobante de Stripe).
+- **Factura:** `card.funding` se lee del `latest_charge` del PI (hoy se
+  llega por la sesión).
+- **MSI:** probar si `installments.enabled: false` en un PI choca con
+  métodos de pago dinámicos (la doc lo advierte); si choca, alternativa:
+  apagar MSI en el Dashboard y prenderlo por PI solo con 2+ llantas.
+
+#### Tareas: backend (`diego-stripe-4`)
+
+- [ ] `crearCobro` (PaymentIntent) en lugar de `crearSesion` en
+      `shopCheckout.service.js`, para carrito y ligas.
+- [ ] Expiración propia: proceso que cancela PIs vencidos + reintento cancela
+      el anterior.
+- [ ] Webhook `payment_intent.succeeded | canceled | payment_failed`,
+      conservando `checkout.session.*`.
+- [ ] Rutas `by-session/:id` aceptan `pi_…`; contacto actualiza
+      `receipt_email`.
+- [ ] `shopFactura.service.js`: forma de pago desde el cargo del PI.
+- [ ] Pruebas: adaptar `tests/shopCheckout.test.js` y
+      `tests/shopFactura.test.js` (pago, monto distinto, evento repetido,
+      última pieza, reintento, expiración, MSI con 1 y 2+ llantas).
+- [ ] Mensaje para el programador del backend: migración (si hay),
+      variables y **agregar los eventos `payment_intent.*` al endpoint del
+      webhook en Stripe** (STG y después producción).
+
+#### Tareas: frontend (`diego-stripe`)
+
+- [ ] `app/pago/checkout.tsx` y `app/pago/[sessionId]/payment-form.tsx`:
+      `Elements` con `clientSecret` + `PaymentElement` +
+      `stripe.confirmPayment({ elements, redirect: "if_required",
+      confirmParams: { return_url } })`. `confirmPayment` antes de cualquier
+      `await` (Apple Pay).
+- [ ] Confirmación en `/pago?payment_intent=…` (y `session_id` para
+      pedidos viejos); `app/api/factura/[sessionId]` acepta `pi_…`.
+- [ ] `components/cart/actions.ts`, `app/pagar/[token]`,
+      `app/agendar-cita/page.tsx`, `lib/commerce/providers/native.ts`:
+      renombrar/aceptar el id del pago.
+- [ ] Mensaje en `/pago` cuando hay 2+ llantas: "Puedes pagar a 3 meses sin
+      intereses con tarjeta de crédito".
+
+#### Pruebas (local con Playwright y luego STG)
+
+- [ ] 4242 éxito, rechazo, fondos insuficientes, 3D Secure en modal.
+- [ ] MSI: 4000 0048 4000 0008 con 2 llantas muestra "Pagar en cuotas" y
+      cobra a 3 meses; con 1 llanta no lo muestra.
+- [ ] Evento repetido, dos clientes por la última llanta, expiración que
+      libera stock, reintento del mismo carrito.
+- [ ] Liga de pago de cotización, factura web (forma 04/28), Apple Pay en
+      iPhone.
+
 ### Tareas: métodos de pago
 
 - [ ] **Meses sin intereses:** activar installments en la sesión de
@@ -710,10 +811,19 @@ _(vacío)_
 
 ---
 
-## Cómo retomar (estado al 2026-10-26)
+## Cómo retomar (estado al 2026-10-27)
 
-**Siguiente paso: Fase 5** (MSI, OXXO, SPEI, reembolsos con nota de
-crédito, carritos abandonados). La Fase 4 (factura web) está en STG y
+**Siguiente paso: Fase 5A** — migrar el cobro de Checkout Sessions a
+PaymentIntents (ver "5A · Cobro con PaymentIntents": diseño, tareas y
+pruebas). Backend en `diego-stripe-4` (desde `staging`, commit 5a93a9d con
+MSI por cantidad de llantas); frontend en `diego-stripe` (cf11747). Después:
+OXXO/SPEI solo envío (5B), reembolsos y lo demás de la Fase 5.
+Prueba rápida de MSI sin el sitio: página HTML con stripe.js
+(`https://js.stripe.com/dahlia/stripe.js`) + Playwright tecleando la tarjeta
+con `pressSequentially` (con `fill` Stripe no consulta los planes).
+
+**Antes (Fase 5):** MSI, OXXO, SPEI, reembolsos con nota de
+crédito, carritos abandonados. La Fase 4 (factura web) está en STG y
 probada de punta a punta, incluida la adopción en el cobro del ERP.
 La Fase 3.5 (checkout en pasos en `/pago`) está en staging y probada. La Fase 3 está en staging y verificada
 de punta a punta para comprar → agendar (pago dentro del sitio con Stripe
@@ -921,3 +1031,9 @@ Formato: `AAAA-MM-DD · Fase N · qué se hizo / qué se decidió / qué quedó 
   OXXO y SPEI solo para envío, apartado de 24 h, aviso con la plantilla
   `pago_pendiente`; reembolsos y notas de crédito desde `/facturacion` del
   ERP con lo que ya existe; cancelar CFDI vs. egreso a criterio técnico.
+- 2026-10-27 · Fase 5 · El reembolso del ERP no llama a Stripe (se regresa
+  a mano en el Dashboard). MSI desde 2 llantas: backend lo apaga por sesión
+  (`diego-stripe-4`, 5a93a9d) y tarjeta de MSI en producto (cf11747).
+  **Hallazgo:** con Checkout Sessions `ui_mode: "elements"` el Payment
+  Element no muestra MSI (sí con PaymentIntent y con el Checkout alojado).
+  **Decisión:** migrar el cobro a PaymentIntents antes de OXXO/SPEI (5A).
