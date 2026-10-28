@@ -7,6 +7,7 @@ import { WelcomeToast } from "components/welcome-toast";
 import { BRANCHES, COMPANY, SOCIALS } from "lib/company";
 import { getCart } from "lib/commerce";
 import { baseUrl } from "lib/utils";
+import { unstable_rethrow } from "next/navigation";
 import { ReactNode } from "react";
 import { Toaster } from "sonner";
 import "./globals.css";
@@ -128,8 +129,10 @@ export default async function RootLayout({
 }) {
   // Don't await the fetch, pass the Promise to the context provider.
   // Si el backend falla, el sitio carga con el carrito vacío: un error aquí
-  // tumba todas las páginas (el layout no tiene error boundary).
+  // tumba todas las páginas (el layout no tiene error boundary). Los errores
+  // internos de Next (render dinámico por cookies) se relanzan.
   const cart = getCart().catch((error) => {
+    unstable_rethrow(error);
     console.error("[layout] getCart falló:", error);
     return undefined;
   });
