@@ -767,11 +767,11 @@ no se sabe cuántas llantas trae). `tsc`, `prettier` y `next build` OK.
 - [x] Última llanta: con inv-18 (1 pieza) apartada por un comprador, el
       backend la da con `quantityAvailable: 0` y el segundo ya no la puede
       agregar al carrito.
-- [ ] Expiración que libera stock: pedidos abandonados 51
-      (`pi_3UVKA3RzetgpiCYb1oXlsyvA`, inv-22, `expires_at` 00:23 UTC del
-      28-oct) y 54 (`pi_3UVKCoRzetgpiCYb0bkQEN5G`, inv-18, ~00:26 UTC).
-      Revisar: pedido `expired`, PI `canceled` y inv-18 de vuelta con 1
-      pieza.
+- [x] Expiración que libera stock: pedidos abandonados 51
+      (`pi_3UVKA3RzetgpiCYb1oXlsyvA`, inv-22) y 54
+      (`pi_3UVKCoRzetgpiCYb0bkQEN5G`, inv-18) quedaron `expired` con el PI
+      `canceled` (`abandoned`) al minuto de su `expires_at`; inv-18 volvió a
+      1 pieza disponible (00:27 UTC del 28-oct).
 - [x] Factura web: pedido 50 (MSI) → WEB-5, UUID
       f22366a4-b7ca-4eae-97c0-3a1d443e3a69, forma **04**, PUE, PDF y XML OK.
       *(Forma 28 con débito no probada; el código es el mismo de la Fase 4.)*
@@ -891,9 +891,8 @@ _(vacío)_
 en `stg-back`, frontend `diego-stripe` (59eae37) en el preview, webhook de
 STG con los eventos `payment_intent.*`. Probado en STG: tarjeta, errores,
 3D Secure, MSI con 1 y 2 llantas, evento repetido, reintento, última
-llanta y factura. Faltan (ver "Pruebas" de la 5A): confirmar la
-expiración de los pedidos 51 y 54, la liga de pago de cotización y Apple
-Pay en iPhone. Pendiente de decidir: cambiar el aviso de MSI a "…escribe tu
+llanta y factura. También la expiración que libera stock. Faltan (ver "Pruebas" de la
+5A): la liga de pago de cotización y Apple Pay en iPhone. Pendiente de decidir: cambiar el aviso de MSI a "…escribe tu
 tarjeta de crédito y elige 'Pagar en cuotas'". Después: OXXO/SPEI solo
 envío (5B), reembolsos y lo demás de la Fase 5.
 Scripts de Playwright del preview (temporales, en el scratchpad de la
@@ -1137,5 +1136,6 @@ Formato: `AAAA-MM-DD · Fase N · qué se hizo / qué se decidió / qué quedó 
   con 1 (11212), rechazo/fondos/3D Secure en el mismo cobro (11213),
   reintento que cancela el PI anterior (11214), evento repetido sin
   efecto, última llanta bloqueada, factura WEB-5 forma 04. Diego pagó a 3
-  meses a mano (pedidos 58 y 59). Faltan: expiración (51 y 54), liga de
-  cotización y Apple Pay.
+  meses a mano (pedidos 58 y 59). Expiración: pedidos 51 y 54 vencidos por
+  el proceso, PI cancelado y stock de vuelta. Faltan: liga de cotización y
+  Apple Pay.
