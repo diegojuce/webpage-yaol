@@ -14,6 +14,7 @@ import {
   type VehicleModelOption,
   type VehicleYearOption,
 } from "lib/vehicle-fitment-client";
+import { tireHeights, tireRims, tireWidths } from "lib/tire-sizes";
 import { useRouter } from "next/navigation";
 import {
   useCallback,
@@ -24,6 +25,7 @@ import {
   type MouseEvent,
 } from "react";
 import { toast } from "sonner";
+import { MeasureWheelSheet, type Measure } from "./measure-wheel-picker";
 
 type SearchTab = "measure" | "vehicle";
 
@@ -37,20 +39,7 @@ const toSelectOptions = (
 ): SelectOption[] =>
   values.map((value) => ({ value: String(value), label: String(value) }));
 
-const REAL_TIRE_WIDTHS = [
-  135, 145, 155, 165, 175, 185, 195, 205, 215, 225, 235, 245, 255, 265, 275,
-  285, 295, 305, 315, 325,
-] as const;
-
-const REAL_TIRE_ASPECT_RATIOS = [
-  25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85,
-] as const;
-
-const REAL_TIRE_RIM_SIZES = [13, 14, 15, 16, 17, 18, 19, 20, 21, 22] as const;
-
-const MEASURE_WIDTH_OPTIONS = toSelectOptions(REAL_TIRE_WIDTHS);
-const MEASURE_HEIGHT_OPTIONS = toSelectOptions(REAL_TIRE_ASPECT_RATIOS);
-const MEASURE_RIM_OPTIONS = toSelectOptions(REAL_TIRE_RIM_SIZES);
+const MEASURE_WIDTH_OPTIONS = toSelectOptions(tireWidths());
 
 const POPULAR_MEASURES = [
   "205/55 R16",
@@ -174,6 +163,10 @@ function SelectField({
           if (!selected) return;
           onChange(selected);
           setQuery("");
+          // En táctil suelta el foco para cerrar el teclado y la lista.
+          if (window.matchMedia("(pointer: coarse)").matches) {
+            inputRef.current?.blur();
+          }
         }}
         onClose={() => setQuery("")}
         immediate
@@ -224,6 +217,9 @@ function SelectField({
               </Combobox.Button>
             </div>
             <Combobox.Options
+              // En modo modal Headless UI bloquea el scroll y vuelve inerte el
+              // resto de la página; en iOS eso congelaba el buscador al elegir.
+              modal={false}
               className={clsx(
                 "absolute z-30 w-full overflow-auto rounded-xl border border-white/10 bg-[#1a1a1b] p-1.5 shadow-[0_24px_60px_rgba(0,0,0,0.55)]",
                 openUpward ? "bottom-full mb-2" : "top-full mt-2"
@@ -276,6 +272,52 @@ export function WelcomeModalContent({
   const [width, setWidth] = useState("");
   const [height, setHeight] = useState("");
   const [rim, setRim] = useState("");
+  const [isWheelOpen, setIsWheelOpen] = useState(false);
+
+  // Cascada: el ancho limita los altos y ambos limitan los rines, para no
+  // ofrecer medidas que no existen.
+  const heightOptions = useMemo(
+    () => toSelectOptions(tireHeights(Number(width) || undefined)),
+    [width]
+  );
+  const rimOptions = useMemo(
+    () =>
+      toSelectOptions(
+        tireRims(Number(width) || undefined, Number(height) || undefined)
+      ),
+    [width, height]
+  );
+
+  const handleWidthChange = (nextWidth: string) => {
+    setWidth(nextWidth);
+    const heights = tireHeights(Number(nextWidth));
+    const keepHeight = heights.includes(Number(height));
+    if (!keepHeight) setHeight("");
+    if (
+      !keepHeight ||
+      !tireRims(Number(nextWidth), Number(height)).includes(Number(rim))
+    ) {
+      setRim("");
+    }
+  };
+
+  const handleHeightChange = (nextHeight: string) => {
+    setHeight(nextHeight);
+    if (
+      !tireRims(Number(width) || undefined, Number(nextHeight)).includes(
+        Number(rim)
+      )
+    ) {
+      setRim("");
+    }
+  };
+
+  const handleWheelConfirm = (measure: Measure) => {
+    setWidth(String(measure.width));
+    setHeight(String(measure.height));
+    setRim(String(measure.rim));
+    setIsWheelOpen(false);
+  };
 
   const [carBrand, setCarBrand] = useState("");
   const [carModel, setCarModel] = useState("");
@@ -567,26 +609,66 @@ export function WelcomeModalContent({
 
           {activeTab === "measure" ? (
             <div className="mt-6">
-              <div className="grid grid-cols-3 gap-3">
+              {/* Celular: rueda tipo iOS en lugar de escribir. */}
+              <div className="grid grid-cols-3 gap-3 md:hidden">
+                {(
+                  [
+                    ["Ancho", width, "205"],
+                    ["Alto", height, "55"],
+                    ["Rin", rim, "16"],
+                  ] as const
+                ).map(([label, value, placeholder]) => (
+                  <div key={label}>
+                    <span className={LABEL}>{label}</span>
+                    <button
+                      type="button"
+                      onClick={() => setIsWheelOpen(true)}
+                      className="flex w-full items-center justify-between gap-2 rounded-xl border border-white/15 bg-white/5 px-4 py-3.5 text-left text-[15px] transition-colors active:border-[#FFC600]"
+                    >
+                      <span
+                        className={
+                          value ? "font-semibold text-white" : "text-white/35"
+                        }
+                      >
+                        {value || placeholder}
+                      </span>
+                      <ChevronUpDownIcon className="h-4 w-4 shrink-0 text-white/40" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <MeasureWheelSheet
+                open={isWheelOpen}
+                initial={{
+                  width: Number(width) || undefined,
+                  height: Number(height) || undefined,
+                  rim: Number(rim) || undefined,
+                }}
+                onClose={() => setIsWheelOpen(false)}
+                onConfirm={handleWheelConfirm}
+                buttonClassName={BOTON}
+              />
+
+              <div className="hidden grid-cols-3 gap-3 md:grid">
                 <SelectField
                   label="Ancho"
                   value={width}
                   placeholder="205"
                   options={MEASURE_WIDTH_OPTIONS}
-                  onChange={setWidth}
+                  onChange={handleWidthChange}
                 />
                 <SelectField
                   label="Alto"
                   value={height}
                   placeholder="55"
-                  options={MEASURE_HEIGHT_OPTIONS}
-                  onChange={setHeight}
+                  options={heightOptions}
+                  onChange={handleHeightChange}
                 />
                 <SelectField
                   label="Rin"
                   value={rim}
                   placeholder="16"
-                  options={MEASURE_RIM_OPTIONS}
+                  options={rimOptions}
                   onChange={setRim}
                 />
               </div>
