@@ -26,6 +26,7 @@ export {
   fetchInvoiceFile,
   getFiscalCatalog,
   getOrderBySession,
+  getOrderLineImages,
   getQuoteLink,
   requestInvoice,
   ShopApiError,

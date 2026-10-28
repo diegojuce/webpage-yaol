@@ -73,14 +73,20 @@ type Props =
       initialPhone: string;
       initialBranchCode: string;
     }
-  | { mode: "confirm"; paymentId: string; order: PublicOrder };
+  | {
+      mode: "confirm";
+      paymentId: string;
+      order: PublicOrder;
+      lineImages: { url: string; altText: string }[];
+    };
 
 type Paso = "datos" | "entrega" | "pago" | "listo";
 type Modo = "install" | "delivery";
 
-const PASOS: { id: Paso; label: string }[] = [
+// `corto`: etiqueta en celular, para que quepa en una línea.
+const PASOS: { id: Paso; label: string; corto?: string }[] = [
   { id: "datos", label: "Tus datos" },
-  { id: "entrega", label: "Cita o envío" },
+  { id: "entrega", label: "Cita o envío", corto: "Entrega" },
   { id: "pago", label: "Pago" },
   { id: "listo", label: "Listo" },
 ];
@@ -166,8 +172,8 @@ export default function Checkout(props: Props) {
           title: l.title,
           quantity: l.quantity,
           totalAmount: String((l.unitPriceCents * l.quantity) / 100),
-          imageUrl: null,
-          imageAlt: l.title,
+          imageUrl: props.lineImages[i]?.url ?? null,
+          imageAlt: props.lineImages[i]?.altText ?? l.title,
         }));
 
   return (
@@ -1351,19 +1357,19 @@ function Resumen({
 function Stepper({ paso }: { paso: Paso }) {
   const indice = PASOS.findIndex((p) => p.id === paso);
   return (
-    <ol className="m-0 mb-7 flex list-none items-center gap-1.5 p-0">
+    <ol className="m-0 mb-7 flex list-none items-start gap-1.5 p-0">
       {PASOS.map((p, i) => {
         const hecho = i < indice;
         const activo = i === indice;
         return (
-          <li key={p.id} className="flex flex-1 flex-col gap-2">
+          <li key={p.id} className="flex min-w-0 flex-1 flex-col gap-2">
             <span
               className={`h-1 w-full rounded-full transition-colors ${
                 hecho || activo ? "bg-[#FFC600]" : "bg-[#e6e6e3]"
               }`}
             />
             <span
-              className={`text-[10px] font-bold uppercase tracking-[0.12em] transition-colors ${
+              className={`whitespace-nowrap text-[10px] font-bold uppercase tracking-[0.08em] transition-colors sm:tracking-[0.12em] ${
                 activo
                   ? "text-[#b38600]"
                   : hecho
@@ -1371,7 +1377,14 @@ function Stepper({ paso }: { paso: Paso }) {
                     : "text-[#b5b5b5]"
               }`}
             >
-              {p.label}
+              {p.corto ? (
+                <>
+                  <span className="sm:hidden">{p.corto}</span>
+                  <span className="hidden sm:inline">{p.label}</span>
+                </>
+              ) : (
+                p.label
+              )}
             </span>
           </li>
         );

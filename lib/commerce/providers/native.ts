@@ -696,6 +696,20 @@ export async function getOrderBySession(sessionId: string): Promise<CheckoutOrde
   return res?.order;
 }
 
+// Las líneas del pedido no traen foto: se busca el producto por su título (el
+// mismo que guardó el carrito) y, si no aparece, la imagen genérica del carrito.
+export async function getOrderLineImages(
+  lines: CheckoutOrder["lines"],
+): Promise<{ url: string; altText: string }[]> {
+  return Promise.all(
+    lines.map(async ({ title }) => {
+      const products = await getProducts({ query: title }).catch(() => []);
+      const image = products.find((p) => p.title === title)?.featuredImage;
+      return { url: image?.url ?? DEFAULT_IMAGE_URL, altText: image?.altText || title };
+    }),
+  );
+}
+
 // Nombre y email del formulario de pago (antes de confirmar).
 export async function updateOrderContact(
   sessionId: string,

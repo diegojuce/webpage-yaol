@@ -7,7 +7,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { getCart, getOrderBySession } from "lib/commerce";
+import { getCart, getOrderBySession, getOrderLineImages } from "lib/commerce";
 import { COMMERCE_PROVIDER } from "lib/commerce-status";
 import Checkout, { type SummaryLine } from "./checkout";
 
@@ -113,6 +113,7 @@ export default async function PagoPage(props: {
       redirect(`/pago/${encodeURIComponent(paymentId)}`);
     }
     const { clientSecret: _secret, ...publicOrder } = order;
+    const lineImages = await getOrderLineImages(order.lines);
     return (
       <Shell>
         <Checkout
@@ -120,6 +121,7 @@ export default async function PagoPage(props: {
           mode="confirm"
           paymentId={paymentId}
           order={publicOrder}
+          lineImages={lineImages}
         />
       </Shell>
     );
