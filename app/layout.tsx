@@ -126,8 +126,13 @@ export default async function RootLayout({
 }: {
   children: ReactNode;
 }) {
-  // Don't await the fetch, pass the Promise to the context provider
-  const cart = getCart();
+  // Don't await the fetch, pass the Promise to the context provider.
+  // Si el backend falla, el sitio carga con el carrito vacío: un error aquí
+  // tumba todas las páginas (el layout no tiene error boundary).
+  const cart = getCart().catch((error) => {
+    console.error("[layout] getCart falló:", error);
+    return undefined;
+  });
 
   return (
     <html lang="es" data-scroll-behavior="smooth">
