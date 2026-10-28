@@ -679,11 +679,14 @@ webhook marca pagado, Apple Pay/Google Pay, el diseño y los pasos de `/pago`.
       `tests/shopFactura.test.js` (pago, monto distinto, evento repetido,
       última pieza, reintento, expiración, MSI con 1 y 2+ llantas).
       *(100 pruebas de la tienda en verde y `check:boot` OK.)*
-- [ ] Mensaje para el programador del backend: migración (si hay),
+- [x] Mensaje para el programador del backend: migración (si hay),
       variables y **agregar los eventos `payment_intent.*` al endpoint del
-      webhook en Stripe** (STG y después producción).
+      webhook en Stripe** (STG y después producción). *(2026-10-27:
+      `diego-stripe-4` desplegada en `stg-back`; el endpoint de STG
+      `we_1UTyLaRzetgpiCYbhZRX1kem` ya tiene `payment_intent.succeeded |
+      canceled | payment_failed`. Falta en producción, Fase 6.)*
 
-**Hecho en el backend (2026-10-27, `diego-stripe-4` f48d69e, sin push):**
+**Hecho en el backend (2026-10-27, `diego-stripe-4` f48d69e, en STG):**
 - Sin migración: se usan `stripe_payment_intent_id` y `stripe_client_secret`.
   `shop_orders.expires_at` pasa a ser el **plazo para pagar** (31 min); la
   reserva vence 5 min después (36). `getOrderBySession` sigue usando
@@ -743,20 +746,38 @@ no se sabe cuántas llantas trae). `tsc`, `prettier` y `next build` OK.
 
 #### Pruebas (local con Playwright y luego STG)
 
-- [ ] 4242 éxito, rechazo, fondos insuficientes, 3D Secure en modal.
-      *(Local 2026-10-27, `/pago/<pi>` con PIs reales de modo prueba y
-      backend simulado: rechazo y fondos insuficientes muestran el error y
-      dejan reintentar con el mismo PI; 3D Secure abre en modal y termina en
-      `/pago?payment_intent=…` con el PI `succeeded`. Falta en STG.)*
-- [ ] MSI: 4000 0048 4000 0008 con 2 llantas muestra "Pagar en cuotas" y
-      cobra a 3 meses; con 1 llanta no lo muestra. *(Local 2026-10-27: con 2
-      llantas sale el aviso y "Pagar en cuotas (meses sin intereses)"; el
-      cargo quedó con `installments.plan = 3 month`. Con 1 llanta no sale
-      ni el aviso ni la opción. Falta en STG.)*
-- [ ] Evento repetido, dos clientes por la última llanta, expiración que
-      libera stock, reintento del mismo carrito.
-- [ ] Liga de pago de cotización, factura web (forma 04/28), Apple Pay en
-      iPhone.
+- [x] 4242 éxito, rechazo, fondos insuficientes, 3D Secure en modal.
+      *(STG 2026-10-27, carrito completo en el preview con envío: rechazo →
+      fondos insuficientes → 3D Secure en el mismo cobro, cada error se
+      muestra y deja reintentar; 3D Secure en modal; pedido 11213.)*
+- [x] MSI: 4000 0048 4000 0008 con 2 llantas muestra "Pagar en cuotas" y
+      cobra a 3 meses; con 1 llanta no lo muestra. *(STG 2026-10-27: pedido
+      11211, 2 llantas, `installments.plan = 3 month`; pedido 11212, 1
+      llanta, sin aviso ni opción. Diego lo repitió a mano: pedidos web 58 y
+      59 a 3 meses. "Pagar en cuotas" aparece dentro del Payment Element
+      después de teclear una tarjeta elegible; en modo prueba solo la 0008.
+      El Dashboard no muestra las cuotas en "Método de pago": están en el
+      cargo, `payment_method_details.card.installments`.)*
+- [x] Evento repetido: reenviado `payment_intent.succeeded` del pedido 50
+      (`stripe events resend`): el pedido no cambia ni se crea otra
+      cotización.
+- [x] Reintento del mismo carrito: cambiar la dirección en el paso de pago
+      cancela el PI anterior (`cancellation_reason: abandoned`) y abre otro;
+      pagado (pedido 11214).
+- [x] Última llanta: con inv-18 (1 pieza) apartada por un comprador, el
+      backend la da con `quantityAvailable: 0` y el segundo ya no la puede
+      agregar al carrito.
+- [ ] Expiración que libera stock: pedidos abandonados 51
+      (`pi_3UVKA3RzetgpiCYb1oXlsyvA`, inv-22, `expires_at` 00:23 UTC del
+      28-oct) y 54 (`pi_3UVKCoRzetgpiCYb0bkQEN5G`, inv-18, ~00:26 UTC).
+      Revisar: pedido `expired`, PI `canceled` y inv-18 de vuelta con 1
+      pieza.
+- [x] Factura web: pedido 50 (MSI) → WEB-5, UUID
+      f22366a4-b7ca-4eae-97c0-3a1d443e3a69, forma **04**, PUE, PDF y XML OK.
+      *(Forma 28 con débito no probada; el código es el mismo de la Fase 4.)*
+- [ ] Liga de pago de cotización (`/pagar/<token>` → `/pago/<pi>`): pedir
+      una liga de STG al programador.
+- [ ] Apple Pay en iPhone con PaymentIntents (Diego, en el preview).
 
 ### Tareas: métodos de pago
 
@@ -865,12 +886,19 @@ _(vacío)_
 
 ## Cómo retomar (estado al 2026-10-27)
 
-**Siguiente paso: Fase 5A, despliegue y pruebas en STG** (backend
-`diego-stripe-4` f48d69e y frontend `diego-stripe`, ambos listos) — migrar el cobro de Checkout Sessions a
-PaymentIntents (ver "5A · Cobro con PaymentIntents": diseño, tareas y
-pruebas). Backend en `diego-stripe-4` (desde `staging`, commit 5a93a9d con
-MSI por cantidad de llantas); frontend en `diego-stripe` (cf11747). Después:
-OXXO/SPEI solo envío (5B), reembolsos y lo demás de la Fase 5.
+**Siguiente paso: cerrar las pruebas de la 5A y empezar la 5B.** La 5A
+(cobro con PaymentIntents) está en STG: backend `diego-stripe-4` (f48d69e)
+en `stg-back`, frontend `diego-stripe` (59eae37) en el preview, webhook de
+STG con los eventos `payment_intent.*`. Probado en STG: tarjeta, errores,
+3D Secure, MSI con 1 y 2 llantas, evento repetido, reintento, última
+llanta y factura. Faltan (ver "Pruebas" de la 5A): confirmar la
+expiración de los pedidos 51 y 54, la liga de pago de cotización y Apple
+Pay en iPhone. Pendiente de decidir: cambiar el aviso de MSI a "…escribe tu
+tarjeta de crédito y elige 'Pagar en cuotas'". Después: OXXO/SPEI solo
+envío (5B), reembolsos y lo demás de la Fase 5.
+Scripts de Playwright del preview (temporales, en el scratchpad de la
+sesión): carrito completo con envío → `/pago`, tarjeta tecleada con
+`pressSequentially` dentro del iframe de Stripe.
 Prueba rápida de MSI sin el sitio: página HTML con stripe.js
 (`https://js.stripe.com/dahlia/stripe.js`) + Playwright tecleando la tarjeta
 con `pressSequentially` (con `fill` Stripe no consulta los planes).
@@ -890,7 +918,8 @@ Elements → webhook → cotización pagada y confirmada → cita agendada).
   (lunes 26-oct 10:00, Constitución), que tienen apartada la llanta inv-280;
   cotizaciones 11199 (cita jueves 29-oct 10:00, Constitución) y 11200
   (envío), con inv-17 apartada; cotización 11204 (envío, inv-284, factura
-  web WEB-1 de prueba).
+  web WEB-1 de prueba). Fase 5A: cotizaciones 11211–11214 y las de los
+  pedidos web 57–59 (envío/instalación de prueba; factura WEB-5 en 11211).
 - Desactivar Link en Métodos de pago de Stripe (recomendado).
 
 **Repos y ramas**
@@ -1102,3 +1131,11 @@ Formato: `AAAA-MM-DD · Fase N · qué se hizo / qué se decidió / qué quedó 
   rechazo, fondos insuficientes y 3D Secure. Siguiente: el programador
   despliega `diego-stripe-4` en STG y agrega los eventos `payment_intent.*`
   al webhook; luego pruebas en STG.
+- 2026-10-27 · Fase 5A · **En STG.** `diego-stripe-4` desplegada y eventos
+  `payment_intent.*` en el webhook. Probado con Playwright en el preview
+  (carrito completo, envío): MSI a 3 meses con 2 llantas (11211), sin MSI
+  con 1 (11212), rechazo/fondos/3D Secure en el mismo cobro (11213),
+  reintento que cancela el PI anterior (11214), evento repetido sin
+  efecto, última llanta bloqueada, factura WEB-5 forma 04. Diego pagó a 3
+  meses a mano (pedidos 58 y 59). Faltan: expiración (51 y 54), liga de
+  cotización y Apple Pay.
