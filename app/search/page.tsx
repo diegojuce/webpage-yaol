@@ -5,9 +5,11 @@ import FilterList from "components/layout/search/filter";
 import PanelSearchForm from "components/layout/search/panel-search-form";
 import SearchModalButton from "components/layout/search/search-modal-button";
 import SizeChipsSelector from "components/layout/search/size-chips-selector";
-import { defaultSort, sorting } from "lib/constants";
+import { RelatedProductsCarousel } from "components/product/related-products-carousel";
+import { defaultSort, sorting, type SortFilterItem } from "lib/constants";
 import { getCategoryProducts, getProducts } from "lib/commerce";
 import { CategoryKind, Product } from "lib/commerce/types";
+import { Suspense } from "react";
 
 const CATEGORY_LABELS: Record<CategoryKind, Record<string, string>> = {
   vehiculo: {
@@ -84,8 +86,9 @@ const NEAR_WIDTH_MAX = 325;
 const NEAR_HEIGHT_MIN = 30;
 const NEAR_HEIGHT_MAX = 90;
 const NEARBY_LIMIT = 8;
-const WIDTH_DELTAS = [-10, 10, -20, 20];
-const HEIGHT_DELTAS = [-5, 5, -10, 10];
+const RELATED_LIMIT = 12;
+const WIDTH_DELTAS = [0, -10, 10, -20, 20];
+const HEIGHT_DELTAS = [0, -5, 5, -10, 10];
 
 type ParsedSizeParts = {
   width: number;
@@ -264,18 +267,6 @@ export default async function SearchPage(props: {
   selectedSizes = orderSelectedSizes(selectedSizes, availableSizes);
   selectedSizes = selectedSizes.slice(0, 1);
 
-  if (
-    sizeSearchMode === "measure" &&
-    selectedSizes.length === 1 &&
-    availableSizes.length <= 1
-  ) {
-    availableSizes = mergeUniqueSizes(
-      availableSizes,
-      buildNearbySizes(selectedSizes[0] ?? "", NEARBY_LIMIT),
-    );
-    selectedSizes = orderSelectedSizes(selectedSizes, availableSizes);
-  }
-
   if (selectedSizes.length === 0 || availableSizes.length === 0) {
     sizeSearchMode = null;
     selectedSizes = [];
@@ -325,7 +316,7 @@ export default async function SearchPage(props: {
   return (
     <div className="mx-auto w-full max-w-(--breakpoint-2xl) px-4 pb-10 text-black dark:text-white mt-35">
       <div className="flex flex-col gap-8 lg:flex-row">
-        <aside className="w-full flex-none lg:max-w-[240px]">
+        <aside className="hidden w-full flex-none md:block lg:max-w-[240px]">
           <div className="hidden space-y-3 md:block lg:sticky lg:top-24">
             <PanelSearchForm />
             <div className="rounded-[14px] border border-[#1e1e1e] bg-[#161616] p-[18px]">
@@ -367,11 +358,6 @@ export default async function SearchPage(props: {
                 <span className="font-semibold">
                   &quot;{primaryMeasureLabel}&quot;
                 </span>
-                {availableSizes.length > 1 ? (
-                  <span className="ml-2 text-xs text-neutral-500 dark:text-neutral-400">
-                    ({availableSizes.length - 1} medidas cercanas disponibles)
-                  </span>
-                ) : null}
               </p>
             ) : searchValue ? (
               <p className="mb-4 text-sm md:text-base">
@@ -383,11 +369,18 @@ export default async function SearchPage(props: {
             ) : null}
             <SearchModalButton
               initialTab={isVehicleSearch ? "vehicle" : "measure"}
+              measure={parseSizeParts(primaryMeasureLabel) ?? undefined}
+              vehicle={
+                isVehicleSearch
+                  ? { make: vehicleMake, model: vehicleModel, year: vehicleYear }
+                  : undefined
+              }
             />
           </div>
-          {sizeSearchMode ? (
+          {/* Por auto: elige entre las medidas que le quedan a ese auto. */}
+          {isVehicleSearch && availableSizes.length > 1 ? (
             <SizeChipsSelector
-              mode={sizeSearchMode}
+              mode="vehicle"
               selectedSizes={selectedSizes}
               availableSizes={availableSizes}
               className="mb-5"
@@ -406,8 +399,53 @@ export default async function SearchPage(props: {
               </p>
             </div>
           )}
+          {sizeSearchMode && primaryMeasureLabel ? (
+            <Suspense fallback={null}>
+              <NearbySizeProducts
+                size={primaryMeasureLabel}
+                excludeSizes={availableSizes}
+                excludeHandles={products.map((product) => product.handle)}
+                sortKey={sortKey}
+                reverse={reverse}
+              />
+            </Suspense>
+          ) : null}
         </div>
       </div>
+    </div>
+  );
+}
+
+// Carrusel con productos de las medidas más cercanas a la buscada.
+async function NearbySizeProducts({
+  size,
+  excludeSizes,
+  excludeHandles,
+  sortKey,
+  reverse,
+}: {
+  size: string;
+  excludeSizes: string[];
+  excludeHandles: string[];
+  sortKey: SortFilterItem["sortKey"];
+  reverse: boolean;
+}) {
+  const nearbySizes = buildNearbySizes(size, NEARBY_LIMIT).filter(
+    (nearby) => !excludeSizes.includes(nearby),
+  );
+  const groups = await Promise.all(
+    nearbySizes.map((query) =>
+      getProducts({ sortKey, reverse, query }).catch(() => []),
+    ),
+  );
+  const excluded = new Set(excludeHandles);
+  const related = dedupeProducts(groups.flat())
+    .filter((product) => !excluded.has(product.handle))
+    .slice(0, RELATED_LIMIT);
+
+  return (
+    <div className="-mx-4 md:mx-0">
+      <RelatedProductsCarousel products={related} titleClassName="text-white" />
     </div>
   );
 }

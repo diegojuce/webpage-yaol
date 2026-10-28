@@ -27,7 +27,7 @@ let scrollLockState: {
   htmlOverscrollBehavior: string;
 } | null = null;
 
-function lockPageScroll() {
+export function lockPageScroll() {
   if (typeof document === "undefined" || typeof window === "undefined") return;
 
   if (scrollLockCount === 0) {
@@ -62,7 +62,7 @@ function lockPageScroll() {
   scrollLockCount += 1;
 }
 
-function unlockPageScroll() {
+export function unlockPageScroll() {
   if (typeof document === "undefined" || typeof window === "undefined") return;
   if (scrollLockCount === 0) return;
 

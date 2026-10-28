@@ -14,6 +14,7 @@ import {
   type VehicleModelOption,
   type VehicleYearOption,
 } from "lib/vehicle-fitment-client";
+import { measureSearchUrl, vehicleSearchUrl } from "lib/search-urls";
 import { tireHeights, tireRims, tireWidths } from "lib/tire-sizes";
 import { useRouter } from "next/navigation";
 import {
@@ -25,7 +26,6 @@ import {
   type MouseEvent,
 } from "react";
 import { toast } from "sonner";
-import { MeasureWheelSheet, type Measure } from "./measure-wheel-picker";
 
 type SearchTab = "measure" | "vehicle";
 
@@ -272,7 +272,6 @@ export function WelcomeModalContent({
   const [width, setWidth] = useState("");
   const [height, setHeight] = useState("");
   const [rim, setRim] = useState("");
-  const [isWheelOpen, setIsWheelOpen] = useState(false);
 
   // Cascada: el ancho limita los altos y ambos limitan los rines, para no
   // ofrecer medidas que no existen.
@@ -312,12 +311,6 @@ export function WelcomeModalContent({
     }
   };
 
-  const handleWheelConfirm = (measure: Measure) => {
-    setWidth(String(measure.width));
-    setHeight(String(measure.height));
-    setRim(String(measure.rim));
-    setIsWheelOpen(false);
-  };
 
   const [carBrand, setCarBrand] = useState("");
   const [carModel, setCarModel] = useState("");
@@ -504,12 +497,7 @@ export function WelcomeModalContent({
 
   const handleSearchByMeasure = () => {
     if (!canSearchByMeasure) return;
-    const nextParams = new URLSearchParams();
-    nextParams.set("q", formattedMeasure);
-    nextParams.set("by", "measure");
-    nextParams.set("sizes", formattedMeasure);
-    nextParams.set("availableSizes", formattedMeasure);
-    router.push(`/search?${nextParams.toString()}`);
+    router.push(measureSearchUrl(formattedMeasure));
   };
 
   const handleSearchByVehicle = async () => {
@@ -531,14 +519,14 @@ export function WelcomeModalContent({
         return;
       }
 
-      const nextParams = new URLSearchParams();
-      nextParams.set("by", "vehicle");
-      nextParams.set("make", carBrand);
-      nextParams.set("model", carModel);
-      nextParams.set("year", carYear);
-      nextParams.set("sizes", response.sizes.join(","));
-      nextParams.set("availableSizes", response.sizes.join(","));
-      router.push(`/search?${nextParams.toString()}`);
+      router.push(
+        vehicleSearchUrl({
+          make: carBrand,
+          model: carModel,
+          year: carYear,
+          sizes: response.sizes,
+        })
+      );
     } catch (error) {
       const message =
         error instanceof Error
@@ -609,47 +597,7 @@ export function WelcomeModalContent({
 
           {activeTab === "measure" ? (
             <div className="mt-6">
-              {/* Celular: rueda tipo iOS en lugar de escribir. */}
-              <div className="grid grid-cols-3 gap-3 md:hidden">
-                {(
-                  [
-                    ["Ancho", width, "205"],
-                    ["Alto", height, "55"],
-                    ["Rin", rim, "16"],
-                  ] as const
-                ).map(([label, value, placeholder]) => (
-                  <div key={label}>
-                    <span className={LABEL}>{label}</span>
-                    <button
-                      type="button"
-                      onClick={() => setIsWheelOpen(true)}
-                      className="flex w-full items-center justify-between gap-2 rounded-xl border border-white/15 bg-white/5 px-4 py-3.5 text-left text-[15px] transition-colors active:border-[#FFC600]"
-                    >
-                      <span
-                        className={
-                          value ? "font-semibold text-white" : "text-white/35"
-                        }
-                      >
-                        {value || placeholder}
-                      </span>
-                      <ChevronUpDownIcon className="h-4 w-4 shrink-0 text-white/40" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-              <MeasureWheelSheet
-                open={isWheelOpen}
-                initial={{
-                  width: Number(width) || undefined,
-                  height: Number(height) || undefined,
-                  rim: Number(rim) || undefined,
-                }}
-                onClose={() => setIsWheelOpen(false)}
-                onConfirm={handleWheelConfirm}
-                buttonClassName={BOTON}
-              />
-
-              <div className="hidden grid-cols-3 gap-3 md:grid">
+              <div className="grid grid-cols-3 gap-3">
                 <SelectField
                   label="Ancho"
                   value={width}

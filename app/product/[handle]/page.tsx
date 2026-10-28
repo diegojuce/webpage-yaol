@@ -1,16 +1,15 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
-import { GridTileImage } from "components/grid/tile";
 import Footer from "components/layout/footer";
 import { Gallery } from "components/product/gallery";
 import { ProductProvider } from "components/product/product-context";
 import { ProductDescription } from "components/product/product-description";
+import { RelatedProductsCarousel } from "components/product/related-products-carousel";
 import { HIDDEN_PRODUCT_TAG } from "lib/constants";
 import { getProduct, getProductRecommendations } from "lib/commerce";
 import { Image } from "lib/commerce/types";
 import { baseUrl } from "lib/utils";
-import Link from "next/link";
 import { Suspense } from "react";
 
 export async function generateMetadata(props: {
@@ -132,42 +131,5 @@ export default async function ProductPage(props: {
 
 async function RelatedProducts({ id }: { id: string }) {
   const relatedProducts = await getProductRecommendations(id);
-
-  if (!relatedProducts.length) return null;
-
-  return (
-    <div className="py-8">
-      <h2 className="mb-4 px-4 text-2xl font-bold md:px-0">
-        Productos relacionados
-      </h2>
-      {/* En celular la tarjeta no ocupa todo el ancho: se asoma la siguiente
-          para que se lea como carrusel. */}
-      <ul className="flex w-full snap-x snap-mandatory scroll-px-4 gap-4 overflow-x-auto px-4 pb-2 pt-1 md:snap-none md:px-0">
-        {relatedProducts.map((product) => (
-          <li
-            key={product.handle}
-            className="aspect-square w-[72%] flex-none snap-start min-[475px]:w-[45%] sm:w-1/3 md:w-1/4 lg:w-1/5"
-          >
-            <Link
-              className="relative h-full w-full"
-              href={`/product/${product.handle}`}
-              prefetch={true}
-            >
-              <GridTileImage
-                alt={product.title}
-                label={{
-                  title: product.title,
-                  amount: product.priceRange.maxVariantPrice.amount,
-                  currencyCode: product.priceRange.maxVariantPrice.currencyCode,
-                }}
-                src={product.featuredImage?.url}
-                fill
-                sizes="(min-width: 1024px) 20vw, (min-width: 768px) 25vw, (min-width: 640px) 33vw, (min-width: 475px) 45vw, 72vw"
-              />
-            </Link>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
+  return <RelatedProductsCarousel products={relatedProducts} />;
 }
