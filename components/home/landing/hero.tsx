@@ -7,6 +7,7 @@ import { FullscreenModal } from "components/ui/fullscreen-modal";
 import { isMobileViewport } from "lib/search-urls";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { HERO_SLIDE_SECONDS, HERO_SLIDES, type HeroSlide } from "./hero-slides";
 import { ArrowRightIcon, BoltIcon, SearchIcon } from "./icons";
 import { PaymentMethods } from "./payment-methods";
 import { PhotoSlot } from "./photo-slot";
@@ -21,13 +22,28 @@ const POPULAR_SIZES = [
   "265/70 R17",
 ];
 
-const CAROUSEL_LABELS = ["Hero · taller", "Promo Michelin", "Servicios destacados"];
-
 export function Hero() {
   const { isOpen, open, close } = useModal();
   const [modalTab, setModalTab] = useState<"measure" | "vehicle">("measure");
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const router = useRouter();
+  // `prev` es la slide que va saliendo hacia la izquierda.
+  const [{ slide, prev }, setSlides] = useState({ slide: 0, prev: -1 });
+  const goTo = (n: number) =>
+    setSlides((s) => (n === s.slide ? s : { slide: n, prev: s.slide }));
+
+  useEffect(() => {
+    if (HERO_SLIDES.length <= 1) return;
+    const t = setInterval(
+      () =>
+        setSlides((s) => ({
+          slide: (s.slide + 1) % HERO_SLIDES.length,
+          prev: s.slide,
+        })),
+      HERO_SLIDE_SECONDS * 1000,
+    );
+    return () => clearInterval(t);
+  }, [slide]);
 
   const openWith = (tab: "measure" | "vehicle") => {
     setModalTab(tab);
@@ -68,27 +84,21 @@ export function Hero() {
 
         <div className="relative flex items-start justify-between gap-6 px-6 pt-7 md:px-12">
           {/* <PromoChip onClick={() => openWith("measure")} /> */}
-          <CarouselDots />
+          <CarouselDots active={slide} onSelect={goTo} />
         </div>
 
         <div className="relative mx-auto flex w-full max-w-[1280px] flex-1 flex-col items-center gap-3 px-6 pb-6 pt-10 text-center md:px-12 md:pt-12">
-          <p className="m-0 text-[12px] font-bold uppercase tracking-[0.22em] text-[#FFD34A]">
-            Yantissimo · Tu mejor opción desde 2016
-          </p>
-          <h1
-            className="m-0 font-black uppercase leading-[0.92] tracking-[0.04em]"
-            style={{
-              fontFamily: "'Staatliches','Fjalla One',sans-serif",
-              fontSize: "clamp(48px, 6.5vw, 96px)",
-            }}
-          >
-            Encuentra tu llanta
-            <br />
-            <span className="text-[#FFC600]">en segundos.</span>
-          </h1>
-          <p className="m-0 mt-1 max-w-[560px] text-[17px] leading-[1.55] text-white/75">
-            Cotiza y agenda en línea. Montaje + balanceo incluidos en las 7 sucursales.
-          </p>
+          {/* Las slides se apilan en la misma celda para que la altura no brinque al rotar. */}
+          <div className="grid w-full justify-items-center">
+            {HERO_SLIDES.map((sl, n) => (
+              <SlideContent
+                key={n}
+                slide={sl}
+                first={n === 0}
+                position={n === slide ? "active" : n === prev ? "leaving" : "waiting"}
+              />
+            ))}
+          </div>
 
           <div className="mt-6 flex w-full justify-center">
             <SearchCapsule onClick={handleSearchClick} />
@@ -195,35 +205,102 @@ function PromoChip({ onClick }: { onClick: () => void }) {
   );
 }
 
-function CarouselDots() {
-  const [i, setI] = useState(0);
-  useEffect(() => {
-    const t = setInterval(() => setI((x) => (x + 1) % 3), 6000);
-    return () => clearInterval(t);
-  }, []);
+// Swipe a la izquierda: la slide activa entra desde la derecha y la anterior
+// sale por la izquierda. Las que esperan se quedan a la derecha sin animar.
+const SLIDE_POSITION = {
+  active: { transform: "translateX(0)", opacity: 1, animate: true },
+  leaving: { transform: "translateX(-100%)", opacity: 0, animate: true },
+  waiting: { transform: "translateX(100%)", opacity: 0, animate: false },
+} as const;
+
+function SlideContent({
+  slide,
+  first,
+  position,
+}: {
+  slide: HeroSlide;
+  first: boolean;
+  position: keyof typeof SLIDE_POSITION;
+}) {
+  const active = position === "active";
+  const pos = SLIDE_POSITION[position];
+  // Solo la primera slide es el <h1> de la página (SEO); las demás son <p>.
+  const Title = first ? "h1" : "p";
+  return (
+    <div
+      aria-hidden={!active}
+      className="col-start-1 row-start-1 flex w-full flex-col items-center gap-3 motion-reduce:!transition-none"
+      style={{
+        transform: pos.transform,
+        opacity: pos.opacity,
+        transition: pos.animate
+          ? "transform 700ms cubic-bezier(.22,.8,.24,1), opacity 700ms ease"
+          : "none",
+        pointerEvents: active ? "auto" : "none",
+      }}
+    >
+      <p
+        className="m-0 text-[12px] font-bold uppercase tracking-[0.22em]"
+        style={{ color: slide.eyebrowColor ?? "#FFD34A" }}
+      >
+        {slide.eyebrow}
+      </p>
+      <Title
+        className="m-0 font-black uppercase leading-[0.92] tracking-[0.04em]"
+        style={{
+          fontFamily: "'Staatliches','Fjalla One',sans-serif",
+          fontSize: "clamp(48px, 6.5vw, 96px)",
+        }}
+      >
+        {slide.title.map((line, i) => (
+          <span key={i} className="block" style={{ color: line.color ?? "#FFFFFF" }}>
+            {line.text}
+          </span>
+        ))}
+      </Title>
+      <p
+        className="m-0 mt-1 max-w-[560px] text-[17px] leading-[1.55]"
+        style={{ color: slide.descriptionColor ?? "rgba(255,255,255,0.75)" }}
+      >
+        {slide.description}
+      </p>
+    </div>
+  );
+}
+
+function CarouselDots({
+  active,
+  onSelect,
+}: {
+  active: number;
+  onSelect: (n: number) => void;
+}) {
+  const total = HERO_SLIDES.length;
+  if (total <= 1) return null;
+  const pad = (n: number) => String(n).padStart(2, "0");
   return (
     <div className="hidden flex-col items-end gap-2 md:flex">
       <span className="text-[11px] font-bold uppercase tracking-[0.16em] text-white/60">
-        0{i + 1} / 03 ·{" "}
-        <span className="text-white/40">{CAROUSEL_LABELS[i]}</span>
+        {pad(active + 1)} / {pad(total)} ·{" "}
+        <span className="text-white/40">{HERO_SLIDES[active]?.label}</span>
       </span>
       <div className="flex gap-1.5">
-        {[0, 1, 2].map((n) => (
+        {HERO_SLIDES.map((_, n) => (
           <button
             key={n}
             type="button"
-            onClick={() => setI(n)}
+            onClick={() => onSelect(n)}
             aria-label={`Mostrar slide ${n + 1}`}
             className="relative h-1 w-11 overflow-hidden rounded-full"
             style={{
-              background: n === i ? "rgba(255,255,255,.25)" : "rgba(255,255,255,.2)",
+              background: n === active ? "rgba(255,255,255,.25)" : "rgba(255,255,255,.2)",
             }}
           >
-            {n === i && (
+            {n === active && (
               <span
                 aria-hidden="true"
                 className="absolute left-0 top-0 h-full w-full bg-[#FFC600]"
-                style={{ animation: "yt-progress 6s linear" }}
+                style={{ animation: `yt-progress ${HERO_SLIDE_SECONDS}s linear` }}
               />
             )}
           </button>
