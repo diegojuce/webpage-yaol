@@ -5,6 +5,7 @@ export { FeaturedTires } from "./featured-tires";
 export { Hero } from "./hero";
 export { Locations } from "./locations";
 export { Paquetes } from "./paquetes";
+export { PaymentMethods } from "./payment-methods";
 export { QuickAccess } from "./quick-access";
 export { Services } from "./services";
 export { Stats } from "./stats";

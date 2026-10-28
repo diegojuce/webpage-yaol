@@ -1,14 +1,14 @@
 import {
-  Bento,
+  // Bento,
   Brands,
   CtaBand,
   Hero,
-  Locations,
+  // Locations,
   Paquetes,
-  QuickAccess,
-  Services,
+  // QuickAccess,
+  // Services,
   Stats,
-  Testimonials
+  Testimonials,
 } from "components/home/landing";
 import Footer from "components/layout/footer";
 
@@ -47,13 +47,13 @@ export default async function HomePage() {
     <>
       <div style={{ marginTop: "var(--masthead-offset, 6rem)" }}>
         <Hero />
-        <QuickAccess />
+        {/* <QuickAccess /> */}
         <Brands />
         {/* <FeaturedTires /> */}
         <Paquetes />
-        <Services />
-        <Bento />
-        <Locations />
+        {/* <Services /> */}
+        {/* <Bento /> */}
+        {/* <Locations /> */}
         <Stats />
         <Testimonials />
         <CtaBand />

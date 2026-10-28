@@ -6,6 +6,7 @@ import { FullscreenModal } from "components/ui/fullscreen-modal";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ArrowRightIcon, BoltIcon, SearchIcon } from "./icons";
+import { PaymentMethods } from "./payment-methods";
 import { PhotoSlot } from "./photo-slot";
 
 const HERO_BG: string | undefined = "/images/home/hero/hero-bg.jpg";
@@ -101,7 +102,7 @@ export function Hero() {
           </div>
         </div>
 
-        <div className="relative flex flex-wrap items-center justify-center gap-8 border-t border-white/10 px-6 py-6 md:px-12">
+        <div className="relative grid grid-cols-4 gap-2 border-t border-white/10 px-4 py-4 md:flex md:flex-wrap md:items-center md:justify-center md:gap-8 md:px-12 md:py-6">
           <MiniStat n="7" l="Sucursales en Colima" />
           <span className="hidden h-9 w-px bg-white/10 md:block" />
           <MiniStat n="10+" l="Años de experiencia" />
@@ -110,6 +111,8 @@ export function Hero() {
           <span className="hidden h-9 w-px bg-white/10 md:block" />
           <MiniStat n="4.5" l="★ en Google Maps" />
         </div>
+
+        <PaymentMethods className="relative px-4 pb-5 pt-4 md:px-12 md:pb-6 md:pt-6" />
       </section>
 
       <FullscreenModal open={isOpen} onClose={close}>
@@ -219,14 +222,14 @@ function CarouselDots() {
 
 function MiniStat({ n, l }: { n: string; l: string }) {
   return (
-    <div className="flex flex-col gap-0.5 border-l-2 border-[#FFC600] pl-3.5">
+    <div className="flex min-w-0 flex-col gap-0.5 border-l-2 border-[#FFC600] pl-2 md:pl-3.5">
       <span
-        className="text-[28px] font-black leading-none tracking-[0.02em] text-white"
+        className="text-[20px] font-black leading-none tracking-[0.02em] text-white md:text-[28px]"
         style={{ fontFamily: "'Staatliches','Fjalla One',sans-serif" }}
       >
         {n}
       </span>
-      <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-white/55">
+      <span className="text-[8.5px] font-semibold uppercase leading-tight tracking-[0.06em] text-white/55 md:text-[11px] md:tracking-[0.12em]">
         {l}
       </span>
     </div>
