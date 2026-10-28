@@ -127,6 +127,8 @@ type MeasureWheelSheetProps = {
   onClose: () => void;
   onConfirm: (measure: Measure) => void;
   buttonClassName: string;
+  /** Si se pasa, muestra un enlace para buscar por auto en su lugar. */
+  onSearchByVehicle?: () => void;
 };
 
 export function MeasureWheelSheet({
@@ -135,6 +137,7 @@ export function MeasureWheelSheet({
   onClose,
   onConfirm,
   buttonClassName,
+  onSearchByVehicle,
 }: MeasureWheelSheetProps) {
   const [mounted, setMounted] = useState(false);
   const [draft, setDraft] = useState<Measure>(DEFAULT_MEASURE);
@@ -279,6 +282,19 @@ export function MeasureWheelSheet({
         >
           Listo
         </button>
+
+        {onSearchByVehicle ? (
+          <button
+            type="button"
+            onClick={onSearchByVehicle}
+            className="mt-4 w-full text-center text-[13px] font-semibold text-white/55"
+          >
+            ¿No sabes tu medida?{" "}
+            <span className="text-[#FFC600] underline underline-offset-4">
+              Busca por auto
+            </span>
+          </button>
+        ) : null}
       </div>
     </div>,
     document.body

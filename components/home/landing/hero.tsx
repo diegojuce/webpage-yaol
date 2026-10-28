@@ -1,6 +1,10 @@
 "use client";
 
 import { useModal } from "components/hooks/use-modal";
+import {
+  MeasureWheelSheet,
+  type Measure,
+} from "components/mainslide/measure-wheel-picker";
 import { WelcomeModalContent } from "components/mainslide/welcome-modal-content";
 import { FullscreenModal } from "components/ui/fullscreen-modal";
 import { useRouter } from "next/navigation";
@@ -24,11 +28,33 @@ const CAROUSEL_LABELS = ["Hero · taller", "Promo Michelin", "Servicios destacad
 export function Hero() {
   const { isOpen, open, close } = useModal();
   const [modalTab, setModalTab] = useState<"measure" | "vehicle">("measure");
+  const [isWheelOpen, setIsWheelOpen] = useState(false);
   const router = useRouter();
 
   const openWith = (tab: "measure" | "vehicle") => {
     setModalTab(tab);
     open();
+  };
+
+  // Prueba: en celular el botón abre directo la rueda de medidas y busca al
+  // dar "Listo"; en computadora sigue abriendo el buscador completo.
+  const handleSearchClick = () => {
+    if (window.matchMedia("(max-width: 767px)").matches) {
+      setIsWheelOpen(true);
+    } else {
+      openWith("measure");
+    }
+  };
+
+  const searchMeasure = ({ width, height, rim }: Measure) => {
+    const measure = `${width}/${height} R${rim}`;
+    const params = new URLSearchParams();
+    params.set("q", measure);
+    params.set("by", "measure");
+    params.set("sizes", measure);
+    params.set("availableSizes", measure);
+    setIsWheelOpen(false);
+    router.push(`/search?${params.toString()}`);
   };
 
   const searchSize = (size: string) => {
@@ -82,7 +108,7 @@ export function Hero() {
           </p>
 
           <div className="mt-6 flex w-full justify-center">
-            <SearchCapsule onClick={() => openWith("measure")} />
+            <SearchCapsule onClick={handleSearchClick} />
           </div>
 
           <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
@@ -118,6 +144,17 @@ export function Hero() {
       <FullscreenModal open={isOpen} onClose={close}>
         <WelcomeModalContent initialTab={modalTab} />
       </FullscreenModal>
+      <MeasureWheelSheet
+        open={isWheelOpen}
+        initial={{}}
+        onClose={() => setIsWheelOpen(false)}
+        onConfirm={searchMeasure}
+        buttonClassName="inline-flex w-full items-center justify-center rounded-full bg-[#FFC600] px-6 py-4 text-sm font-bold uppercase tracking-wider text-black"
+        onSearchByVehicle={() => {
+          setIsWheelOpen(false);
+          openWith("vehicle");
+        }}
+      />
     </>
   );
 }
