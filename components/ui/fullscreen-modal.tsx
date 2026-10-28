@@ -1,5 +1,6 @@
 "use client";
 
+import { XMarkIcon } from "@heroicons/react/24/outline";
 import clsx from "clsx";
 import { ReactNode, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
@@ -158,11 +159,11 @@ export function FullscreenModal({
       >
         <button
           type="button"
-          aria-label="Cerrar modal"
+          aria-label="Cerrar"
           onClick={onClose}
-          className="absolute right-6 top-6 z-20 rounded-full border border-neutral-200 bg-white px-3 py-1 text-sm font-medium text-neutral-700 shadow-sm transition hover:border-neutral-300 hover:bg-neutral-50"
+          className="absolute right-5 top-4 z-20 flex h-11 w-11 items-center justify-center rounded-full border border-white/15 bg-[#0F0F10] text-white transition-colors hover:border-[#FFC600] hover:text-[#FFC600]"
         >
-          Cerrar
+          <XMarkIcon className="h-5" />
         </button>
         <div
           className={clsx(

@@ -3,6 +3,7 @@ import ProductGridItems from "components/layout/product-grid-items";
 import Collections from "components/layout/search/collections";
 import FilterList from "components/layout/search/filter";
 import PanelSearchForm from "components/layout/search/panel-search-form";
+import SearchModalButton from "components/layout/search/search-modal-button";
 import SizeChipsSelector from "components/layout/search/size-chips-selector";
 import { defaultSort, sorting } from "lib/constants";
 import { getCategoryProducts, getProducts } from "lib/commerce";
@@ -317,8 +318,8 @@ export default async function SearchPage(props: {
   const primaryMeasureLabel = selectedSizes[0] ?? normalizedSearchMeasure ?? "";
   const categoryLabel =
     isCategorySearch && categoryKind && categoryValue
-      ? CATEGORY_LABELS[categoryKind][categoryValue] ??
-        humanizeSlug(categoryValue)
+      ? (CATEGORY_LABELS[categoryKind][categoryValue] ??
+        humanizeSlug(categoryValue))
       : "";
 
   return (
@@ -336,45 +337,54 @@ export default async function SearchPage(props: {
           </div>
         </aside>
         <div className="flex-1">
-          {isCategorySearch ? (
-            <p className="mb-4 text-sm md:text-base">
-              {hasProducts
-                ? `Mostrando ${products.length} ${resultsText} en `
-                : "No hay productos en "}
-              <span className="font-semibold">&quot;{categoryLabel}&quot;</span>
-            </p>
-          ) : isVehicleSearch ? (
-            <p className="mb-4 text-sm md:text-base">
-              {hasProducts
-                ? `Mostrando ${products.length} ${resultsText} para `
-                : "No hay productos que coincidan con "}
-              <span className="font-semibold">&quot;{vehicleLabel}&quot;</span>
-              <span className="ml-2 text-xs text-neutral-500 dark:text-neutral-400">
-                ({availableSizes.length} medidas detectadas)
-              </span>
-            </p>
-          ) : isMeasureSizesSearch ? (
-            <p className="mb-4 text-sm md:text-base">
-              {hasProducts
-                ? `Mostrando ${products.length} ${resultsText} para `
-                : "No hay productos que coincidan con "}
-              <span className="font-semibold">
-                &quot;{primaryMeasureLabel}&quot;
-              </span>
-              {availableSizes.length > 1 ? (
-                <span className="ml-2 text-xs text-neutral-500 dark:text-neutral-400">
-                  ({availableSizes.length - 1} medidas cercanas disponibles)
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-2 [&>p]:mb-0">
+            {isCategorySearch ? (
+              <p className="mb-4 text-sm md:text-base">
+                {hasProducts
+                  ? `Mostrando ${products.length} ${resultsText} en `
+                  : "No hay productos en "}
+                <span className="font-semibold">
+                  &quot;{categoryLabel}&quot;
                 </span>
-              ) : null}
-            </p>
-          ) : searchValue ? (
-            <p className="mb-4 text-sm md:text-base">
-              {hasProducts
-                ? `Mostrando ${products.length} ${resultsText} para `
-                : "No hay productos que coincidan con "}
-              <span className="font-semibold">&quot;{searchValue}&quot;</span>
-            </p>
-          ) : null}
+              </p>
+            ) : isVehicleSearch ? (
+              <p className="mb-4 text-sm md:text-base">
+                {hasProducts
+                  ? `Mostrando ${products.length} ${resultsText} para `
+                  : "No hay productos que coincidan con "}
+                <span className="font-semibold">
+                  &quot;{vehicleLabel}&quot;
+                </span>
+                <span className="ml-2 text-xs text-neutral-500 dark:text-neutral-400">
+                  ({availableSizes.length} medidas detectadas)
+                </span>
+              </p>
+            ) : isMeasureSizesSearch ? (
+              <p className="mb-4 text-sm md:text-base">
+                {hasProducts
+                  ? `Mostrando ${products.length} ${resultsText} para `
+                  : "No hay productos que coincidan con "}
+                <span className="font-semibold">
+                  &quot;{primaryMeasureLabel}&quot;
+                </span>
+                {availableSizes.length > 1 ? (
+                  <span className="ml-2 text-xs text-neutral-500 dark:text-neutral-400">
+                    ({availableSizes.length - 1} medidas cercanas disponibles)
+                  </span>
+                ) : null}
+              </p>
+            ) : searchValue ? (
+              <p className="mb-4 text-sm md:text-base">
+                {hasProducts
+                  ? `Mostrando ${products.length} ${resultsText} para `
+                  : "No hay productos que coincidan con "}
+                <span className="font-semibold">&quot;{searchValue}&quot;</span>
+              </p>
+            ) : null}
+            <SearchModalButton
+              initialTab={isVehicleSearch ? "vehicle" : "measure"}
+            />
+          </div>
           {sizeSearchMode ? (
             <SizeChipsSelector
               mode={sizeSearchMode}

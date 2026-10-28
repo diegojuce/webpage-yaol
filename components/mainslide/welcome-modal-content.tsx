@@ -1,8 +1,10 @@
 "use client";
 
 import { Combobox } from "@headlessui/react";
-import { ChevronUpDownIcon } from "@heroicons/react/24/outline";
+import { CheckIcon, ChevronUpDownIcon } from "@heroicons/react/24/outline";
 import clsx from "clsx";
+import LoadingDots from "components/loading-dots";
+import LogoSquare from "components/logo-square";
 import {
   fetchVehicleMakes,
   fetchVehicleModels,
@@ -62,7 +64,20 @@ const POPULAR_MEASURES = [
 const COMBOBOX_DEFAULT_MAX_HEIGHT = 256;
 const VIEWPORT_EDGE_PADDING = 12;
 
-const BRAND_YELLOW = "#FFCA28";
+// Mismo lenguaje visual que el carrito y /pago.
+const DISPLAY_FONT =
+  "var(--font-staatliches), var(--font-fjalla), Impact, sans-serif";
+const LABEL =
+  "mb-2 block text-[11px] font-bold uppercase tracking-[0.16em] text-white/55";
+const BOTON =
+  "inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#FFC600] px-6 py-4 text-sm font-bold uppercase tracking-wider text-black transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#FFD34A] hover:shadow-[0_18px_50px_rgba(255,211,74,0.25)] disabled:pointer-events-none disabled:bg-white/10 disabled:text-white/35";
+const TAB =
+  "rounded-full px-4 py-2.5 text-[12px] font-bold uppercase tracking-[0.12em] transition-colors";
+const tabClass = (activo: boolean) =>
+  clsx(
+    TAB,
+    activo ? "bg-[#FFC600] text-black" : "text-white/55 hover:text-white"
+  );
 
 type SelectFieldProps = {
   label: string;
@@ -151,10 +166,8 @@ function SelectField({
   };
 
   return (
-    <div className="space-y-2">
-      <label className="block text-[10px] font-bold uppercase tracking-[0.22em] text-neutral-500">
-        {label}
-      </label>
+    <div>
+      <label className={LABEL}>{label}</label>
       <Combobox
         value={value}
         onChange={(selected: string | null) => {
@@ -174,10 +187,10 @@ function SelectField({
           >
             <div
               className={clsx(
-                "group flex w-full items-center justify-between gap-3 rounded-2xl border bg-neutral-900/60 px-5 py-3 text-left text-base transition-colors",
-                "border-neutral-700 hover:border-neutral-500",
+                "group flex w-full items-center justify-between gap-2 rounded-xl border px-4 py-3.5 text-left text-[15px] transition-[border-color,box-shadow]",
+                "border-white/15 bg-white/5 hover:border-white/30 focus-within:border-[#FFC600] focus-within:shadow-[0_0_0_3px_rgba(255,198,0,0.2)]",
                 disabled &&
-                  "cursor-not-allowed border-neutral-800 bg-neutral-900/30"
+                  "cursor-not-allowed border-white/10 bg-white/[0.02] hover:border-white/10"
               )}
               onClick={handleContainerClick}
             >
@@ -185,10 +198,8 @@ function SelectField({
                 ref={inputRef}
                 data-combobox-input="true"
                 className={clsx(
-                  "w-full appearance-none border-none bg-transparent text-base font-medium outline-none ring-0 placeholder:text-neutral-500 focus:!border-none focus:!outline-none focus:!ring-0 focus-visible:!outline-none focus-visible:!ring-0 focus-visible:!ring-offset-0",
-                  disabled
-                    ? "cursor-not-allowed text-neutral-600"
-                    : "text-white"
+                  "w-full min-w-0 appearance-none border-none bg-transparent p-0 text-[15px] font-semibold outline-none ring-0 placeholder:font-normal placeholder:text-white/35 focus:!border-none focus:!outline-none focus:!ring-0 focus-visible:!outline-none focus-visible:!ring-0 focus-visible:!ring-offset-0",
+                  disabled ? "cursor-not-allowed text-white/30" : "text-white"
                 )}
                 displayValue={(selected: string) =>
                   optionLabelByValue.get(selected) ?? selected ?? ""
@@ -207,12 +218,14 @@ function SelectField({
               />
               <Combobox.Button
                 data-combobox-toggle="true"
-                className="pointer-events-none flex items-center justify-center focus:!outline-none focus:!ring-0 focus-visible:!outline-none focus-visible:!ring-0 focus-visible:!ring-offset-0 md:pointer-events-auto"
-              ></Combobox.Button>
+                className="pointer-events-none flex shrink-0 items-center justify-center text-white/40 focus:!outline-none focus:!ring-0 focus-visible:!outline-none focus-visible:!ring-0 focus-visible:!ring-offset-0 md:pointer-events-auto"
+              >
+                <ChevronUpDownIcon className="h-4 w-4" />
+              </Combobox.Button>
             </div>
             <Combobox.Options
               className={clsx(
-                "absolute z-30 w-full overflow-auto rounded-xl border border-neutral-700 bg-neutral-900 p-1.5 shadow-[0_12px_32px_rgba(0,0,0,0.45)]",
+                "absolute z-30 w-full overflow-auto rounded-xl border border-white/10 bg-[#1a1a1b] p-1.5 shadow-[0_24px_60px_rgba(0,0,0,0.55)]",
                 openUpward ? "bottom-full mb-2" : "top-full mt-2"
               )}
               style={{ maxHeight: `${optionsMaxHeight}px` }}
@@ -224,13 +237,9 @@ function SelectField({
                     value={option.value}
                     className={({ active, selected }) =>
                       clsx(
-                        "cursor-pointer rounded-lg px-4 py-3 text-sm transition",
-                        selected && "font-semibold",
-                        active
-                          ? "bg-[#FFCA28] text-neutral-900"
-                          : selected
-                            ? "bg-neutral-800 text-white"
-                            : "text-neutral-300"
+                        "cursor-pointer rounded-lg px-3 py-2.5 text-sm transition-colors",
+                        selected ? "font-semibold text-[#FFC600]" : "text-white/80",
+                        active && "bg-white/10 text-white"
                       )
                     }
                   >
@@ -238,7 +247,7 @@ function SelectField({
                   </Combobox.Option>
                 ))
               ) : (
-                <div className="px-3 py-2 text-sm text-neutral-500">
+                <div className="px-3 py-2.5 text-sm text-white/40">
                   Sin coincidencias
                 </div>
               )}
@@ -499,104 +508,92 @@ export function WelcomeModalContent({
     }
   };
 
-  const eyebrow =
-    activeTab === "vehicle" ? "Búsqueda por vehículo" : "Búsqueda por medida";
   const heading =
-    activeTab === "vehicle"
-      ? "Encuentra las llantas perfectas para tu auto."
-      : "Encuentra las llantas por la medida exacta.";
+    activeTab === "vehicle" ? "Llantas para tu auto" : "Busca por medida";
   const subheading =
     activeTab === "vehicle"
-      ? "Selecciona tu vehículo y te mostramos los mejores resultados."
-      : "Ingresa los tres números grabados en el costado de tu llanta.";
+      ? "Elige marca, modelo y año; te mostramos las llantas que le quedan."
+      : "Ancho, alto y rin: vienen grabados en el costado de tu llanta (ej. 205/55 R16).";
 
   return (
-    <div className="flex min-h-full w-full flex-col bg-black px-6 py-12 text-white md:px-12 md:py-16">
-      <div className="mx-auto flex w-full max-w-2xl flex-col">
-        <header className="text-center">
-          <p
-            className="text-[11px] font-bold uppercase tracking-[0.32em]"
-            style={{ color: BRAND_YELLOW }}
-          >
-            {eyebrow}
+    <div
+      className="flex min-h-full w-full flex-col bg-[#0F0F10] text-white"
+      style={{ fontFamily: "var(--font-geist-sans, system-ui)" }}
+    >
+      <div className="flex h-[76px] shrink-0 items-center border-b border-white/10 px-5">
+        <LogoSquare variant="white" />
+      </div>
+
+      <div className="mx-auto flex w-full max-w-xl flex-1 flex-col px-5 py-10 md:py-14">
+        <header>
+          <p className="m-0 text-[13px] font-bold uppercase tracking-[0.22em] text-[#FFC600]">
+            Encuentra tus llantas
           </p>
-          <h1 className="mt-5 text-balance text-4xl font-extrabold leading-[1.05] tracking-tight text-white md:text-[56px]">
+          <h1
+            className="m-0 mt-2 text-[clamp(2.4rem,7vw,3.4rem)] font-black uppercase leading-[0.9] tracking-[0.04em] text-white"
+            style={{ fontFamily: DISPLAY_FONT }}
+          >
             {heading}
           </h1>
-          <p className="mx-auto mt-5 max-w-lg text-sm leading-relaxed text-neutral-400 md:text-base">
+          <p className="m-0 mt-3 text-[14px] leading-relaxed text-white/55">
             {subheading}
           </p>
         </header>
 
-        <section className="mx-auto mt-10 w-full rounded-3xl border border-neutral-800 bg-neutral-900/40 p-5 md:p-8">
-          <div className="grid grid-cols-2 gap-1 rounded-2xl bg-neutral-900/80 p-1.5">
+        <section className="mt-8 rounded-[24px] border border-white/10 bg-white/[0.03] p-5 sm:p-7">
+          <div
+            role="tablist"
+            className="grid grid-cols-2 gap-1 rounded-full border border-white/10 bg-black/40 p-1"
+          >
             <button
               type="button"
+              role="tab"
+              aria-selected={activeTab === "measure"}
               onClick={() => setActiveTab("measure")}
-              className={clsx(
-                "rounded-xl px-4 py-3 text-sm font-bold tracking-tight transition",
-                activeTab === "measure"
-                  ? "text-neutral-900 shadow-sm"
-                  : "text-neutral-400 hover:text-white"
-              )}
-              style={
-                activeTab === "measure"
-                  ? { backgroundColor: BRAND_YELLOW }
-                  : undefined
-              }
+              className={tabClass(activeTab === "measure")}
             >
               Por medida
             </button>
             <button
               type="button"
+              role="tab"
+              aria-selected={activeTab === "vehicle"}
               onClick={handleSetVehicleTab}
-              className={clsx(
-                "rounded-xl px-4 py-3 text-sm font-bold tracking-tight transition",
-                activeTab === "vehicle"
-                  ? "text-neutral-900 shadow-sm"
-                  : "text-neutral-400 hover:text-white"
-              )}
-              style={
-                activeTab === "vehicle"
-                  ? { backgroundColor: BRAND_YELLOW }
-                  : undefined
-              }
+              className={tabClass(activeTab === "vehicle")}
             >
               Por auto
             </button>
           </div>
 
           {activeTab === "measure" ? (
-            <div className="mt-6 space-y-8">
+            <div className="mt-6">
               <div className="grid grid-cols-3 gap-3">
                 <SelectField
                   label="Ancho"
                   value={width}
-                  placeholder="—"
+                  placeholder="205"
                   options={MEASURE_WIDTH_OPTIONS}
                   onChange={setWidth}
                 />
                 <SelectField
                   label="Alto"
                   value={height}
-                  placeholder="—"
+                  placeholder="55"
                   options={MEASURE_HEIGHT_OPTIONS}
                   onChange={setHeight}
                 />
                 <SelectField
                   label="Rin"
                   value={rim}
-                  placeholder="—"
+                  placeholder="16"
                   options={MEASURE_RIM_OPTIONS}
                   onChange={setRim}
                 />
               </div>
 
-              <div className="my-6">
-                <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.22em] text-neutral-500">
-                  Medidas populares
-                </p>
-                <div className="grid grid-cols-3 gap-2">
+              <div className="mt-6">
+                <p className={LABEL}>Medidas populares</p>
+                <div className="flex flex-wrap gap-2">
                   {POPULAR_MEASURES.map((measure) => {
                     const isSelected =
                       canSearchByMeasure && measure === formattedMeasure;
@@ -606,16 +603,11 @@ export function WelcomeModalContent({
                         type="button"
                         onClick={() => handleApplyPopularMeasure(measure)}
                         className={clsx(
-                          "rounded-full border px-5 py-2 text-sm font-medium transition",
+                          "rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-colors",
                           isSelected
-                            ? "border-transparent text-neutral-900"
-                            : "border-neutral-700 bg-neutral-900/60 text-neutral-300 hover:border-neutral-500 hover:bg-neutral-800 hover:text-white",
+                            ? "border-[#FFC600] bg-[#FFC600]/15 text-[#FFC600]"
+                            : "border-white/15 bg-white/5 text-white hover:border-white/30 hover:bg-white/10"
                         )}
-                        style={
-                          isSelected
-                            ? { backgroundColor: BRAND_YELLOW }
-                            : undefined
-                        }
                       >
                         {measure}
                       </button>
@@ -628,25 +620,16 @@ export function WelcomeModalContent({
                 type="button"
                 onClick={handleSearchByMeasure}
                 disabled={!canSearchByMeasure}
-                className={clsx(
-                  "mt-2 flex w-full items-center justify-center gap-2.5 rounded-2xl px-5 py-4 text-[15px] font-extrabold tracking-tight transition",
-                  canSearchByMeasure
-                    ? "bg-white text-neutral-900 hover:bg-neutral-200"
-                    : "cursor-not-allowed border border-neutral-800 bg-neutral-900/40 text-neutral-600"
-                )}
+                className={clsx(BOTON, "mt-7")}
               >
-                {canSearchByMeasure ? (
-                  <>
-                    <span>Ver llantas para {formattedMeasure}</span>
-                    <span aria-hidden>→</span>
-                  </>
-                ) : (
-                  <span>Buscar llantas</span>
-                )}
+                {canSearchByMeasure
+                  ? `Ver llantas ${formattedMeasure}`
+                  : "Elige ancho, alto y rin"}
+                {canSearchByMeasure ? <span aria-hidden>→</span> : null}
               </button>
             </div>
           ) : (
-            <div className="mt-6 space-y-8">
+            <div className="mt-6 flex flex-col gap-5">
               <SelectField
                 label="Marca"
                 value={carBrand}
@@ -654,8 +637,8 @@ export function WelcomeModalContent({
                   isLoadingMakes
                     ? "Cargando marcas..."
                     : vehicleMakesUnavailable
-                      ? "Configura WHEEL_SIZE_API_KEY"
-                      : "Seleccionar marca"
+                      ? "No disponible"
+                      : "Ej. Nissan"
                 }
                 options={brandSelectOptions}
                 onChange={handleCarBrandChange}
@@ -666,10 +649,10 @@ export function WelcomeModalContent({
                 value={carModel}
                 placeholder={
                   !carBrand
-                    ? "Seleccionar modelo"
+                    ? "Primero elige la marca"
                     : isLoadingModels
                       ? "Cargando modelos..."
-                      : "Seleccionar modelo"
+                      : "Ej. Versa"
                 }
                 options={modelSelectOptions}
                 onChange={handleCarModelChange}
@@ -680,10 +663,10 @@ export function WelcomeModalContent({
                 value={carYear}
                 placeholder={
                   !carModel
-                    ? "Seleccionar año"
+                    ? "Primero elige el modelo"
                     : isLoadingYears
                       ? "Cargando años..."
-                      : "Seleccionar año"
+                      : "Ej. 2020"
                 }
                 options={yearSelectOptions}
                 onChange={setCarYear}
@@ -691,9 +674,12 @@ export function WelcomeModalContent({
               />
 
               {vehicleMakesUnavailable ? (
-                <p className="text-xs text-red-400">
-                  El buscador por auto necesita configuración del servidor
-                  (falta `WHEEL_SIZE_API_KEY`).
+                <p
+                  role="alert"
+                  className="m-0 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-[13px] text-white/70"
+                >
+                  La búsqueda por auto no está disponible por ahora. Busca por
+                  medida o escríbenos y te ayudamos.
                 </p>
               ) : null}
 
@@ -701,28 +687,32 @@ export function WelcomeModalContent({
                 type="button"
                 onClick={handleSearchByVehicle}
                 disabled={!canSearchByVehicle || isSearchingVehicle}
-                className={clsx(
-                  "mt-2 flex w-full items-center justify-center gap-2.5 rounded-2xl px-5 py-4 text-[15px] font-extrabold tracking-tight transition",
-                  canSearchByVehicle && !isSearchingVehicle
-                    ? "bg-white text-neutral-900 hover:bg-neutral-200"
-                    : "cursor-not-allowed border border-neutral-800 bg-neutral-900/40 text-neutral-600"
-                )}
+                className={clsx(BOTON, "mt-2")}
               >
                 {isSearchingVehicle ? (
-                  <span>Buscando...</span>
+                  <LoadingDots className="bg-black" />
+                ) : canSearchByVehicle ? (
+                  <>
+                    Ver llantas para mi auto <span aria-hidden>→</span>
+                  </>
                 ) : (
-                  <span>Buscar llantas</span>
+                  "Elige marca, modelo y año"
                 )}
               </button>
             </div>
           )}
         </section>
 
-        <div className="mx-auto mt-10 flex w-full max-w-2xl flex-wrap items-center justify-center gap-x-10 gap-y-3 text-[13px] text-neutral-400">
-          <span>✓ Envío a todo México</span>
-          <span>✓ Instalación disponible</span>
-          <span>✓ Garantía incluida</span>
-        </div>
+        <ul className="m-0 mt-8 flex list-none flex-wrap items-center justify-center gap-x-6 gap-y-2 p-0 text-[13px] text-white/55">
+          {["Instalación o envío GRATIS", "Garantía de fabricante", "Pago seguro"].map(
+            (t) => (
+              <li key={t} className="flex items-center gap-1.5">
+                <CheckIcon className="h-4 w-4 text-[#FFC600]" />
+                {t}
+              </li>
+            )
+          )}
+        </ul>
       </div>
     </div>
   );
