@@ -8,7 +8,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getCart, getOrderBySession, getOrderLineImages } from "lib/commerce";
-import { COMMERCE_PROVIDER } from "lib/commerce-status";
+import {
+  COMMERCE_PROVIDER,
+  PAYMENTS_BLOCKED,
+  PAYMENTS_BLOCKED_MESSAGE,
+} from "lib/commerce-status";
 import Checkout, { type SummaryLine } from "./checkout";
 
 export const metadata: Metadata = {
@@ -78,7 +82,7 @@ export default async function PagoPage(props: {
   // del sitio (no pasa con tarjeta: el 3D Secure va en un modal).
   const paymentId = sp.payment_intent ?? sp.session_id;
 
-  if (COMMERCE_PROVIDER !== "native") {
+  if (COMMERCE_PROVIDER !== "native" || PAYMENTS_BLOCKED) {
     return (
       <Screen
         eyebrow="PAGO EN LÍNEA"

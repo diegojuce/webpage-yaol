@@ -10,7 +10,11 @@ import Link from "next/link";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { getOrderBySession } from "lib/commerce";
-import { COMMERCE_PROVIDER } from "lib/commerce-status";
+import {
+  COMMERCE_PROVIDER,
+  PAYMENTS_BLOCKED,
+  PAYMENTS_BLOCKED_MESSAGE,
+} from "lib/commerce-status";
 import { confirmacionUrl, MSI_MIN_LLANTAS } from "../stripe";
 import PaymentForm from "./payment-form";
 
@@ -76,7 +80,7 @@ export default async function PagoPage(props: {
 }) {
   const { sessionId } = await props.params;
 
-  if (COMMERCE_PROVIDER !== "native") {
+  if (COMMERCE_PROVIDER !== "native" || PAYMENTS_BLOCKED) {
     return (
       <Screen
         eyebrow="PAGO EN LÍNEA"

@@ -3,6 +3,8 @@ import { cartLineVariants } from "lib/commerce/variant-utils";
 
 import {
   COMMERCE_DISABLED_MESSAGE,
+  PAYMENTS_BLOCKED,
+  PAYMENTS_BLOCKED_MESSAGE,
   COMMERCE_ENABLED,
   COMMERCE_PROVIDER,
 } from "lib/commerce-status";
@@ -510,6 +512,10 @@ export async function startCheckout(
 ): Promise<StartCheckoutResult> {
   if (!COMMERCE_ENABLED) {
     return { ok: false, error: "error", message: COMMERCE_DISABLED_MESSAGE, unavailableItems: [] };
+  }
+
+  if (PAYMENTS_BLOCKED) {
+    return { ok: false, error: "error", message: PAYMENTS_BLOCKED_MESSAGE, unavailableItems: [] };
   }
 
   if (COMMERCE_PROVIDER !== "native") {

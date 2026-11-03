@@ -8,7 +8,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { CART_BRANCHES, backendBranchCode } from "components/cart/branches";
 import { getQuoteLink } from "lib/commerce";
-import { COMMERCE_PROVIDER } from "lib/commerce-status";
+import { COMMERCE_PROVIDER, PAYMENTS_BLOCKED } from "lib/commerce-status";
 import PayButton from "./pay-button";
 
 export const metadata: Metadata = {
@@ -51,7 +51,7 @@ export default async function PagarPage(props: {
 }) {
   const { token } = await props.params;
 
-  if (COMMERCE_PROVIDER !== "native") {
+  if (COMMERCE_PROVIDER !== "native" || PAYMENTS_BLOCKED) {
     return (
       <Screen eyebrow="PAGO EN LÍNEA" title="Disponible muy pronto">
         <p className="success__lead">

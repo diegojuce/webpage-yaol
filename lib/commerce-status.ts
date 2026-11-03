@@ -32,3 +32,22 @@ export const SHOPIFY_ENABLED = COMMERCE_PROVIDER === "shopify";
 
 export const COMMERCE_DISABLED_MESSAGE =
   "Carrito y pagos no disponibles: sitio en construcción. Llámanos o visítanos en sucursal para comprar.";
+
+// Bloqueo de pago: mientras producción use la llave de PRUEBA de Stripe
+// (pk_test_…), nadie puede llegar al cobro; el carrito sigue funcionando y se
+// invita a comprar en sucursal. Se quita solo al poner la llave pk_live_… en
+// Vercel. Local y previews (llave de prueba) siguen pudiendo probar el pago.
+// NEXT_PUBLIC_PAYMENTS_BLOCKED = "true" | "false" fuerza el valor.
+function resolvePaymentsBlocked(): boolean {
+  const forced = process.env.NEXT_PUBLIC_PAYMENTS_BLOCKED;
+  if (forced === "true") return true;
+  if (forced === "false") return false;
+  const isProduction = process.env.NEXT_PUBLIC_VERCEL_ENV === "production";
+  const key = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY ?? "";
+  return isProduction && !key.startsWith("pk_live_");
+}
+
+export const PAYMENTS_BLOCKED = resolvePaymentsBlocked();
+
+export const PAYMENTS_BLOCKED_MESSAGE =
+  "El pago en línea estará disponible muy pronto. Mientras tanto, aparta tus llantas por WhatsApp o visítanos en cualquiera de nuestras sucursales.";

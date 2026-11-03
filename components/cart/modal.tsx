@@ -8,6 +8,8 @@ import {
   COMMERCE_DISABLED_MESSAGE,
   COMMERCE_ENABLED,
   COMMERCE_PROVIDER,
+  PAYMENTS_BLOCKED,
+  PAYMENTS_BLOCKED_MESSAGE,
 } from "lib/commerce-status";
 import { DEFAULT_OPTION } from "lib/constants";
 import { createUrl } from "lib/utils";
@@ -492,6 +494,11 @@ function CheckoutButton({ onClose }: { onClose: () => void }) {
 
   const handleCheckout = async () => {
     if (pending) return;
+
+    if (PAYMENTS_BLOCKED) {
+      toast.info(PAYMENTS_BLOCKED_MESSAGE);
+      return;
+    }
 
     // Nativo: el checkout del sitio pide contacto, entrega y pago en /pago.
     if (COMMERCE_PROVIDER === "native") {

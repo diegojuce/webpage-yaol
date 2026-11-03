@@ -1,7 +1,11 @@
 "use server";
 
 import { ShopApiError, startQuoteCheckout } from "lib/commerce";
-import { COMMERCE_PROVIDER } from "lib/commerce-status";
+import {
+  COMMERCE_PROVIDER,
+  PAYMENTS_BLOCKED,
+  PAYMENTS_BLOCKED_MESSAGE,
+} from "lib/commerce-status";
 import { headers } from "next/headers";
 
 // Origen del sitio (preview, producción o local) al que Stripe regresa.
@@ -21,6 +25,9 @@ export type PayQuoteResult =
 // agendar → pagar: abre el cobro (PaymentIntent) por el saldo de la
 // cotización; el formulario se pinta en /pago/<paymentId>.
 export async function payQuote(token: string): Promise<PayQuoteResult> {
+  if (PAYMENTS_BLOCKED) {
+    return { ok: false, message: PAYMENTS_BLOCKED_MESSAGE };
+  }
   if (COMMERCE_PROVIDER !== "native") {
     return {
       ok: false,
