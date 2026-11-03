@@ -4,6 +4,10 @@
 import CreditCardIcon from "@mui/icons-material/CreditCard";
 import { Product } from "lib/commerce/types";
 
+// Oculta temporalmente (Buen Fin, pago en modo de prueba). Cambiar a `true`
+// para volver a mostrar la tarjeta en la página de producto.
+const MOSTRAR_MSI = false;
+
 const MSI_MESES = 3;
 const MSI_EJEMPLOS = [2, 4];
 
@@ -15,6 +19,7 @@ const formatCurrency = (value: number, currencyCode: string) =>
   }).format(value);
 
 export function PaymentOptions({ product }: { product: Product }) {
+  if (!MOSTRAR_MSI) return null;
   const { amount, currencyCode } = product.priceRange.minVariantPrice;
   const unitPrice = parseFloat(amount);
   if (!Number.isFinite(unitPrice) || unitPrice <= 0) return null;

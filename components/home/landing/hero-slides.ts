@@ -36,8 +36,19 @@ export type HeroSlide = {
 
 export const HERO_SLIDES: HeroSlide[] = [
   {
-    label: "Hero · taller",
-    eyebrow: "Yantissimo · Nueva tienda online",
+    label: "Buen Fin",
+    eyebrow: "Buen Fin · Ofertas por tiempo limitado",
+    eyebrowColor: "#FFD34A",
+    title: [
+      { text: "Llegó el Buen Fin." },
+      { text: "Llantas con descuento.", color: "#FFC600" },
+    ],
+    description:
+      "Los mejores precios del año en llantas para SUV, sedán, Jeep y pick-up. ¡Aprovecha antes de que se acaben!",
+  },
+  {
+    label: "Bienvenido",
+    eyebrow: "Yantissimo · Tienda online",
     eyebrowColor: "#FFD34A",
     title: [
       { text: "Encuentra tu llanta" },
@@ -46,37 +57,26 @@ export const HERO_SLIDES: HeroSlide[] = [
     description:
       "Cotiza y agenda en línea. Montaje + balanceo incluidos en las 7 sucursales.",
   },
-  {
-    label: "Meses",
-    eyebrow: "Promo Especial - Nueva Tienda Online",
-    eyebrowColor: "#FFD34A",
-    title: [
-      { text: "Promo por Tiempo limitado" },
-      { text: "3 MSI.", color: "#FFC600" },
-    ],
-    description:
-      "Aplica para compras en linea de minimo 2 llantas. ¡Aprovecha!",
-  },
-  {
-    label: "Servicios incluidos",
-    eyebrow: "Montaje, balanceo y nitrogeno",
-    eyebrowColor: "#FFD34A",
-    title: [
-      { text: "Envio y Montaje" },
-      { text: "Gratis", color: "#FFC600" },
-    ],
-    description:
-      "La nueva experiencia de comprar llantas en línea. Compra tus llantas y nosotros nos encargamos del resto. ",
-  },
-  {
-    label: "Club Yantissimo",
-    eyebrow: "Promo por tiempo limitado",
-    eyebrowColor: "#FFD34A",
-    title: [
-      { text: "Compra ya y te Regalamos:" },
-      { text: "Club Yantissimo", color: "#FFC600" },
-    ],
-    description:
-      "Nitrogeno ilimitado, Rotacion de llantas, 5% en mano de obra y Recordatorios de servicio.",
-  },
+  // {
+  //   label: "Servicios incluidos",
+  //   eyebrow: "Montaje, balanceo y nitrogeno",
+  //   eyebrowColor: "#FFD34A",
+  //   title: [
+  //     { text: "Envio y Montaje" },
+  //     { text: "Gratis", color: "#FFC600" },
+  //   ],
+  //   description:
+  //     "La nueva experiencia de comprar llantas en línea. Compra tus llantas y nosotros nos encargamos del resto. ",
+  // },
+  // {
+  //   label: "Club Yantissimo",
+  //   eyebrow: "Promo por tiempo limitado",
+  //   eyebrowColor: "#FFD34A",
+  //   title: [
+  //     { text: "Compra ya y te Regalamos:" },
+  //     { text: "Club Yantissimo", color: "#FFC600" },
+  //   ],
+  //   description:
+  //     "Nitrogeno ilimitado, Rotacion de llantas, 5% en mano de obra y Recordatorios de servicio.",
+  // },
 ];
