@@ -2,6 +2,7 @@ import clsx from "clsx";
 import { GridTileImage } from "components/grid/tile";
 import type { Product } from "lib/commerce/types";
 import Link from "next/link";
+import { DiscountBadge, getDiscountPercent } from "./discount-badge";
 
 // Carrusel horizontal de "Productos relacionados" (página de producto y
 // resultados de búsqueda).
@@ -27,7 +28,7 @@ export function RelatedProductsCarousel({
         {products.map((product) => (
           <li
             key={product.handle}
-            className="aspect-square w-[72%] flex-none snap-start min-[475px]:w-[45%] sm:w-1/3 md:w-1/4 lg:w-1/5"
+            className="relative aspect-square w-[72%] flex-none snap-start min-[475px]:w-[45%] sm:w-1/3 md:w-1/4 lg:w-1/5"
           >
             <Link
               className="relative h-full w-full"
@@ -38,14 +39,16 @@ export function RelatedProductsCarousel({
                 alt={product.title}
                 label={{
                   title: product.title,
-                  amount: product.priceRange.maxVariantPrice.amount,
-                  currencyCode: product.priceRange.maxVariantPrice.currencyCode,
+                  // Precio de venta (max = precio de lista).
+                  amount: product.priceRange.minVariantPrice.amount,
+                  currencyCode: product.priceRange.minVariantPrice.currencyCode,
                 }}
                 src={product.featuredImage?.url}
                 fill
                 sizes="(min-width: 1024px) 20vw, (min-width: 768px) 25vw, (min-width: 640px) 33vw, (min-width: 475px) 45vw, 72vw"
               />
             </Link>
+            <DiscountBadge discount={getDiscountPercent(product)} />
           </li>
         ))}
       </ul>

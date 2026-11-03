@@ -1,6 +1,8 @@
 import clsx from "clsx";
+import { getBrandLogo } from "lib/brand-logos";
 import type { Image as ProductImage, Product } from "lib/commerce/types";
 import Link from "next/link";
+import { DiscountBadge, getDiscountPercent } from "./discount-badge";
 import ProductCardImages from "./product-card-images";
 
 interface ProductCardProps {
@@ -83,6 +85,7 @@ export default function ProductCard({ product, className }: ProductCardProps) {
   const tags = product.tags ?? [];
   const brand = getBrand(tags, product.title);
   const displayTag = getTagValue(tags, "tag") ?? tags[0];
+  const tagLogo = getBrandLogo(displayTag);
   const size = getTagValue(tags, "size");
   const rating = getRating(tags);
   const minAmount = Number.parseFloat(
@@ -92,9 +95,7 @@ export default function ProductCard({ product, className }: ProductCardProps) {
     product.priceRange.maxVariantPrice.amount,
   );
   const hasDiscount = Number.isFinite(maxAmount) && maxAmount > minAmount;
-  const discount = hasDiscount
-    ? Math.round((1 - minAmount / maxAmount) * 100)
-    : 0;
+  const discount = getDiscountPercent(product);
   const currencyCode = product.priceRange.minVariantPrice.currencyCode;
 
   return (
@@ -111,16 +112,22 @@ export default function ProductCard({ product, className }: ProductCardProps) {
         className="absolute inset-0 z-10"
       />
       <div className="relative flex min-h-[200px] w-full items-center justify-center overflow-hidden bg-white p-6">
-        {displayTag ? (
+        {tagLogo ? (
+          <span className="pointer-events-none absolute left-3 top-3 z-20 flex h-8 items-center rounded-full border border-black/10 bg-white px-3 shadow-[0_2px_8px_rgba(0,0,0,0.12)]">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={tagLogo}
+              alt={displayTag}
+              loading="lazy"
+              className="h-4 w-auto max-w-[84px] object-contain"
+            />
+          </span>
+        ) : displayTag ? (
           <span className="pointer-events-none absolute left-3 top-3 z-20 rounded-full border border-[#3a3a3a] bg-[#1d1d1d] px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-[#e5e5e5]">
             {displayTag}
           </span>
         ) : null}
-        {discount > 0 ? (
-          <span className="pointer-events-none absolute right-3 top-3 z-20 rounded bg-[#e53935] px-1.5 py-0.5 text-[10px] font-bold text-white">
-            -{discount}%
-          </span>
-        ) : null}
+        <DiscountBadge discount={discount} />
         <ProductCardImages images={images} alt={product.title} />
       </div>
 

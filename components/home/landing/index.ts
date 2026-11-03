@@ -1,5 +1,6 @@
 export { Bento } from "./bento";
 export { Brands } from "./brands";
+export { BuenFin } from "./buen-fin";
 export { CtaBand } from "./cta-band";
 export { FeaturedTires } from "./featured-tires";
 export { Hero } from "./hero";

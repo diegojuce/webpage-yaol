@@ -1,10 +1,11 @@
 import {
   // Bento,
   Brands,
+  BuenFin,
   CtaBand,
   Hero,
   // Locations,
-  Paquetes,
+  // Paquetes,
   // QuickAccess,
   // Services,
   Stats,
@@ -50,7 +51,8 @@ export default async function HomePage() {
         {/* <QuickAccess /> */}
         <Brands />
         {/* <FeaturedTires /> */}
-        <Paquetes />
+        <BuenFin />
+        {/* <Paquetes /> */}
         {/* <Services /> */}
         {/* <Bento /> */}
         {/* <Locations /> */}

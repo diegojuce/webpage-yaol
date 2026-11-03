@@ -1,17 +1,4 @@
-const BRANDS = [
-  { name: "Michelin", file: "michelin.svg" },
-  { name: "Goodyear", file: "goodyear.svg" },
-  { name: "Bridgestone", file: "bridgestone.svg" },
-  { name: "Pirelli", file: "pirelli.svg" },
-  { name: "Continental", file: "continental.svg" },
-  { name: "Yokohama", file: "yokohama.svg" },
-  { name: "Hankook", file: "hankook.svg" },
-  { name: "BFGoodrich", file: "bfgoodrich.svg" },
-  { name: "Cooper Tires", file: "cooper.svg" },
-  { name: "Nexen Tire", file: "nexen.svg" },
-  { name: "Toyo Tires", file: "toyo.svg" },
-  { name: "Kumho Tire", file: "kumho.svg" },
-];
+import { BRANDS } from "lib/brand-logos";
 
 export function Brands() {
   return (

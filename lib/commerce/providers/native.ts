@@ -1,5 +1,6 @@
 // Adaptador nativo: catálogo y carrito desde el backend propio (/bypass/shop)
 // sin el formato de Shopify.
+import { DEFAULT_IMAGE_URL } from "lib/commerce/placeholder-image";
 import { TAGS } from "lib/constants";
 import type {
   Cart,
@@ -361,9 +362,6 @@ type ShopCart = {
   currency: string;
   totals: { subtotalCents: number; taxCents: number; totalCents: number };
 };
-
-const DEFAULT_IMAGE_URL =
-  "https://static.vecteezy.com/system/resources/previews/008/730/042/non_2x/car-rim-and-tire-linear-icon-thin-line-illustration-automobile-wheel-contour-symbol-isolated-outline-drawing-vector.jpg";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export const isValidCartId = (id?: string): id is string => !!id && UUID_RE.test(id);
