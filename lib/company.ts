@@ -10,6 +10,8 @@ export const COMPANY = {
   foundedYear: 2016,
   foundedDate: "2016-10-27",
   email: "marketing@yantissimo.com",
+  // Soporte, privacidad (ARCO) y cancelaciones en Términos y Condiciones.
+  supportEmail: "online.yantissimo@gmail.com",
   fleetEmail: "marketing@yantissimo.com",
   website: "https://yantissimo.com",
   hqAddress: {

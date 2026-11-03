@@ -87,7 +87,7 @@ export default function PrivacyPolicyPage() {
             items={[
               "Historial de visitas y servicios, cotizaciones, pagos (estado del pago) y recordatorios de servicio.",
               "Resultados de inspecciones y revisiones posteriores (postchecks) de tu vehículo.",
-              "Membresía y beneficios del Club Llantísimo, asociados a cada vehículo.",
+              "Membresía y beneficios del Club Yantissimo, asociados a cada vehículo.",
               "Token del dispositivo, necesario para enviarte notificaciones push.",
             ]}
           />
@@ -102,7 +102,7 @@ export default function PrivacyPolicyPage() {
           </p>
           <p>
             <strong>Datos de pago:</strong> los pagos con tarjeta se procesan a
-            través de [PROCESADOR DE PAGOS]. Yantissimo no almacena números
+            través de Stripe. Yantissimo no almacena números
             completos de tarjeta.
           </p>
         </Section>
@@ -118,7 +118,7 @@ export default function PrivacyPolicyPage() {
               "Asociar tus vehículos y llevar su historial de servicio.",
               "Elaborar, enviar y dar seguimiento a cotizaciones, citas y pagos.",
               "Enviarte recordatorios de servicio y avisos sobre tu visita o tu vehículo, por notificación push, WhatsApp o SMS.",
-              "Administrar tu membresía y beneficios del Club Llantísimo.",
+              "Administrar tu membresía y beneficios del Club Yantissimo.",
               "Cumplir obligaciones legales, fiscales y de garantía.",
             ]}
           />
@@ -148,7 +148,7 @@ export default function PrivacyPolicyPage() {
             items={[
               "Apple (APNs): entrega de notificaciones push.",
               "Meta (WhatsApp Business): envío de mensajes de servicio y recordatorios.",
-              "[PROCESADOR DE PAGOS]: cobro de servicios.",
+              "Stripe: procesamiento de pagos con tarjeta.",
               "[PROVEEDOR DE HOSTING/BASE DE DATOS]: alojamiento de la información.",
             ]}
           />

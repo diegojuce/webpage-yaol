@@ -49,7 +49,8 @@ const COLS: Col[] = [
     items: [
       { label: "Guía de llantas", href: "/contacto" },
       { label: "Garantías", href: "/contacto" },
-      { label: "Política de privacidad", href: "/privacy-advice" },
+      { label: "Términos y condiciones", href: "/terminos-condiciones" },
+      { label: "Aviso de privacidad", href: "/politica-privacidad" },
       { label: "Política de reembolso", href: "/return-policy" },
       { label: "Política de envío", href: "/shipping-policy" },
       { label: "Devoluciones", href: "/contacto" },
