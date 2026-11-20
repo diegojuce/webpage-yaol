@@ -1,4 +1,4 @@
-// Landing + alta pública al Club Yantissimo (sin app móvil).
+// Landing + compra pública del Club Yantissimo (sin app móvil; solo de pago).
 //
 // Los beneficios se traen en el servidor para que la landing pinte completa al
 // primer render; el resto del flujo (código, vehículo, tarjeta) es del cliente.
@@ -11,14 +11,14 @@ import ClubSignupCard from "./club-signup-card";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Club Yantissimo · Beneficios gratis para tu auto | Yantissimo",
+  title: "Club Yantissimo · Membresía anual para tu auto | Yantissimo",
   description:
-    "Únete gratis al Club Yantissimo y llévate tu tarjeta digital en el celular. Rotación, balanceo, revisión de presión y más beneficios en las 6 sucursales de Colima, Villa de Álvarez y Manzanillo.",
+    "Compra tu membresía anual del Club Yantissimo en línea y llévate tu tarjeta digital en el celular. Rotación, balanceo, revisión de presión y más beneficios en las 6 sucursales de Colima, Villa de Álvarez y Manzanillo.",
   alternates: { canonical: "/club" },
   openGraph: {
-    title: "Club Yantissimo · Beneficios gratis para tu auto",
+    title: "Club Yantissimo · Membresía anual para tu auto",
     description:
-      "Sin descargar ninguna app. Regístrate con tu celular y llévate tu tarjeta digital.",
+      "Sin descargar ninguna app. Paga tu membresía en línea con tu celular y llévate tu tarjeta digital.",
     url: "https://yantissimo.com/club",
     type: "website",
   },
@@ -48,20 +48,20 @@ const PASOS = [
   },
   {
     n: "04",
-    titulo: "Guarda tu tarjeta",
+    titulo: "Paga y guarda tu tarjeta",
     texto:
-      "Agrégala a Apple Wallet o preséntala en sucursal. Ahí activamos tu membresía y empiezas a usarla.",
+      "Pagas en línea y tu membresía queda activa al momento. Agrégala a Apple Wallet o preséntala en sucursal.",
   },
 ];
 
 const FAQ = [
   {
     p: "¿Cuánto cuesta entrar al Club?",
-    r: "El alta en línea es gratuita. Los beneficios se activan cuando presentas tu tarjeta en cualquier sucursal Yantissimo.",
+    r: "Es una membresía anual por vehículo; ves el precio antes de pagar. Se activa en cuanto pagas y la usas en cualquier sucursal Yantissimo.",
   },
   {
     p: "¿Necesito descargar una app?",
-    r: "No. Todo el alta es desde esta página y tu tarjeta vive en Apple Wallet o en el número de membresía que te damos al terminar.",
+    r: "No. Toda la compra es desde esta página y tu tarjeta vive en Apple Wallet o en el número de membresía que te damos al terminar.",
   },
   {
     p: "¿Por qué me piden un código si ya soy cliente?",
@@ -69,11 +69,11 @@ const FAQ = [
   },
   {
     p: "Tengo varios autos, ¿me alcanza una membresía?",
-    r: "La membresía es por vehículo. Puedes repetir el alta con el mismo celular para inscribir cada uno de tus autos.",
+    r: "La membresía es por vehículo. Puedes repetir la compra con el mismo celular para inscribir cada uno de tus autos.",
   },
   {
     p: "¿Y si tengo Android?",
-    r: "Guarda tu número de membresía o pásate a cualquier sucursal: ahí te entregamos tu tarjeta y la dejamos activa.",
+    r: "Guarda tu número de membresía o pásate a cualquier sucursal: ahí te entregamos tu tarjeta.",
   },
 ];
 
@@ -121,8 +121,8 @@ export default async function ClubPage() {
             </h1>
             <p className="m-0 max-w-[520px] text-[17px] leading-[1.6] text-white/70">
               Beneficios reales en las {BRANCHES.length} sucursales de{" "}
-              {COMPANY.brandName}. Sin descargar nada, sin mensualidad y sin
-              letras chiquitas: te registras con tu celular y te llevas tu
+              {COMPANY.brandName}. Una membresía anual, sin descargar nada y sin
+              letras chiquitas: pagas en línea con tu celular y te llevas tu
               tarjeta digital.
             </p>
 
@@ -131,7 +131,7 @@ export default async function ClubPage() {
                 href="#alta"
                 className="inline-flex items-center gap-2 rounded-full bg-[#FFC600] px-7 py-4 text-sm font-bold uppercase tracking-wider text-black transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#FFD34A] hover:shadow-[0_18px_50px_rgba(255,211,74,0.35)] lg:hidden"
               >
-                Darme de alta
+                Unirme al Club
                 <span aria-hidden="true">→</span>
               </a>
               <a
@@ -147,7 +147,7 @@ export default async function ClubPage() {
 
             <ul className="m-0 mt-2 flex flex-wrap gap-x-8 gap-y-3 p-0">
               {[
-                "Alta gratis en 2 minutos",
+                "Membresía anual, activa al pagar",
                 "Sin app que descargar",
                 `Válido en las ${BRANCHES.length} sucursales`,
               ].map((t) => (
@@ -206,9 +206,8 @@ export default async function ClubPage() {
             </ul>
           ) : (
             <p className="mt-8 max-w-[560px] text-[16px] leading-relaxed text-white/55">
-              Estamos actualizando la lista de beneficios. Regístrate ahora y
-              pregunta por ellos en tu sucursal: tu membresía queda lista de
-              todos modos.
+              Estamos actualizando la lista de beneficios. Pregunta por ellos en
+              tu sucursal: tu membresía queda lista de todos modos.
             </p>
           )}
         </div>
@@ -253,8 +252,8 @@ export default async function ClubPage() {
                 Tu número está protegido.
               </strong>{" "}
               No consultamos ni modificamos tu cuenta antes de que confirmes el
-              código de WhatsApp, así que nadie puede darte de alta ni averiguar
-              si eres cliente usando tu teléfono.
+              código de WhatsApp, así que nadie puede comprar a tu nombre ni
+              averiguar si eres cliente usando tu teléfono.
             </p>
           </div>
         </div>
@@ -310,7 +309,7 @@ export default async function ClubPage() {
           ¿Listo para <span className="text-[#FFC600]">entrar?</span>
         </h2>
         <p className="mx-auto m-0 mt-4 max-w-[460px] text-[16px] leading-relaxed text-white/60">
-          Dos minutos y tu tarjeta queda en tu celular.
+          Pagas en dos minutos y tu tarjeta queda en tu celular.
         </p>
         <a
           href="#alta"

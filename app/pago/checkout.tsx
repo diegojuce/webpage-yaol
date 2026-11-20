@@ -206,7 +206,10 @@ export default function Checkout(props: Props) {
           <Resumen
             lines={summary}
             total={total}
-            nota={props.mode === "cart" || props.order.kind === "cart"}
+            nota={
+              props.mode === "cart" ||
+              (props.order.kind === "cart" && !props.order.soloClub)
+            }
           />
         </div>
       </div>
@@ -933,9 +936,10 @@ function Confirmacion({
           className="m-0 text-3xl font-black uppercase leading-none tracking-[0.04em] text-[#0f0f0f]"
           style={{ fontFamily: DISPLAY_FONT }}
         >
-          ¡Pago confirmado!
+          {order.soloClub ? "¡Ya eres del Club!" : "¡Pago confirmado!"}
         </h2>
         <p className="m-0 max-w-[380px] text-[14px] leading-relaxed text-[#6b6b6b]">
+          {order.soloClub ? "Tu membresía está activa. " : null}
           Te mandamos la confirmación por WhatsApp
           {order.customerEmail
             ? ` y el comprobante a ${order.customerEmail}`
@@ -1000,9 +1004,11 @@ function Confirmacion({
 
       <Factura paymentId={paymentId} invoice={order.invoice} />
 
-      {agendar &&
-      ((order.fulfillment === "install" && cita?.status === "failed") ||
-        (!order.fulfillment && order.needsAppointment)) ? (
+      {order.soloClub ? (
+        <BotonLink href="/club?pagado=1#alta">Descargar mi tarjeta</BotonLink>
+      ) : agendar &&
+        ((order.fulfillment === "install" && cita?.status === "failed") ||
+          (!order.fulfillment && order.needsAppointment)) ? (
         <BotonLink href={agendar}>
           {order.kind === "quote" ? "Ver o agendar mi cita" : "Elegir horario"}
         </BotonLink>

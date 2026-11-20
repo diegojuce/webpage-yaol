@@ -25,14 +25,6 @@ export type VehiculoClub = {
   membership_id?: number | null;
 };
 
-export type Membresia = {
-  creada: boolean;
-  membership_number: string;
-  status?: string;
-  starts_at?: string | null;
-  expires_at?: string | null;
-};
-
 export type VehiculoNuevo = {
   placa?: string;
   marca?: string;
@@ -51,6 +43,9 @@ const ERRORES: Record<string, string> = {
   vehiculo_incompleto: "Necesitamos al menos la placa o la marca.",
   vehiculo_requerido: "Elige un vehículo para tu membresía.",
   membresia_duplicada: "Ese vehículo ya tiene una membresía activa.",
+  CLUB_VIGENTE: "Ese vehículo ya tiene una membresía del Club vigente.",
+  pago_no_disponible:
+    "El pago en línea no está disponible por ahora. Puedes comprar tu membresía en cualquier sucursal.",
   membresia_por_definir_existente:
     "Ya tienes una membresía pendiente de asignar vehículo. Para inscribir otro auto, captura sus datos aquí o pásate a tu sucursal.",
   pase_no_disponible:
@@ -91,7 +86,13 @@ async function post<T>(path: string, body: unknown, token?: string | null) {
   }
 
   if (!res.ok) {
-    const code = data?.error as string | undefined;
+    // 410 = pago en línea apagado. Un 401 sin código = token vencido (ojo:
+    // /verificar también responde 401, con codigo_invalido).
+    const code =
+      res.status === 410
+        ? "pago_no_disponible"
+        : (((data?.code ?? data?.error) as string | undefined) ??
+          (res.status === 401 ? "sesion_invalida" : undefined));
     throw new ClubError(
       (code && ERRORES[code]) || data?.error_message || "Algo salió mal.",
       code
@@ -131,7 +132,11 @@ export async function verificarCodigo(
   codigo: string,
   nombre?: string
 ) {
-  const data = await post<{ token: string; vehiculos?: VehiculoClub[] }>(
+  const data = await post<{
+    token: string;
+    vehiculos?: VehiculoClub[];
+    precio_club?: number | null;
+  }>(
     "/public/club/verificar",
     {
       telefono: soloDigitos(telefono),
@@ -142,14 +147,19 @@ export async function verificarCodigo(
   return {
     token: data.token,
     vehiculos: Array.isArray(data.vehiculos) ? data.vehiculos : [],
+    // MXN con IVA; null = no se puede vender en línea.
+    precio_club: typeof data.precio_club === "number" ? data.precio_club : null,
   };
 }
 
-export async function darDeAlta(
+// Compra en línea (la web ya no da altas gratis): el backend crea el documento
+// con el CS1 y devuelve la liga del checkout nativo; el webhook activa la
+// membresía al pagar. Idempotente: reintentar devuelve la misma liga.
+export async function comprar(
   token: string,
   eleccion: string,
   nuevo: VehiculoNuevo
-): Promise<Membresia> {
+): Promise<{ payment_url: string; membership_number: string }> {
   let body: Record<string, unknown>;
   if (eleccion === "despues") {
     body = { sin_vehiculo: true };
@@ -165,7 +175,7 @@ export async function darDeAlta(
   } else {
     body = { vehicle_id: Number(eleccion) };
   }
-  return post<Membresia>("/public/club/alta", body, token);
+  return post("/public/club/comprar", body, token);
 }
 
 // El .pkpass viene como binario firmado, así que no pasa por post().

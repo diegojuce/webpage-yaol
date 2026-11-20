@@ -619,6 +619,8 @@ export type CheckoutOrder = {
   quoteId: string | null;
   needsAppointment: boolean;
   hasDelivery: boolean;
+  // El pedido es solo la membresía del Club (sin cita ni entrega).
+  soloClub?: boolean;
   totalCents: number;
   expiresAt: string;
   customerName: string | null;

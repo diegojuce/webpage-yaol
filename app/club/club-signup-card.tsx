@@ -1,21 +1,24 @@
 "use client";
 
-// Alta pública al Club Yantissimo en cuatro pasos:
-//   telefono → codigo → vehiculo → listo (descarga del .pkpass)
+// Compra pública del Club Yantissimo (solo de pago) en cuatro pasos:
+//   telefono → codigo → vehiculo (→ checkout nativo /pagar/<token>) → listo
+//
+// Al volver del pago (/pago enlaza a /club?pagado=1) se recupera de
+// sessionStorage el token y el número para descargar el .pkpass.
 //
 // Réplica del flujo del ERP (erp-yssm/(public)/club) con la UI de yantissimo.com.
 
 import {
   ClubError,
-  darDeAlta,
+  comprar,
   descargarPase,
   pedirCodigo,
   soloDigitos,
   verificarCodigo,
-  type Membresia,
   type VehiculoClub,
 } from "lib/api/club";
-import { useMemo, useState } from "react";
+import { COMMERCE_PROVIDER, PAYMENTS_BLOCKED } from "lib/commerce-status";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 type Paso = "telefono" | "codigo" | "vehiculo" | "listo";
 
@@ -30,6 +33,16 @@ const INPUT =
   "w-full rounded-xl border border-white/15 bg-white/[0.04] px-4 py-3.5 text-[15px] text-white outline-none transition-colors placeholder:text-white/30 focus:border-[#FFC600] focus:bg-white/[0.07] disabled:opacity-50";
 const LABEL =
   "mb-2 block text-[11px] font-bold uppercase tracking-[0.16em] text-white/45";
+
+const PAGO_APAGADO = COMMERCE_PROVIDER !== "native" || PAYMENTS_BLOCKED;
+const COMPRA_KEY = "club-compra";
+// Vida del token de /public/club/verificar.
+const TOKEN_MS = 20 * 60 * 1000;
+
+const formatMXN = (n: number) =>
+  new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(
+    n
+  );
 
 const mensaje = (err: unknown, fallback: string) =>
   err instanceof ClubError ? err.message : fallback;
@@ -53,6 +66,8 @@ export default function ClubSignupCard() {
   const [codigo, setCodigo] = useState("");
 
   const [token, setToken] = useState<string | null>(null);
+  const tokenExp = useRef(0);
+  const [precio, setPrecio] = useState<number | null>(null);
   const [vehiculos, setVehiculos] = useState<VehiculoClub[]>([]);
   const [eleccion, setEleccion] = useState(""); // id | "nuevo" | "despues"
   const [nuevo, setNuevo] = useState({
@@ -62,8 +77,23 @@ export default function ClubSignupCard() {
     anio: "",
   });
 
-  const [membresia, setMembresia] = useState<Membresia | null>(null);
+  const [membresia, setMembresia] = useState<string | null>(null);
   const [bajando, setBajando] = useState(false);
+
+  // De regreso del pago: paso «listo» mientras el token siga vivo.
+  useEffect(() => {
+    if (!new URLSearchParams(window.location.search).has("pagado")) return;
+    try {
+      const c = JSON.parse(sessionStorage.getItem(COMPRA_KEY) ?? "null");
+      if (c?.token && c?.membership_number && c.exp > Date.now()) {
+        setToken(c.token);
+        setMembresia(c.membership_number);
+        setPaso("listo");
+      }
+    } catch {
+      // sessionStorage bloqueado: el cliente pide su tarjeta en sucursal.
+    }
+  }, []);
 
   const telefonoOk = soloDigitos(telefono).length === 10;
   const codigoOk = /^\d{6}$/.test(codigo);
@@ -108,6 +138,8 @@ export default function ClubSignupCard() {
     try {
       const data = await verificarCodigo(telefono, codigo, nombre);
       setToken(data.token);
+      tokenExp.current = Date.now() + TOKEN_MS;
+      setPrecio(data.precio_club);
       setVehiculos(data.vehiculos);
       const libres = data.vehiculos.filter((v) => !v.membership_id);
       setEleccion(libres.length ? String(libres[0]!.id) : "nuevo");
@@ -119,17 +151,34 @@ export default function ClubSignupCard() {
     }
   }
 
-  async function onAlta() {
+  async function onComprar() {
     if (!token) return;
     setError("");
     setEnviando(true);
     try {
-      setMembresia(await darDeAlta(token, eleccion, nuevo));
-      setPaso("listo");
+      const { payment_url, membership_number } = await comprar(
+        token,
+        eleccion,
+        nuevo
+      );
+      try {
+        sessionStorage.setItem(
+          COMPRA_KEY,
+          JSON.stringify({ token, membership_number, exp: tokenExp.current })
+        );
+      } catch {
+        // Sin sessionStorage solo se pierde el atajo a la tarjeta al volver.
+      }
+      window.location.assign(payment_url);
     } catch (err) {
-      setError(mensaje(err, "No se pudo completar tu alta."));
-    } finally {
+      setError(mensaje(err, "No se pudo abrir el pago."));
       setEnviando(false);
+      // Token vencido: hay que volver a pedir el código.
+      if (err instanceof ClubError && err.code === "sesion_invalida") {
+        setCodigo("");
+        setToken(null);
+        setPaso("telefono");
+      }
     }
   }
 
@@ -138,7 +187,7 @@ export default function ClubSignupCard() {
     setError("");
     setBajando(true);
     try {
-      await descargarPase(token, membresia.membership_number);
+      await descargarPase(token, membresia);
     } catch (err) {
       setError(mensaje(err, "No se pudo generar tu tarjeta."));
     } finally {
@@ -195,46 +244,53 @@ export default function ClubSignupCard() {
       {paso === "telefono" ? (
         <div className="flex flex-col gap-5">
           <Encabezado
-            titulo="Únete gratis"
-            sub="Sin descargar ninguna app. Solo necesitamos tu celular."
+            titulo="Únete al Club"
+            sub="Membresía anual por vehículo. Sin descargar ninguna app: solo necesitamos tu celular."
           />
-          <div>
-            <label className={LABEL} htmlFor="club-tel">
-              Celular
-            </label>
-            <input
-              id="club-tel"
-              className={INPUT}
-              value={telefono}
-              onChange={(e) =>
-                setTelefono(soloDigitos(e.target.value).slice(0, 10))
-              }
-              placeholder="10 dígitos"
-              inputMode="numeric"
-              autoComplete="tel-national"
-              disabled={enviando}
-            />
-            <p className="mt-2 text-[12px] leading-relaxed text-white/40">
-              Te enviaremos un código por WhatsApp para confirmar que es tuyo.
-            </p>
-          </div>
-          <div>
-            <label className={LABEL} htmlFor="club-nombre">
-              Nombre <span className="text-white/25">(opcional)</span>
-            </label>
-            <input
-              id="club-nombre"
-              className={INPUT}
-              value={nombre}
-              onChange={(e) => setNombre(e.target.value)}
-              placeholder="¿Cómo te llamamos?"
-              autoComplete="name"
-              disabled={enviando}
-            />
-          </div>
-          <Boton onClick={onPedirCodigo} disabled={!telefonoOk || enviando}>
-            {enviando ? "Enviando…" : "Enviarme el código"}
-          </Boton>
+          {PAGO_APAGADO ? (
+            <ProntoEnLinea />
+          ) : (
+            <>
+              <div>
+                <label className={LABEL} htmlFor="club-tel">
+                  Celular
+                </label>
+                <input
+                  id="club-tel"
+                  className={INPUT}
+                  value={telefono}
+                  onChange={(e) =>
+                    setTelefono(soloDigitos(e.target.value).slice(0, 10))
+                  }
+                  placeholder="10 dígitos"
+                  inputMode="numeric"
+                  autoComplete="tel-national"
+                  disabled={enviando}
+                />
+                <p className="mt-2 text-[12px] leading-relaxed text-white/40">
+                  Te enviaremos un código por WhatsApp para confirmar que es
+                  tuyo.
+                </p>
+              </div>
+              <div>
+                <label className={LABEL} htmlFor="club-nombre">
+                  Nombre <span className="text-white/25">(opcional)</span>
+                </label>
+                <input
+                  id="club-nombre"
+                  className={INPUT}
+                  value={nombre}
+                  onChange={(e) => setNombre(e.target.value)}
+                  placeholder="¿Cómo te llamamos?"
+                  autoComplete="name"
+                  disabled={enviando}
+                />
+              </div>
+              <Boton onClick={onPedirCodigo} disabled={!telefonoOk || enviando}>
+                {enviando ? "Enviando…" : "Enviarme el código"}
+              </Boton>
+            </>
+          )}
         </div>
       ) : null}
 
@@ -413,9 +469,15 @@ export default function ClubSignupCard() {
             </p>
           ) : null}
 
-          <Boton onClick={onAlta} disabled={enviando || !altaLista}>
-            {enviando ? "Dando de alta…" : "Unirme al Club"}
-          </Boton>
+          {precio === null || PAGO_APAGADO ? (
+            <ProntoEnLinea />
+          ) : (
+            <Boton onClick={onComprar} disabled={enviando || !altaLista}>
+              {enviando
+                ? "Abriendo el pago…"
+                : `Pagar ${formatMXN(precio)} y unirme`}
+            </Boton>
+          )}
         </div>
       ) : null}
 
@@ -435,9 +497,8 @@ export default function ClubSignupCard() {
               ¡Ya eres del Club!
             </h2>
             <p className="m-0 max-w-[340px] text-[14px] leading-relaxed text-white/55">
-              Tu membresía queda pendiente de activación. Preséntala en
-              cualquier sucursal Yantissimo para activarla y empezar a usar tus
-              beneficios.
+              Tu membresía ya está activa. Preséntala en cualquier sucursal
+              Yantissimo para empezar a usar tus beneficios.
             </p>
           </div>
 
@@ -446,7 +507,7 @@ export default function ClubSignupCard() {
               Número de membresía
             </p>
             <p className="m-0 mt-1 break-all font-mono text-[13px] text-white">
-              {membresia?.membership_number}
+              {membresia}
             </p>
           </div>
 
@@ -460,6 +521,15 @@ export default function ClubSignupCard() {
         </div>
       ) : null}
     </div>
+  );
+}
+
+function ProntoEnLinea() {
+  return (
+    <p className="rounded-xl border border-[#FFC600]/30 bg-[#FFC600]/10 px-4 py-3 text-sm leading-relaxed text-[#FFD34A]">
+      Muy pronto podrás comprarlo en línea; mientras tanto, en cualquier
+      sucursal.
+    </p>
   );
 }
 
